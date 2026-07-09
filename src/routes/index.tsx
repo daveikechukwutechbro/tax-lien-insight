@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { scheduledAuctionQuery, type ScheduledPropertyRow } from "@/lib/queries/auctions";
 import {
   CalendarDays,
   Clock,
@@ -18,6 +20,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(scheduledAuctionQuery),
   head: () => ({
     meta: [
       { title: "Upcoming Tax Lien Auction — Chicago TaxLien Auctions" },
@@ -37,119 +40,42 @@ export const Route = createFileRoute("/")({
     links: [{ rel: "canonical", href: "/" }],
   }),
   component: HomePage,
+  errorComponent: ({ error }) => (
+    <div className="container-tight py-20 text-center">
+      <h1 className="font-display text-2xl font-600 text-navy">We couldn't load auctions</h1>
+      <p className="mt-2 text-sm text-ink-muted">{error.message}</p>
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="container-tight py-20 text-center">
+      <h1 className="font-display text-2xl font-600 text-navy">No auctions scheduled</h1>
+    </div>
+  ),
 });
 
-// Mock data — Phase 2 replaces with server functions + database.
-const AUCTION_DATE = new Date("2026-08-14T14:00:00Z"); // 10:00 AM EST
-
-type ScheduledProperty = {
-  id: string;
-  address: string;
-  cityState: string;
-  type: string;
-  propertyType: "Residential" | "Land" | "Commercial";
-  county: string;
-  parcelId: string;
-  taxesOwed: number;
-  interestRate: number;
-  minBid: number;
-  status: "Upcoming" | "Live" | "Closed";
-  image: string;
-};
-
-const PROPERTIES: ScheduledProperty[] = [
-  {
-    id: "P-0010",
-    address: "123 Oak Street",
-    cityState: "Anytown, FL 32101",
-    type: "Single Family Residence",
-    propertyType: "Residential",
-    county: "Franklin",
-    parcelId: "22-05-17-1234-0000-0010",
-    taxesOwed: 5642.18,
-    interestRate: 15,
-    minBid: 5642.18,
-    status: "Upcoming",
-    image:
-      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=240&q=60",
-  },
-  {
-    id: "P-0020",
-    address: "456 Maple Avenue",
-    cityState: "Anytown, FL 32102",
-    type: "Single Family Residence",
-    propertyType: "Residential",
-    county: "Franklin",
-    parcelId: "22-05-17-1234-0000-0020",
-    taxesOwed: 3210.75,
-    interestRate: 15,
-    minBid: 3210.75,
-    status: "Upcoming",
-    image:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=240&q=60",
-  },
-  {
-    id: "P-0030",
-    address: "789 Pine Road",
-    cityState: "Anytown, FL 32103",
-    type: "Vacant Land",
-    propertyType: "Land",
-    county: "Franklin",
-    parcelId: "22-05-17-1234-0000-0030",
-    taxesOwed: 8987.64,
-    interestRate: 15,
-    minBid: 8987.64,
-    status: "Upcoming",
-    image:
-      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=240&q=60",
-  },
-  {
-    id: "P-0040",
-    address: "321 Cedar Lane",
-    cityState: "Anytown, FL 32104",
-    type: "Single Family Residence",
-    propertyType: "Residential",
-    county: "Franklin",
-    parcelId: "22-05-17-1234-0000-0040",
-    taxesOwed: 2150.0,
-    interestRate: 15,
-    minBid: 2150.0,
-    status: "Upcoming",
-    image:
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=240&q=60",
-  },
-  {
-    id: "P-0050",
-    address: "654 Birch Boulevard",
-    cityState: "Anytown, FL 32105",
-    type: "Single Family Residence",
-    propertyType: "Residential",
-    county: "Franklin",
-    parcelId: "22-05-17-1234-0000-0050",
-    taxesOwed: 4875.9,
-    interestRate: 15,
-    minBid: 4875.9,
-    status: "Upcoming",
-    image:
-      "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=240&q=60",
-  },
-];
-
 function HomePage() {
+  const { data } = useSuspenseQuery(scheduledAuctionQuery);
+  const auctionDate = data.nextStartsAt ? new Date(data.nextStartsAt) : null;
+
   return (
     <div className="bg-background pb-16">
       <div className="container-tight pt-10">
-        <HeroRow />
-        <StatsRow />
+        <HeroRow auctionDate={auctionDate} />
+        <StatsRow
+          totalProperties={data.totalProperties}
+          totalCounties={data.totalCounties}
+          totalTaxesOwed={data.totalTaxesOwed}
+          auctionDate={auctionDate}
+        />
         <FilterBar />
-        <PropertyTable />
+        <PropertyTable properties={data.properties} />
         <RegisterBanner />
       </div>
     </div>
   );
 }
 
-function HeroRow() {
+function HeroRow({ auctionDate }: { auctionDate: Date | null }) {
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_auto_auto] lg:items-end">
       <div>
@@ -161,17 +87,25 @@ function HeroRow() {
           on secured tax lien certificates.
         </p>
       </div>
-      <HeroCard
-        icon={<CalendarDays className="size-6 text-navy" strokeWidth={1.75} />}
-        label="Auction Date"
-        primary={AUCTION_DATE.toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        })}
-        secondary="10:00 AM (EST)"
-      />
-      <CountdownCard />
+      {auctionDate && (
+        <>
+          <HeroCard
+            icon={<CalendarDays className="size-6 text-navy" strokeWidth={1.75} />}
+            label="Auction Date"
+            primary={auctionDate.toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+            secondary={auctionDate.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              timeZoneName: "short",
+            })}
+          />
+          <CountdownCard target={auctionDate} />
+        </>
+      )}
     </section>
   );
 }
@@ -203,14 +137,14 @@ function HeroCard({
   );
 }
 
-function CountdownCard() {
+function CountdownCard({ target }: { target: Date }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const diff = Math.max(0, AUCTION_DATE.getTime() - now);
+  const diff = Math.max(0, target.getTime() - now);
   const days = Math.floor(diff / 86_400_000);
   const hrs = Math.floor((diff % 86_400_000) / 3_600_000);
   const mins = Math.floor((diff % 3_600_000) / 60_000);
@@ -252,33 +186,55 @@ function Sep() {
   return <span className="text-destructive/60">:</span>;
 }
 
-function StatsRow() {
+function StatsRow({
+  totalProperties,
+  totalCounties,
+  totalTaxesOwed,
+  auctionDate,
+}: {
+  totalProperties: number;
+  totalCounties: number;
+  totalTaxesOwed: number;
+  auctionDate: Date | null;
+}) {
+  const money = totalTaxesOwed.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
   return (
     <section className="mt-6 grid gap-4 rounded-xl border border-hairline bg-surface p-6 lg:grid-cols-[1fr_auto]">
       <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
         <Stat
           icon={<Tag className="size-6" strokeWidth={1.5} />}
-          value="150"
+          value={String(totalProperties)}
           label={<>Properties<br />Scheduled</>}
         />
         <Stat
           icon={<MapPin className="size-6" strokeWidth={1.5} />}
-          value="12"
+          value={String(totalCounties)}
           label={<>Counties<br />Included</>}
         />
         <Stat
           icon={<DollarSign className="size-6" strokeWidth={1.5} />}
-          value="$785,420.00"
+          value={money}
           label="Total Taxes Owed"
         />
         <Stat
           icon={<Gavel className="size-6" strokeWidth={1.5} />}
-          value="Aug 14, 2026"
+          value={
+            auctionDate
+              ? auctionDate.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : "TBD"
+          }
           label="Auction Date"
         />
         <Stat
           icon={<Users2 className="size-6" strokeWidth={1.5} />}
-          value="248"
+          value="—"
           label={<>Registered<br />Bidders</>}
         />
       </div>
@@ -380,14 +336,24 @@ function SelectPill({ label }: { label: string }) {
   );
 }
 
-function PropertyTable() {
+function PropertyTable({ properties }: { properties: ScheduledPropertyRow[] }) {
   const fmt = (n: number) =>
     n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+
+  if (properties.length === 0) {
+    return (
+      <section className="mt-8 rounded-xl border border-hairline bg-surface p-10 text-center">
+        <p className="text-sm text-ink-muted">
+          No properties scheduled yet. Check back soon.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="mt-8">
       <h2 className="mb-3 font-display text-lg font-600 text-navy">
-        Scheduled Properties ({PROPERTIES.length})
+        Scheduled Properties ({properties.length})
       </h2>
       <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
         <div className="overflow-x-auto">
@@ -410,49 +376,55 @@ function PropertyTable() {
               </tr>
             </thead>
             <tbody>
-              {PROPERTIES.map((p) => (
+              {properties.map((p) => (
                 <tr
-                  key={p.id}
+                  key={p.lien_id}
                   className="border-b border-hairline/60 last:border-b-0 hover:bg-surface-alt/60"
                 >
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <img
-                        src={p.image}
-                        alt={`${p.address} exterior`}
-                        loading="lazy"
-                        className="size-12 rounded-md object-cover"
-                      />
+                      {p.image_url ? (
+                        <img
+                          src={p.image_url}
+                          alt={`${p.address} exterior`}
+                          loading="lazy"
+                          className="size-12 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="size-12 rounded-md bg-surface-alt" />
+                      )}
                       <div>
                         <div className="font-600 text-navy">{p.address}</div>
-                        <div className="text-xs text-ink-muted">{p.cityState}</div>
-                        <div className="text-xs text-ink-muted">{p.type}</div>
+                        <div className="text-xs text-ink-muted">
+                          {p.city}, {p.state} {p.zip}
+                        </div>
+                        <div className="text-xs text-ink-muted">
+                          {p.description ?? p.property_type}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-3 py-4 text-ink">{p.county}</td>
                   <td className="px-3 py-4 font-mono text-xs text-ink-muted">
-                    {p.parcelId}
+                    {p.parcel_id}
                   </td>
                   <td className="px-3 py-4 text-right tabular-nums text-ink">
-                    {fmt(p.taxesOwed)}
+                    {fmt(p.taxes_owed)}
                   </td>
                   <td className="px-3 py-4 text-right tabular-nums text-ink">
-                    {p.interestRate.toFixed(2)}%
+                    {(p.current_rate ?? p.starting_rate).toFixed(2)}%
                   </td>
                   <td className="px-3 py-4 text-right tabular-nums font-600 text-navy">
-                    {fmt(p.minBid)}
+                    {fmt(p.min_bid)}
                   </td>
-                  <td className="px-3 py-4 text-ink">{p.propertyType}</td>
+                  <td className="px-3 py-4 text-ink capitalize">{p.property_type}</td>
                   <td className="px-3 py-4">
-                    <span className="inline-flex items-center rounded-full bg-navy/5 px-2.5 py-1 text-xs font-500 text-navy">
-                      {p.status}
-                    </span>
+                    <StatusPill status={p.auction_status} />
                   </td>
                   <td className="px-3 py-4 text-right">
                     <Link
                       to="/properties/$id"
-                      params={{ id: p.id }}
+                      params={{ id: p.property_id }}
                       className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-xs font-500 text-ink transition-colors hover:border-navy hover:text-navy"
                     >
                       <Eye className="size-3.5" /> View Details
@@ -465,6 +437,21 @@ function PropertyTable() {
         </div>
       </div>
     </section>
+  );
+}
+
+function StatusPill({ status }: { status: ScheduledPropertyRow["auction_status"] }) {
+  const map = {
+    draft: { bg: "bg-muted", fg: "text-ink-muted", label: "Draft" },
+    scheduled: { bg: "bg-navy/5", fg: "text-navy", label: "Upcoming" },
+    live: { bg: "bg-success-soft", fg: "text-success", label: "Live" },
+    closed: { bg: "bg-muted", fg: "text-ink-muted", label: "Closed" },
+    canceled: { bg: "bg-destructive/10", fg: "text-destructive", label: "Canceled" },
+  }[status];
+  return (
+    <span className={`inline-flex items-center rounded-full ${map.bg} px-2.5 py-1 text-xs font-500 ${map.fg}`}>
+      {map.label}
+    </span>
   );
 }
 
