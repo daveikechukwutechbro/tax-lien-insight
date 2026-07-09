@@ -14,16 +14,376 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_logs: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          meta: Json | null
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: []
+      }
+      auctions: {
+        Row: {
+          county_id: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          starts_at: string
+          status: Database["public"]["Enums"]["auction_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          county_id?: string | null
+          created_at?: string
+          ends_at: string
+          id?: string
+          starts_at: string
+          status?: Database["public"]["Enums"]["auction_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          county_id?: string | null
+          created_at?: string
+          ends_at?: string
+          id?: string
+          starts_at?: string
+          status?: Database["public"]["Enums"]["auction_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auctions_county_id_fkey"
+            columns: ["county_id"]
+            isOneToOne: false
+            referencedRelation: "counties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bids: {
+        Row: {
+          id: string
+          interest_rate: number
+          lien_id: string
+          placed_at: string
+          status: Database["public"]["Enums"]["bid_status"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          interest_rate: number
+          lien_id: string
+          placed_at?: string
+          status?: Database["public"]["Enums"]["bid_status"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          interest_rate?: number
+          lien_id?: string
+          placed_at?: string
+          status?: Database["public"]["Enums"]["bid_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_lien_id_fkey"
+            columns: ["lien_id"]
+            isOneToOne: false
+            referencedRelation: "liens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      counties: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          state: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          state: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          state?: string
+        }
+        Relationships: []
+      }
+      liens: {
+        Row: {
+          auction_id: string
+          bid_decrement: number
+          created_at: string
+          current_rate: number | null
+          current_winner_id: string | null
+          id: string
+          min_bid: number
+          property_id: string
+          starting_rate: number
+          status: Database["public"]["Enums"]["lien_status"]
+          tax_year: number
+          taxes_owed: number
+          updated_at: string
+        }
+        Insert: {
+          auction_id: string
+          bid_decrement?: number
+          created_at?: string
+          current_rate?: number | null
+          current_winner_id?: string | null
+          id?: string
+          min_bid: number
+          property_id: string
+          starting_rate?: number
+          status?: Database["public"]["Enums"]["lien_status"]
+          tax_year: number
+          taxes_owed: number
+          updated_at?: string
+        }
+        Update: {
+          auction_id?: string
+          bid_decrement?: number
+          created_at?: string
+          current_rate?: number | null
+          current_winner_id?: string | null
+          id?: string
+          min_bid?: number
+          property_id?: string
+          starting_rate?: number
+          status?: Database["public"]["Enums"]["lien_status"]
+          tax_year?: number
+          taxes_owed?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liens_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liens_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string
+          assessed_value: number | null
+          city: string
+          county_id: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          parcel_id: string
+          property_type: Database["public"]["Enums"]["property_type"]
+          state: string
+          updated_at: string
+          zip: string
+        }
+        Insert: {
+          address: string
+          assessed_value?: number | null
+          city: string
+          county_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          parcel_id: string
+          property_type: Database["public"]["Enums"]["property_type"]
+          state: string
+          updated_at?: string
+          zip: string
+        }
+        Update: {
+          address?: string
+          assessed_value?: number | null
+          city?: string
+          county_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          parcel_id?: string
+          property_type?: Database["public"]["Enums"]["property_type"]
+          state?: string
+          updated_at?: string
+          zip?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_county_id_fkey"
+            columns: ["county_id"]
+            isOneToOne: false
+            referencedRelation: "counties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlist: {
+        Row: {
+          created_at: string
+          id: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      place_bid: {
+        Args: { _interest_rate: number; _lien_id: string }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
+      auction_status: "draft" | "scheduled" | "live" | "closed" | "canceled"
+      bid_status: "winning" | "outbid" | "won" | "lost" | "invalid"
+      lien_status: "active" | "redeemed" | "canceled" | "expired"
+      property_type: "residential" | "land" | "commercial"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +510,12 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+      auction_status: ["draft", "scheduled", "live", "closed", "canceled"],
+      bid_status: ["winning", "outbid", "won", "lost", "invalid"],
+      lien_status: ["active", "redeemed", "canceled", "expired"],
+      property_type: ["residential", "land", "commercial"],
+    },
   },
 } as const
