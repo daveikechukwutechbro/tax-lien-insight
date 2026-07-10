@@ -15,13 +15,14 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
-const nav = [
+type Item = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+const nav: Item[] = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/counties", label: "Counties", icon: MapPin },
   { to: "/admin/properties", label: "Properties", icon: Home },
   { to: "/admin/auctions", label: "Auctions", icon: Gavel },
   { to: "/admin/liens", label: "Liens", icon: FileText },
-] as const;
+];
 
 function AdminLayout() {
   return (

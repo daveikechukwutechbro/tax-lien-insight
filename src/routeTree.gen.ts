@@ -20,7 +20,9 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedDashboardWonRouteImport } from './routes/_authenticated/dashboard.won'
 import { Route as AuthenticatedDashboardWatchedRouteImport } from './routes/_authenticated/dashboard.watched'
 import { Route as AuthenticatedDashboardSearchesRouteImport } from './routes/_authenticated/dashboard.searches'
@@ -34,6 +36,10 @@ import { Route as AuthenticatedDashboardHistoryRouteImport } from './routes/_aut
 import { Route as AuthenticatedDashboardFundsRouteImport } from './routes/_authenticated/dashboard.funds'
 import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
 import { Route as AuthenticatedDashboardBidsRouteImport } from './routes/_authenticated/dashboard.bids'
+import { Route as AuthenticatedAdminPropertiesRouteImport } from './routes/_authenticated/admin.properties'
+import { Route as AuthenticatedAdminLiensRouteImport } from './routes/_authenticated/admin.liens'
+import { Route as AuthenticatedAdminCountiesRouteImport } from './routes/_authenticated/admin.counties'
+import { Route as AuthenticatedAdminAuctionsRouteImport } from './routes/_authenticated/admin.auctions'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -89,12 +95,22 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardIndexRoute =
   AuthenticatedDashboardIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedDashboardWonRoute =
   AuthenticatedDashboardWonRouteImport.update({
     id: '/won',
@@ -173,6 +189,29 @@ const AuthenticatedDashboardBidsRoute =
     path: '/bids',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedAdminPropertiesRoute =
+  AuthenticatedAdminPropertiesRouteImport.update({
+    id: '/properties',
+    path: '/properties',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminLiensRoute = AuthenticatedAdminLiensRouteImport.update({
+  id: '/liens',
+  path: '/liens',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminCountiesRoute =
+  AuthenticatedAdminCountiesRouteImport.update({
+    id: '/counties',
+    path: '/counties',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAuctionsRoute =
+  AuthenticatedAdminAuctionsRouteImport.update({
+    id: '/auctions',
+    path: '/auctions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -183,8 +222,13 @@ export interface FileRoutesByFullPath {
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/properties/$id': typeof PropertiesIdRoute
+  '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
+  '/admin/counties': typeof AuthenticatedAdminCountiesRoute
+  '/admin/liens': typeof AuthenticatedAdminLiensRoute
+  '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
   '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
@@ -198,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
   '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/dashboard/won': typeof AuthenticatedDashboardWonRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -210,6 +255,10 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/properties/$id': typeof PropertiesIdRoute
+  '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
+  '/admin/counties': typeof AuthenticatedAdminCountiesRoute
+  '/admin/liens': typeof AuthenticatedAdminLiensRoute
+  '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
   '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
@@ -223,6 +272,7 @@ export interface FileRoutesByTo {
   '/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
   '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/dashboard/won': typeof AuthenticatedDashboardWonRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -236,8 +286,13 @@ export interface FileRoutesById {
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/properties/$id': typeof PropertiesIdRoute
+  '/_authenticated/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
+  '/_authenticated/admin/counties': typeof AuthenticatedAdminCountiesRoute
+  '/_authenticated/admin/liens': typeof AuthenticatedAdminLiensRoute
+  '/_authenticated/admin/properties': typeof AuthenticatedAdminPropertiesRoute
   '/_authenticated/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/_authenticated/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
@@ -251,6 +306,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
   '/_authenticated/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/_authenticated/dashboard/won': typeof AuthenticatedDashboardWonRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -264,8 +320,13 @@ export interface FileRouteTypes {
     | '/resources'
     | '/search'
     | '/sitemap.xml'
+    | '/admin'
     | '/dashboard'
     | '/properties/$id'
+    | '/admin/auctions'
+    | '/admin/counties'
+    | '/admin/liens'
+    | '/admin/properties'
     | '/dashboard/bids'
     | '/dashboard/documents'
     | '/dashboard/funds'
@@ -279,6 +340,7 @@ export interface FileRouteTypes {
     | '/dashboard/searches'
     | '/dashboard/watched'
     | '/dashboard/won'
+    | '/admin/'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -291,6 +353,10 @@ export interface FileRouteTypes {
     | '/search'
     | '/sitemap.xml'
     | '/properties/$id'
+    | '/admin/auctions'
+    | '/admin/counties'
+    | '/admin/liens'
+    | '/admin/properties'
     | '/dashboard/bids'
     | '/dashboard/documents'
     | '/dashboard/funds'
@@ -304,6 +370,7 @@ export interface FileRouteTypes {
     | '/dashboard/searches'
     | '/dashboard/watched'
     | '/dashboard/won'
+    | '/admin'
     | '/dashboard'
   id:
     | '__root__'
@@ -316,8 +383,13 @@ export interface FileRouteTypes {
     | '/resources'
     | '/search'
     | '/sitemap.xml'
+    | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/properties/$id'
+    | '/_authenticated/admin/auctions'
+    | '/_authenticated/admin/counties'
+    | '/_authenticated/admin/liens'
+    | '/_authenticated/admin/properties'
     | '/_authenticated/dashboard/bids'
     | '/_authenticated/dashboard/documents'
     | '/_authenticated/dashboard/funds'
@@ -331,6 +403,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/searches'
     | '/_authenticated/dashboard/watched'
     | '/_authenticated/dashboard/won'
+    | '/_authenticated/admin/'
     | '/_authenticated/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -426,12 +499,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/': {
       id: '/_authenticated/dashboard/'
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/dashboard/won': {
       id: '/_authenticated/dashboard/won'
@@ -524,8 +611,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardBidsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/admin/properties': {
+      id: '/_authenticated/admin/properties'
+      path: '/properties'
+      fullPath: '/admin/properties'
+      preLoaderRoute: typeof AuthenticatedAdminPropertiesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/liens': {
+      id: '/_authenticated/admin/liens'
+      path: '/liens'
+      fullPath: '/admin/liens'
+      preLoaderRoute: typeof AuthenticatedAdminLiensRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/counties': {
+      id: '/_authenticated/admin/counties'
+      path: '/counties'
+      fullPath: '/admin/counties'
+      preLoaderRoute: typeof AuthenticatedAdminCountiesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/auctions': {
+      id: '/_authenticated/admin/auctions'
+      path: '/auctions'
+      fullPath: '/admin/auctions'
+      preLoaderRoute: typeof AuthenticatedAdminAuctionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
+
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAuctionsRoute: typeof AuthenticatedAdminAuctionsRoute
+  AuthenticatedAdminCountiesRoute: typeof AuthenticatedAdminCountiesRoute
+  AuthenticatedAdminLiensRoute: typeof AuthenticatedAdminLiensRoute
+  AuthenticatedAdminPropertiesRoute: typeof AuthenticatedAdminPropertiesRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAuctionsRoute: AuthenticatedAdminAuctionsRoute,
+  AuthenticatedAdminCountiesRoute: AuthenticatedAdminCountiesRoute,
+  AuthenticatedAdminLiensRoute: AuthenticatedAdminLiensRoute,
+  AuthenticatedAdminPropertiesRoute: AuthenticatedAdminPropertiesRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardBidsRoute: typeof AuthenticatedDashboardBidsRoute
@@ -569,10 +703,12 @@ const AuthenticatedDashboardRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRouteWithChildren,
 }
 
