@@ -9,7 +9,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAdminQuery, profileQuery } from "@/lib/queries/dashboard";
 import { useRouter } from "@tanstack/react-router";
 
-const items = [
+type Item = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+const items: Item[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/dashboard/bids", label: "My Bids", icon: Gavel },
   { to: "/dashboard/watched", label: "Watched Properties", icon: Bookmark },
@@ -24,7 +25,7 @@ const items = [
   { to: "/dashboard/searches", label: "Saved Searches", icon: Search },
   { to: "/dashboard/documents", label: "Documents", icon: FileText },
   { to: "/dashboard/messages", label: "Messages", icon: MessageSquare },
-] as const;
+];
 
 export function DashboardSidebar() {
   const { user } = useSession();
