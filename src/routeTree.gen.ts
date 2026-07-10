@@ -21,6 +21,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
+import { Route as AuthenticatedDashboardWonRouteImport } from './routes/_authenticated/dashboard.won'
+import { Route as AuthenticatedDashboardWatchedRouteImport } from './routes/_authenticated/dashboard.watched'
+import { Route as AuthenticatedDashboardLostRouteImport } from './routes/_authenticated/dashboard.lost'
+import { Route as AuthenticatedDashboardBidsRouteImport } from './routes/_authenticated/dashboard.bids'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -82,6 +86,30 @@ const AuthenticatedDashboardIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardWonRoute =
+  AuthenticatedDashboardWonRouteImport.update({
+    id: '/won',
+    path: '/won',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardWatchedRoute =
+  AuthenticatedDashboardWatchedRouteImport.update({
+    id: '/watched',
+    path: '/watched',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardLostRoute =
+  AuthenticatedDashboardLostRouteImport.update({
+    id: '/lost',
+    path: '/lost',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardBidsRoute =
+  AuthenticatedDashboardBidsRouteImport.update({
+    id: '/bids',
+    path: '/bids',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -94,6 +122,10 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/properties/$id': typeof PropertiesIdRoute
+  '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
+  '/dashboard/lost': typeof AuthenticatedDashboardLostRoute
+  '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
+  '/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -106,6 +138,10 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/properties/$id': typeof PropertiesIdRoute
+  '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
+  '/dashboard/lost': typeof AuthenticatedDashboardLostRoute
+  '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
+  '/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -121,6 +157,10 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/properties/$id': typeof PropertiesIdRoute
+  '/_authenticated/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
+  '/_authenticated/dashboard/lost': typeof AuthenticatedDashboardLostRoute
+  '/_authenticated/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
+  '/_authenticated/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -136,6 +176,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/dashboard'
     | '/properties/$id'
+    | '/dashboard/bids'
+    | '/dashboard/lost'
+    | '/dashboard/watched'
+    | '/dashboard/won'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -148,6 +192,10 @@ export interface FileRouteTypes {
     | '/search'
     | '/sitemap.xml'
     | '/properties/$id'
+    | '/dashboard/bids'
+    | '/dashboard/lost'
+    | '/dashboard/watched'
+    | '/dashboard/won'
     | '/dashboard'
   id:
     | '__root__'
@@ -162,6 +210,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/dashboard'
     | '/properties/$id'
+    | '/_authenticated/dashboard/bids'
+    | '/_authenticated/dashboard/lost'
+    | '/_authenticated/dashboard/watched'
+    | '/_authenticated/dashboard/won'
     | '/_authenticated/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -264,15 +316,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/won': {
+      id: '/_authenticated/dashboard/won'
+      path: '/won'
+      fullPath: '/dashboard/won'
+      preLoaderRoute: typeof AuthenticatedDashboardWonRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/watched': {
+      id: '/_authenticated/dashboard/watched'
+      path: '/watched'
+      fullPath: '/dashboard/watched'
+      preLoaderRoute: typeof AuthenticatedDashboardWatchedRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/lost': {
+      id: '/_authenticated/dashboard/lost'
+      path: '/lost'
+      fullPath: '/dashboard/lost'
+      preLoaderRoute: typeof AuthenticatedDashboardLostRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/bids': {
+      id: '/_authenticated/dashboard/bids'
+      path: '/bids'
+      fullPath: '/dashboard/bids'
+      preLoaderRoute: typeof AuthenticatedDashboardBidsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
   }
 }
 
 interface AuthenticatedDashboardRouteChildren {
+  AuthenticatedDashboardBidsRoute: typeof AuthenticatedDashboardBidsRoute
+  AuthenticatedDashboardLostRoute: typeof AuthenticatedDashboardLostRoute
+  AuthenticatedDashboardWatchedRoute: typeof AuthenticatedDashboardWatchedRoute
+  AuthenticatedDashboardWonRoute: typeof AuthenticatedDashboardWonRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
 }
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
+    AuthenticatedDashboardBidsRoute: AuthenticatedDashboardBidsRoute,
+    AuthenticatedDashboardLostRoute: AuthenticatedDashboardLostRoute,
+    AuthenticatedDashboardWatchedRoute: AuthenticatedDashboardWatchedRoute,
+    AuthenticatedDashboardWonRoute: AuthenticatedDashboardWonRoute,
     AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   }
 
