@@ -23,7 +23,16 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
 import { Route as AuthenticatedDashboardWonRouteImport } from './routes/_authenticated/dashboard.won'
 import { Route as AuthenticatedDashboardWatchedRouteImport } from './routes/_authenticated/dashboard.watched'
+import { Route as AuthenticatedDashboardSearchesRouteImport } from './routes/_authenticated/dashboard.searches'
+import { Route as AuthenticatedDashboardScheduledRouteImport } from './routes/_authenticated/dashboard.scheduled'
+import { Route as AuthenticatedDashboardProfileRouteImport } from './routes/_authenticated/dashboard.profile'
+import { Route as AuthenticatedDashboardPaymentsRouteImport } from './routes/_authenticated/dashboard.payments'
+import { Route as AuthenticatedDashboardNotificationsRouteImport } from './routes/_authenticated/dashboard.notifications'
+import { Route as AuthenticatedDashboardMessagesRouteImport } from './routes/_authenticated/dashboard.messages'
 import { Route as AuthenticatedDashboardLostRouteImport } from './routes/_authenticated/dashboard.lost'
+import { Route as AuthenticatedDashboardHistoryRouteImport } from './routes/_authenticated/dashboard.history'
+import { Route as AuthenticatedDashboardFundsRouteImport } from './routes/_authenticated/dashboard.funds'
+import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
 import { Route as AuthenticatedDashboardBidsRouteImport } from './routes/_authenticated/dashboard.bids'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -98,10 +107,64 @@ const AuthenticatedDashboardWatchedRoute =
     path: '/watched',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardSearchesRoute =
+  AuthenticatedDashboardSearchesRouteImport.update({
+    id: '/searches',
+    path: '/searches',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardScheduledRoute =
+  AuthenticatedDashboardScheduledRouteImport.update({
+    id: '/scheduled',
+    path: '/scheduled',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardProfileRoute =
+  AuthenticatedDashboardProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardPaymentsRoute =
+  AuthenticatedDashboardPaymentsRouteImport.update({
+    id: '/payments',
+    path: '/payments',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardNotificationsRoute =
+  AuthenticatedDashboardNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardMessagesRoute =
+  AuthenticatedDashboardMessagesRouteImport.update({
+    id: '/messages',
+    path: '/messages',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardLostRoute =
   AuthenticatedDashboardLostRouteImport.update({
     id: '/lost',
     path: '/lost',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardHistoryRoute =
+  AuthenticatedDashboardHistoryRouteImport.update({
+    id: '/history',
+    path: '/history',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardFundsRoute =
+  AuthenticatedDashboardFundsRouteImport.update({
+    id: '/funds',
+    path: '/funds',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardDocumentsRoute =
+  AuthenticatedDashboardDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardBidsRoute =
@@ -123,7 +186,16 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/properties/$id': typeof PropertiesIdRoute
   '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
+  '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
+  '/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
+  '/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
   '/dashboard/lost': typeof AuthenticatedDashboardLostRoute
+  '/dashboard/messages': typeof AuthenticatedDashboardMessagesRoute
+  '/dashboard/notifications': typeof AuthenticatedDashboardNotificationsRoute
+  '/dashboard/payments': typeof AuthenticatedDashboardPaymentsRoute
+  '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
+  '/dashboard/scheduled': typeof AuthenticatedDashboardScheduledRoute
+  '/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
   '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
@@ -139,7 +211,16 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
+  '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
+  '/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
+  '/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
   '/dashboard/lost': typeof AuthenticatedDashboardLostRoute
+  '/dashboard/messages': typeof AuthenticatedDashboardMessagesRoute
+  '/dashboard/notifications': typeof AuthenticatedDashboardNotificationsRoute
+  '/dashboard/payments': typeof AuthenticatedDashboardPaymentsRoute
+  '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
+  '/dashboard/scheduled': typeof AuthenticatedDashboardScheduledRoute
+  '/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
   '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
@@ -158,7 +239,16 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/properties/$id': typeof PropertiesIdRoute
   '/_authenticated/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
+  '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
+  '/_authenticated/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
+  '/_authenticated/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
   '/_authenticated/dashboard/lost': typeof AuthenticatedDashboardLostRoute
+  '/_authenticated/dashboard/messages': typeof AuthenticatedDashboardMessagesRoute
+  '/_authenticated/dashboard/notifications': typeof AuthenticatedDashboardNotificationsRoute
+  '/_authenticated/dashboard/payments': typeof AuthenticatedDashboardPaymentsRoute
+  '/_authenticated/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
+  '/_authenticated/dashboard/scheduled': typeof AuthenticatedDashboardScheduledRoute
+  '/_authenticated/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
   '/_authenticated/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/_authenticated/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
@@ -177,7 +267,16 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/properties/$id'
     | '/dashboard/bids'
+    | '/dashboard/documents'
+    | '/dashboard/funds'
+    | '/dashboard/history'
     | '/dashboard/lost'
+    | '/dashboard/messages'
+    | '/dashboard/notifications'
+    | '/dashboard/payments'
+    | '/dashboard/profile'
+    | '/dashboard/scheduled'
+    | '/dashboard/searches'
     | '/dashboard/watched'
     | '/dashboard/won'
     | '/dashboard/'
@@ -193,7 +292,16 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/properties/$id'
     | '/dashboard/bids'
+    | '/dashboard/documents'
+    | '/dashboard/funds'
+    | '/dashboard/history'
     | '/dashboard/lost'
+    | '/dashboard/messages'
+    | '/dashboard/notifications'
+    | '/dashboard/payments'
+    | '/dashboard/profile'
+    | '/dashboard/scheduled'
+    | '/dashboard/searches'
     | '/dashboard/watched'
     | '/dashboard/won'
     | '/dashboard'
@@ -211,7 +319,16 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/properties/$id'
     | '/_authenticated/dashboard/bids'
+    | '/_authenticated/dashboard/documents'
+    | '/_authenticated/dashboard/funds'
+    | '/_authenticated/dashboard/history'
     | '/_authenticated/dashboard/lost'
+    | '/_authenticated/dashboard/messages'
+    | '/_authenticated/dashboard/notifications'
+    | '/_authenticated/dashboard/payments'
+    | '/_authenticated/dashboard/profile'
+    | '/_authenticated/dashboard/scheduled'
+    | '/_authenticated/dashboard/searches'
     | '/_authenticated/dashboard/watched'
     | '/_authenticated/dashboard/won'
     | '/_authenticated/dashboard/'
@@ -330,11 +447,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardWatchedRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/searches': {
+      id: '/_authenticated/dashboard/searches'
+      path: '/searches'
+      fullPath: '/dashboard/searches'
+      preLoaderRoute: typeof AuthenticatedDashboardSearchesRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/scheduled': {
+      id: '/_authenticated/dashboard/scheduled'
+      path: '/scheduled'
+      fullPath: '/dashboard/scheduled'
+      preLoaderRoute: typeof AuthenticatedDashboardScheduledRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/profile': {
+      id: '/_authenticated/dashboard/profile'
+      path: '/profile'
+      fullPath: '/dashboard/profile'
+      preLoaderRoute: typeof AuthenticatedDashboardProfileRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/payments': {
+      id: '/_authenticated/dashboard/payments'
+      path: '/payments'
+      fullPath: '/dashboard/payments'
+      preLoaderRoute: typeof AuthenticatedDashboardPaymentsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/notifications': {
+      id: '/_authenticated/dashboard/notifications'
+      path: '/notifications'
+      fullPath: '/dashboard/notifications'
+      preLoaderRoute: typeof AuthenticatedDashboardNotificationsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/messages': {
+      id: '/_authenticated/dashboard/messages'
+      path: '/messages'
+      fullPath: '/dashboard/messages'
+      preLoaderRoute: typeof AuthenticatedDashboardMessagesRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/lost': {
       id: '/_authenticated/dashboard/lost'
       path: '/lost'
       fullPath: '/dashboard/lost'
       preLoaderRoute: typeof AuthenticatedDashboardLostRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/history': {
+      id: '/_authenticated/dashboard/history'
+      path: '/history'
+      fullPath: '/dashboard/history'
+      preLoaderRoute: typeof AuthenticatedDashboardHistoryRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/funds': {
+      id: '/_authenticated/dashboard/funds'
+      path: '/funds'
+      fullPath: '/dashboard/funds'
+      preLoaderRoute: typeof AuthenticatedDashboardFundsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/documents': {
+      id: '/_authenticated/dashboard/documents'
+      path: '/documents'
+      fullPath: '/dashboard/documents'
+      preLoaderRoute: typeof AuthenticatedDashboardDocumentsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/bids': {
@@ -349,7 +529,16 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardBidsRoute: typeof AuthenticatedDashboardBidsRoute
+  AuthenticatedDashboardDocumentsRoute: typeof AuthenticatedDashboardDocumentsRoute
+  AuthenticatedDashboardFundsRoute: typeof AuthenticatedDashboardFundsRoute
+  AuthenticatedDashboardHistoryRoute: typeof AuthenticatedDashboardHistoryRoute
   AuthenticatedDashboardLostRoute: typeof AuthenticatedDashboardLostRoute
+  AuthenticatedDashboardMessagesRoute: typeof AuthenticatedDashboardMessagesRoute
+  AuthenticatedDashboardNotificationsRoute: typeof AuthenticatedDashboardNotificationsRoute
+  AuthenticatedDashboardPaymentsRoute: typeof AuthenticatedDashboardPaymentsRoute
+  AuthenticatedDashboardProfileRoute: typeof AuthenticatedDashboardProfileRoute
+  AuthenticatedDashboardScheduledRoute: typeof AuthenticatedDashboardScheduledRoute
+  AuthenticatedDashboardSearchesRoute: typeof AuthenticatedDashboardSearchesRoute
   AuthenticatedDashboardWatchedRoute: typeof AuthenticatedDashboardWatchedRoute
   AuthenticatedDashboardWonRoute: typeof AuthenticatedDashboardWonRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
@@ -358,7 +547,17 @@ interface AuthenticatedDashboardRouteChildren {
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
     AuthenticatedDashboardBidsRoute: AuthenticatedDashboardBidsRoute,
+    AuthenticatedDashboardDocumentsRoute: AuthenticatedDashboardDocumentsRoute,
+    AuthenticatedDashboardFundsRoute: AuthenticatedDashboardFundsRoute,
+    AuthenticatedDashboardHistoryRoute: AuthenticatedDashboardHistoryRoute,
     AuthenticatedDashboardLostRoute: AuthenticatedDashboardLostRoute,
+    AuthenticatedDashboardMessagesRoute: AuthenticatedDashboardMessagesRoute,
+    AuthenticatedDashboardNotificationsRoute:
+      AuthenticatedDashboardNotificationsRoute,
+    AuthenticatedDashboardPaymentsRoute: AuthenticatedDashboardPaymentsRoute,
+    AuthenticatedDashboardProfileRoute: AuthenticatedDashboardProfileRoute,
+    AuthenticatedDashboardScheduledRoute: AuthenticatedDashboardScheduledRoute,
+    AuthenticatedDashboardSearchesRoute: AuthenticatedDashboardSearchesRoute,
     AuthenticatedDashboardWatchedRoute: AuthenticatedDashboardWatchedRoute,
     AuthenticatedDashboardWonRoute: AuthenticatedDashboardWonRoute,
     AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
