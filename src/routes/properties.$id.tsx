@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft, Bookmark, CalendarDays, MapPin, FileText, DollarSign,
@@ -205,11 +205,10 @@ function PropertyDetailPage() {
 function AuctionCountdown({ target }: { target: Date }) {
   const hydrated = useHydrated();
   const [now, setNow] = useState(() => Date.now());
-  useState(() => {
-    if (typeof window === "undefined") return;
+  useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  });
+  }, []);
   const diff = hydrated ? Math.max(0, target.getTime() - now) : 0;
   const d = Math.floor(diff / 86_400_000);
   const h = Math.floor((diff % 86_400_000) / 3_600_000);
