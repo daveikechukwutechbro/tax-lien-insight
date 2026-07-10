@@ -1,254 +1,219 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { propertyDetailQuery, type PropertyDetail as PD } from "@/lib/queries/property-detail";
+import { useSession } from "@/hooks/use-session";
+import { supabase } from "@/integrations/supabase/client";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  ArrowLeft, Bookmark, CalendarDays, MapPin, FileText, DollarSign,
-  Gavel, Home as HomeIcon, Info, Clock,
-} from "lucide-react";
-import { propertyDetailQuery } from "@/lib/queries/property-detail";
-import { useSession } from "@/hooks/use-session";
-import { useHydrated } from "@/hooks/use-hydrated";
-import { supabase } from "@/integrations/supabase/client";
+import { Bookmark, BookmarkCheck, FileText, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/properties/$id")({
-  loader: ({ params, context }) =>
-    context.queryClient.ensureQueryData(propertyDetailQuery(params.id)),
   head: ({ params }) => ({
     meta: [
-      { title: `Property ${params.id.slice(0, 8)} — TaxLien Auctions` },
-      { name: "description", content: "Full property, tax lien, and auction details." },
-      { property: "og:title", content: "Tax Lien Property Details" },
+      { title: `Property Details — TaxLien Auctions` },
+      { name: "description", content: `Tax lien property details, assessed values, documents, and live bidding.` },
+      { property: "og:title", content: `Property Details` },
       { property: "og:url", content: `/properties/${params.id}` },
     ],
     links: [{ rel: "canonical", href: `/properties/${params.id}` }],
   }),
-  component: PropertyDetailPage,
-  errorComponent: ({ error }) => (
-    <div className="container-tight py-20 text-center">
-      <h1 className="font-display text-2xl font-600 text-navy">Property not found</h1>
-      <p className="mt-2 text-sm text-ink-muted">{error.message}</p>
-      <Link to="/" className="mt-4 inline-block text-sm text-navy underline">Back to auctions</Link>
-    </div>
-  ),
-  notFoundComponent: () => <div className="container-tight py-20 text-center">Not found</div>,
+  component: PropertyDetail,
 });
 
-const fmtMoney = (n: number) =>
-  n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
-function PropertyDetailPage() {
+function PropertyDetail() {
   const { id } = Route.useParams();
-  const { data: p } = useSuspenseQuery(propertyDetailQuery(id));
+  const { data, isLoading, error } = useQuery(propertyDetailQuery(id));
   const { user } = useSession();
   const qc = useQueryClient();
-  const [watching, setWatching] = useState(false);
+  const [watching, setWatching] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("watchlist").select("id").eq("user_id", user.id).eq("property_id", id).maybeSingle()
+      .then(({ data: w }) => setWatching(w?.id ?? null));
+  }, [user, id]);
 
   async function toggleWatch() {
-    if (!user) return toast.error("Sign in to watch this property");
-    setWatching(true);
-    const { error } = await supabase.from("watchlist").insert({
-      property_id: p.id, user_id: user.id,
-    });
-    setWatching(false);
-    if (error && !error.message.includes("duplicate")) return toast.error(error.message);
+    if (!user) return toast.error("Sign in to save properties");
+    if (watching) {
+      await supabase.from("watchlist").delete().eq("id", watching);
+      setWatching(null); toast.success("Removed from watchlist");
+    } else {
+      const { data: row, error } = await supabase.from("watchlist").insert({ user_id: user.id, property_id: id }).select("id").single();
+      if (error) return toast.error(error.message);
+      setWatching(row.id); toast.success("Added to watchlist");
+    }
     qc.invalidateQueries({ queryKey: ["dashboard", "watchlist"] });
-    toast.success("Added to watchlist");
   }
+
+  if (isLoading) return <div className="container-tight py-16 text-ink-muted">Loading…</div>;
+  if (error || !data) return (
+    <div className="container-tight py-16">
+      <h1 className="font-display text-3xl text-navy">Property not found</h1>
+      <Link to="/" className="mt-4 inline-flex text-sm text-navy underline">← Back</Link>
+    </div>
+  );
+
+  const p = data;
+  const gallery = [p.image_url, ...p.gallery_urls].filter(Boolean) as string[];
 
   return (
     <div className="bg-background pb-16">
       <div className="container-tight pt-6">
-        <nav className="flex items-center gap-1.5 text-xs text-ink-muted">
-          <Link to="/" className="hover:text-navy">Auctions</Link>
-          <span>›</span>
-          <span>Property Details</span>
-        </nav>
-
-        <Link to="/" className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-hairline bg-surface px-3 py-1.5 text-sm text-ink hover:border-navy hover:text-navy">
-          <ArrowLeft className="size-4" /> Back to Properties
-        </Link>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
+        <Link to="/" className="text-xs font-500 text-ink-muted hover:text-navy">← Back to auctions</Link>
+        <div className="mt-2 grid gap-6 lg:grid-cols-[1fr_360px]">
           <div>
-            <div className="grid gap-6 md:grid-cols-[minmax(0,320px)_1fr]">
-              <div className="relative overflow-hidden rounded-xl border border-hairline bg-surface-alt">
-                {p.image_url ? (
-                  <img src={p.image_url} alt={`${p.address} exterior`} className="aspect-[4/3] w-full object-cover" />
-                ) : <div className="aspect-[4/3] w-full bg-surface-alt" />}
-                <span className="absolute left-3 top-3 rounded bg-navy px-2 py-1 text-[10px] font-600 uppercase text-primary-foreground">
-                  {p.property_type}
-                </span>
-              </div>
-              <div>
-                <h1 className="font-display text-3xl font-600 text-navy">{p.address}</h1>
-                <div className="mt-1 flex items-center gap-1 text-sm text-ink-muted">
-                  <MapPin className="size-3.5" /> {p.city}, {p.state} {p.zip} · {p.county.name} County
+            <div className="rounded-xl border border-hairline bg-surface p-4">
+              {gallery[0] ? <img src={gallery[0]} alt={p.address} className="aspect-[16/10] w-full rounded-lg object-cover" /> : <div className="aspect-[16/10] w-full rounded-lg bg-surface-alt" />}
+              {gallery.length > 1 && (
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {gallery.slice(1, 5).map((u) => <img key={u} src={u} alt="" className="aspect-square w-full rounded-md object-cover" />)}
                 </div>
-                <div className="mt-1 text-xs text-ink-muted">Parcel ID: <span className="font-mono">{p.parcel_id}</span></div>
-
-                {p.lien && (
-                  <div className="mt-4 rounded-lg border border-gold-soft bg-gold-soft/30 p-3">
-                    <div className="flex items-center gap-2 text-xs font-500 text-navy">
-                      <CalendarDays className="size-4" /> This property is scheduled for auction
-                    </div>
-                    <div className="mt-1 text-sm font-600 text-navy">
-                      {p.lien.auction && new Date(p.lien.auction.starts_at).toLocaleString("en-US", {
-                        month: "long", day: "numeric", year: "numeric",
-                        hour: "numeric", minute: "2-digit", timeZone: "America/New_York",
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {p.lien && (
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <MetaCell icon={<DollarSign className="size-4" />} label="Taxes Owed" value={fmtMoney(p.lien.taxes_owed)} />
-                    <MetaCell icon={<Info className="size-4" />} label="Interest Rate" value={`${(p.lien.current_rate ?? p.lien.starting_rate).toFixed(2)}%`} />
-                    <MetaCell icon={<Gavel className="size-4" />} label="Minimum Bid" value={fmtMoney(p.lien.min_bid)} />
-                    <MetaCell icon={<HomeIcon className="size-4" />} label="Property Type" value={p.property_type} />
-                    <MetaCell icon={<Clock className="size-4" />} label="Redemption Period" value={`${p.lien.redemption_period_months} months`} />
-                    <MetaCell icon={<CalendarDays className="size-4" />} label="Tax Year" value={String(p.lien.tax_year)} />
-                  </div>
-                )}
-              </div>
+              )}
             </div>
 
-            <div className="mt-8 grid gap-6 md:grid-cols-3">
-              <InfoCard title="Property Details">
-                <Row k="Property Type" v={p.property_type} />
-                <Row k="Use Type" v={p.use_type ?? "—"} />
-                <Row k="Year Built" v={p.year_built ?? "—"} />
-                <Row k="Living Area" v={p.living_area_sqft ? `${p.living_area_sqft.toLocaleString()} sq ft` : "—"} />
-                <Row k="Lot Size" v={p.lot_size_acres ? `${p.lot_size_acres} acres` : "—"} />
-                <Row k="Bed / Bath" v={p.bedrooms !== null ? `${p.bedrooms} / ${p.bathrooms}` : "—"} />
-              </InfoCard>
-              <InfoCard title="Description">
-                <p className="text-sm leading-relaxed text-ink">
-                  {p.description ?? "No description provided."}
-                </p>
-                <div className="mt-3 rounded-md bg-navy/5 p-2 text-xs text-navy">
-                  Note: This is a lien only. You are not buying the property. The owner retains all
-                  rights of ownership during the redemption period.
+            <div className="mt-4 rounded-xl border border-hairline bg-surface p-5">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-ink-muted"><MapPin className="size-4" /> {p.county.name}, {p.county.state}</div>
+              <h1 className="mt-1 font-display text-3xl font-600 text-navy">{p.address}</h1>
+              <div className="text-sm text-ink-muted">{p.city}, {p.state} {p.zip} · Parcel {p.parcel_id}</div>
+              {p.description && <p className="mt-4 text-sm leading-6 text-ink">{p.description}</p>}
+              <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-hairline pt-4 text-sm sm:grid-cols-4">
+                <Field label="Type" value={<span className="capitalize">{p.property_type}</span>} />
+                <Field label="Year Built" value={p.year_built ?? "—"} />
+                <Field label="Living Area" value={p.living_area_sqft ? `${p.living_area_sqft.toLocaleString()} sq ft` : "—"} />
+                <Field label="Lot Size" value={p.lot_size_acres ? `${p.lot_size_acres} ac` : "—"} />
+                <Field label="Beds" value={p.bedrooms ?? "—"} />
+                <Field label="Baths" value={p.bathrooms ?? "—"} />
+                <Field label="Assessed" value={p.assessed_value ? fmt(p.assessed_value) : "—"} />
+                <Field label="Use Type" value={p.use_type ?? "—"} />
+              </dl>
+              {(p.owner_name || p.owner_mailing_address) && (
+                <div className="mt-5 rounded-lg bg-surface-alt p-4 text-sm">
+                  <div className="text-xs uppercase tracking-wider text-ink-muted">Owner of Record</div>
+                  {p.owner_name && <div className="mt-1 font-500 text-navy">{p.owner_name}</div>}
+                  {p.owner_mailing_address && <div className="text-ink-muted">{p.owner_mailing_address}</div>}
                 </div>
-              </InfoCard>
-              <InfoCard title="Owner & Assessed Value">
-                <Row k="Owner" v={p.owner_name ?? "—"} />
-                <Row k="Mailing" v={p.owner_mailing_address ?? "—"} />
-                <div className="my-3 h-px bg-hairline" />
-                <Row k="Land Value" v={p.land_value !== null ? fmtMoney(p.land_value) : "—"} />
-                <Row k="Improvement" v={p.improvement_value !== null ? fmtMoney(p.improvement_value) : "—"} />
-                <Row k="Assessed Value" v={p.assessed_value !== null ? fmtMoney(p.assessed_value) : "—"} />
-              </InfoCard>
-            </div>
-          </div>
-
-          {/* Right sidebar */}
-          <aside className="space-y-4">
-            <div className="overflow-hidden rounded-xl border border-hairline">
-              <div className="bg-navy px-5 py-3 text-sm font-600 text-primary-foreground">Auction Information</div>
-              <div className="space-y-4 bg-surface p-5">
-                {p.lien?.auction ? (
-                  <>
-                    <div>
-                      <div className="text-xs uppercase tracking-wider text-ink-muted">Auction Date</div>
-                      <div className="mt-1 font-display text-lg font-600 text-navy">
-                        {new Date(p.lien.auction.starts_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/New_York" })}
-                      </div>
-                      <div className="text-xs text-ink-muted">
-                        {new Date(p.lien.auction.starts_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York", timeZoneName: "short" })}
-                      </div>
-                    </div>
-                    <AuctionCountdown target={new Date(p.lien.auction.starts_at)} />
-                  </>
-                ) : <p className="text-sm text-ink-muted">Not scheduled.</p>}
-                <div className="border-t border-hairline pt-3 text-sm">
-                  <div className="flex justify-between"><span className="text-ink-muted">Number of Bids</span><span className="font-600">0</span></div>
-                  <div className="mt-2 flex justify-between"><span className="text-ink-muted">Current Rate</span><span className="font-600">{p.lien?.current_rate !== null && p.lien?.current_rate !== undefined ? `${p.lien.current_rate.toFixed(2)}%` : "N/A"}</span></div>
-                </div>
-                <button
-                  disabled={!p.lien?.auction || p.lien.auction.status !== "live"}
-                  className="w-full rounded-md bg-success px-4 py-2.5 text-sm font-600 text-white disabled:bg-muted disabled:text-ink-muted"
-                >
-                  {p.lien?.auction?.status === "live" ? "Place Bid" : "Place Bid When Auction Starts"}
-                </button>
-                <button onClick={toggleWatch} disabled={watching} className="flex w-full items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface px-4 py-2.5 text-sm font-500 text-navy hover:border-navy">
-                  <Bookmark className="size-4" /> Add to Watchlist
-                </button>
-              </div>
+              )}
             </div>
 
-            <div className="rounded-xl border border-hairline bg-surface p-5">
-              <div className="text-sm font-600 text-navy">Documents</div>
-              <ul className="mt-3 space-y-2">
-                {p.documents.length === 0 ? (
-                  <li className="text-xs text-ink-muted">No documents uploaded yet.</li>
-                ) : (
-                  p.documents.map((d) => (
+            {p.documents.length > 0 && (
+              <div className="mt-4 rounded-xl border border-hairline bg-surface p-5">
+                <h2 className="font-display text-lg font-600 text-navy">Documents</h2>
+                <ul className="mt-3 space-y-2">
+                  {p.documents.map((d) => (
                     <li key={d.id}>
-                      <a href={d.url} target="_blank" rel="noreferrer" className="flex items-center justify-between text-sm text-ink hover:text-navy">
-                        <span className="flex items-center gap-2"><FileText className="size-4" /> {d.name}</span>
-                        <span className="text-xs text-ink-muted">↓</span>
+                      <a href={d.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-md border border-hairline px-3 py-2 text-sm text-navy hover:bg-surface-alt">
+                        <FileText className="size-4" /> <span className="flex-1">{d.name}</span> <span className="text-xs text-ink-muted uppercase">{d.kind}</span>
                       </a>
                     </li>
-                  ))
-                )}
-              </ul>
-            </div>
-          </aside>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <BidPanel property={p} watching={!!watching} onToggleWatch={toggleWatch} />
         </div>
       </div>
     </div>
   );
 }
 
-function AuctionCountdown({ target }: { target: Date }) {
-  const hydrated = useHydrated();
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const diff = hydrated ? Math.max(0, target.getTime() - now) : 0;
-  const d = Math.floor(diff / 86_400_000);
-  const h = Math.floor((diff % 86_400_000) / 3_600_000);
-  const m = Math.floor((diff % 3_600_000) / 60_000);
-  const s = Math.floor((diff % 60_000) / 1000);
-  return (
-    <div>
-      <div className="text-xs uppercase tracking-wider text-ink-muted">Auction Starts In</div>
-      <div className="mt-1 flex gap-2 font-display text-2xl font-600 tabular-nums text-destructive">
-        <Part n={d} l="Days" /><Sep /><Part n={h} l="Hrs" /><Sep /><Part n={m} l="Mins" /><Sep /><Part n={s} l="Secs" />
-      </div>
-    </div>
-  );
+function Field({ label, value }: { label: string; value: React.ReactNode }) {
+  return <div><dt className="text-xs uppercase tracking-wider text-ink-muted">{label}</dt><dd className="mt-0.5 font-500 text-navy">{value}</dd></div>;
 }
-function Part({ n, l }: { n: number; l: string }) {
-  return (
-    <div className="text-center">
-      <div>{String(n).padStart(2, "0")}</div>
-      <div className="text-[10px] font-600 uppercase tracking-wider text-ink-muted">{l}</div>
-    </div>
-  );
-}
-function Sep() { return <span className="text-destructive/60">:</span>; }
 
-function MetaCell({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function BidPanel({ property, watching, onToggleWatch }: { property: PD; watching: boolean; onToggleWatch: () => void }) {
+  const { user } = useSession();
+  const qc = useQueryClient();
+  const hydrated = useHydrated();
+  const lien = property.lien;
+  const auction = lien?.auction;
+  const [rate, setRate] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [remaining, setRemaining] = useState(0);
+
+  useEffect(() => {
+    if (!hydrated || !auction) return;
+    const tick = () => setRemaining(Math.max(0, new Date(auction.starts_at).getTime() - Date.now()));
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [hydrated, auction]);
+
+  async function placeBid(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return toast.error("Sign in to place a bid");
+    if (!lien) return;
+    setSubmitting(true);
+    const { error } = await supabase.rpc("place_bid", { _lien_id: lien.id, _interest_rate: Number(rate) });
+    setSubmitting(false);
+    if (error) return toast.error(error.message);
+    setRate("");
+    qc.invalidateQueries({ queryKey: ["property", property.id] });
+    qc.invalidateQueries({ queryKey: ["dashboard", "bids"] });
+    toast.success("Bid placed");
+  }
+
+  const days = Math.floor(remaining / 86_400_000);
+  const hours = Math.floor((remaining / 3_600_000) % 24);
+  const minutes = Math.floor((remaining / 60_000) % 60);
+  const isLive = auction?.status === "live";
+
   return (
-    <div className="rounded-md border border-hairline bg-surface p-3">
-      <div className="flex items-center gap-1.5 text-xs text-ink-muted">{icon} {label}</div>
-      <div className="mt-0.5 font-600 text-navy capitalize">{value}</div>
-    </div>
+    <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+      <div className="rounded-xl border border-hairline bg-surface p-5">
+        <div className="text-xs uppercase tracking-wider text-ink-muted">{isLive ? "Live Auction" : "Auction Starts In"}</div>
+        {auction ? (
+          <>
+            {!isLive && hydrated && (
+              <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                <Cell label="Days" value={days} /><Cell label="Hours" value={hours} /><Cell label="Min" value={minutes} />
+              </div>
+            )}
+            <div className="mt-3 text-xs text-ink-muted">{new Date(auction.starts_at).toLocaleString()}</div>
+          </>
+        ) : <div className="mt-2 text-sm text-ink-muted">Not yet scheduled</div>}
+
+        {lien && (
+          <dl className="mt-4 space-y-2 border-t border-hairline pt-4 text-sm">
+            <Row label="Taxes Owed" value={fmt(lien.taxes_owed)} />
+            <Row label="Minimum Bid" value={fmt(lien.min_bid)} />
+            <Row label="Starting Rate" value={`${lien.starting_rate.toFixed(2)}%`} />
+            <Row label="Current Rate" value={lien.current_rate !== null ? `${lien.current_rate.toFixed(2)}%` : "—"} />
+            <Row label="Tax Year" value={lien.tax_year} />
+            <Row label="Redemption" value={`${lien.redemption_period_months} mo`} />
+          </dl>
+        )}
+
+        {lien && isLive ? (
+          <form onSubmit={placeBid} className="mt-4 space-y-2 border-t border-hairline pt-4">
+            <label className="text-xs uppercase tracking-wider text-ink-muted">Your Interest Rate (%)</label>
+            <input type="number" step="0.25" min="0" max={lien.starting_rate} required value={rate} onChange={(e) => setRate(e.target.value)} className="h-10 w-full rounded-md border border-hairline px-3 text-sm" />
+            <button type="submit" disabled={submitting} className="h-10 w-full rounded-md bg-navy text-sm font-600 text-primary-foreground disabled:opacity-60">
+              {submitting ? "Placing…" : "Place Bid"}
+            </button>
+          </form>
+        ) : lien && (
+          <div className="mt-4 rounded-md border border-hairline bg-surface-alt p-3 text-xs text-ink-muted">
+            Bidding opens when the auction goes live.
+          </div>
+        )}
+
+        <button onClick={onToggleWatch} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-hairline text-sm font-500 text-navy hover:bg-surface-alt">
+          {watching ? <><BookmarkCheck className="size-4" /> Watching</> : <><Bookmark className="size-4" /> Add to Watchlist</>}
+        </button>
+      </div>
+    </aside>
   );
 }
-function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-hairline bg-surface p-5">
-      <div className="text-sm font-600 text-navy">{title}</div>
-      <div className="mt-3 space-y-1.5 text-sm">{children}</div>
-    </div>
-  );
+
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return <div className="flex justify-between"><dt className="text-ink-muted">{label}</dt><dd className="font-600 text-navy tabular-nums">{value}</dd></div>;
 }
-function Row({ k, v }: { k: string; v: React.ReactNode }) {
-  return <div className="flex justify-between text-sm"><span className="text-ink-muted">{k}:</span><span className="font-500 text-ink">{v}</span></div>;
+function Cell({ label, value }: { label: string; value: number }) {
+  return <div className="rounded-md bg-navy text-primary-foreground py-2"><div className="font-display text-xl font-600">{String(value).padStart(2, "0")}</div><div className="text-[10px] uppercase tracking-wider opacity-70">{label}</div></div>;
 }
