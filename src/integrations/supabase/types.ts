@@ -44,6 +44,35 @@ export type Database = {
         }
         Relationships: []
       }
+      auction_registrations: {
+        Row: {
+          auction_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          auction_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          auction_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_registrations_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auctions: {
         Row: {
           county_id: string | null
@@ -141,6 +170,47 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          property_id: string
+          size_bytes: number | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          name: string
+          property_id: string
+          size_bytes?: number | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          property_id?: string
+          size_bytes?: number | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       liens: {
         Row: {
           auction_id: string
@@ -151,6 +221,7 @@ export type Database = {
           id: string
           min_bid: number
           property_id: string
+          redemption_period_months: number
           starting_rate: number
           status: Database["public"]["Enums"]["lien_status"]
           tax_year: number
@@ -166,6 +237,7 @@ export type Database = {
           id?: string
           min_bid: number
           property_id: string
+          redemption_period_months?: number
           starting_rate?: number
           status?: Database["public"]["Enums"]["lien_status"]
           tax_year: number
@@ -181,6 +253,7 @@ export type Database = {
           id?: string
           min_bid?: number
           property_id?: string
+          redemption_period_months?: number
           starting_rate?: number
           status?: Database["public"]["Enums"]["lien_status"]
           tax_year?: number
@@ -233,25 +306,31 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_balance: number
           created_at: string
           full_name: string | null
           id: string
           phone: string | null
           updated_at: string
+          verified: boolean
         }
         Insert: {
+          account_balance?: number
           created_at?: string
           full_name?: string | null
           id: string
           phone?: string | null
           updated_at?: string
+          verified?: boolean
         }
         Update: {
+          account_balance?: number
           created_at?: string
           full_name?: string | null
           id?: string
           phone?: string | null
           updated_at?: string
+          verified?: boolean
         }
         Relationships: []
       }
@@ -259,46 +338,79 @@ export type Database = {
         Row: {
           address: string
           assessed_value: number | null
+          bathrooms: number | null
+          bedrooms: number | null
           city: string
           county_id: string
           created_at: string
           description: string | null
+          gallery_urls: string[] | null
           id: string
           image_url: string | null
+          improvement_value: number | null
+          land_value: number | null
+          living_area_sqft: number | null
+          lot_size_acres: number | null
+          owner_mailing_address: string | null
+          owner_name: string | null
           parcel_id: string
           property_type: Database["public"]["Enums"]["property_type"]
           state: string
           updated_at: string
+          use_type: string | null
+          year_built: number | null
           zip: string
         }
         Insert: {
           address: string
           assessed_value?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
           city: string
           county_id: string
           created_at?: string
           description?: string | null
+          gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
+          improvement_value?: number | null
+          land_value?: number | null
+          living_area_sqft?: number | null
+          lot_size_acres?: number | null
+          owner_mailing_address?: string | null
+          owner_name?: string | null
           parcel_id: string
           property_type: Database["public"]["Enums"]["property_type"]
           state: string
           updated_at?: string
+          use_type?: string | null
+          year_built?: number | null
           zip: string
         }
         Update: {
           address?: string
           assessed_value?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
           city?: string
           county_id?: string
           created_at?: string
           description?: string | null
+          gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
+          improvement_value?: number | null
+          land_value?: number | null
+          living_area_sqft?: number | null
+          lot_size_acres?: number | null
+          owner_mailing_address?: string | null
+          owner_name?: string | null
           parcel_id?: string
           property_type?: Database["public"]["Enums"]["property_type"]
           state?: string
           updated_at?: string
+          use_type?: string | null
+          year_built?: number | null
           zip?: string
         }
         Relationships: [
@@ -366,6 +478,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_first_admin: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

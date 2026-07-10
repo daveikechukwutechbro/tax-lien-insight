@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { scheduledAuctionQuery, type ScheduledPropertyRow } from "@/lib/queries/auctions";
+import { useHydrated } from "@/hooks/use-hydrated";
 import {
   CalendarDays,
   Clock,
@@ -101,6 +102,7 @@ function HeroRow({ auctionDate }: { auctionDate: Date | null }) {
               hour: "numeric",
               minute: "2-digit",
               timeZoneName: "short",
+              timeZone: "America/New_York",
             })}
           />
           <CountdownCard target={auctionDate} />
@@ -138,13 +140,14 @@ function HeroCard({
 }
 
 function CountdownCard({ target }: { target: Date }) {
+  const hydrated = useHydrated();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const diff = Math.max(0, target.getTime() - now);
+  const diff = hydrated ? Math.max(0, target.getTime() - now) : 0;
   const days = Math.floor(diff / 86_400_000);
   const hrs = Math.floor((diff % 86_400_000) / 3_600_000);
   const mins = Math.floor((diff % 3_600_000) / 60_000);
