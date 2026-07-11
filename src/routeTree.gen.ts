@@ -19,6 +19,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
+import { Route as AuctionsIdRouteImport } from './routes/auctions.$id'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
@@ -89,6 +90,11 @@ const PropertiesIdRoute = PropertiesIdRouteImport.update({
   id: '/properties/$id',
   path: '/properties/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuctionsIdRoute = AuctionsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuctionsRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -216,7 +222,7 @@ const AuthenticatedAdminAuctionsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/auctions': typeof AuctionsRoute
+  '/auctions': typeof AuctionsRouteWithChildren
   '/auth': typeof AuthRoute
   '/how-it-works': typeof HowItWorksRoute
   '/resources': typeof ResourcesRoute
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
@@ -248,12 +255,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/auctions': typeof AuctionsRoute
+  '/auctions': typeof AuctionsRouteWithChildren
   '/auth': typeof AuthRoute
   '/how-it-works': typeof HowItWorksRoute
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
@@ -280,7 +288,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/auctions': typeof AuctionsRoute
+  '/auctions': typeof AuctionsRouteWithChildren
   '/auth': typeof AuthRoute
   '/how-it-works': typeof HowItWorksRoute
   '/resources': typeof ResourcesRoute
@@ -288,6 +296,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/_authenticated/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
   '/_authenticated/admin/counties': typeof AuthenticatedAdminCountiesRoute
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin'
     | '/dashboard'
+    | '/auctions/$id'
     | '/properties/$id'
     | '/admin/auctions'
     | '/admin/counties'
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/search'
     | '/sitemap.xml'
+    | '/auctions/$id'
     | '/properties/$id'
     | '/admin/auctions'
     | '/admin/counties'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
+    | '/auctions/$id'
     | '/properties/$id'
     | '/_authenticated/admin/auctions'
     | '/_authenticated/admin/counties'
@@ -411,7 +423,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
-  AuctionsRoute: typeof AuctionsRoute
+  AuctionsRoute: typeof AuctionsRouteWithChildren
   AuthRoute: typeof AuthRoute
   HowItWorksRoute: typeof HowItWorksRoute
   ResourcesRoute: typeof ResourcesRoute
@@ -491,6 +503,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/properties/$id'
       preLoaderRoute: typeof PropertiesIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auctions/$id': {
+      id: '/auctions/$id'
+      path: '/$id'
+      fullPath: '/auctions/$id'
+      preLoaderRoute: typeof AuctionsIdRouteImport
+      parentRoute: typeof AuctionsRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -715,11 +734,23 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuctionsRouteChildren {
+  AuctionsIdRoute: typeof AuctionsIdRoute
+}
+
+const AuctionsRouteChildren: AuctionsRouteChildren = {
+  AuctionsIdRoute: AuctionsIdRoute,
+}
+
+const AuctionsRouteWithChildren = AuctionsRoute._addFileChildren(
+  AuctionsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
-  AuctionsRoute: AuctionsRoute,
+  AuctionsRoute: AuctionsRouteWithChildren,
   AuthRoute: AuthRoute,
   HowItWorksRoute: HowItWorksRoute,
   ResourcesRoute: ResourcesRoute,

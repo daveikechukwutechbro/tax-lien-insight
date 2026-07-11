@@ -5,12 +5,15 @@ import { useEffect, useState } from "react";
 import { auctionDetailQuery } from "@/lib/queries/discovery";
 
 export const Route = createFileRoute("/auctions/$id")({
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData ? `${loaderData.title} — Chicago TaxLien Auctions` : "Auction" },
-      { name: "description", content: loaderData ? `${loaderData.liens.length} liens in ${loaderData.county.name}, ${loaderData.county.state}.` : "Auction details" },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const d = loaderData as { title: string; liens: unknown[]; county: { name: string; state: string } } | undefined;
+    return {
+      meta: [
+        { title: d ? `${d.title} — Chicago TaxLien Auctions` : "Auction" },
+        { name: "description", content: d ? `${d.liens.length} liens in ${d.county.name}, ${d.county.state}.` : "Auction details" },
+      ],
+    };
+  },
   loader: ({ context, params }) => context.queryClient.ensureQueryData(auctionDetailQuery(params.id)),
   component: AuctionDetailPage,
   errorComponent: ({ error, reset }) => {
