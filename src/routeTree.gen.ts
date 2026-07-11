@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StatesRouteImport } from './routes/states'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ResourcesRouteImport } from './routes/resources'
@@ -42,6 +43,11 @@ import { Route as AuthenticatedAdminLiensRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminCountiesRouteImport } from './routes/_authenticated/admin.counties'
 import { Route as AuthenticatedAdminAuctionsRouteImport } from './routes/_authenticated/admin.auctions'
 
+const StatesRoute = StatesRouteImport.update({
+  id: '/states',
+  path: '/states',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/states': typeof StatesRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/auctions/$id': typeof AuctionsIdRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/states': typeof StatesRoute
   '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/states': typeof StatesRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/auctions/$id': typeof AuctionsIdRoute
@@ -329,6 +338,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/search'
     | '/sitemap.xml'
+    | '/states'
     | '/admin'
     | '/dashboard'
     | '/auctions/$id'
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/search'
     | '/sitemap.xml'
+    | '/states'
     | '/auctions/$id'
     | '/properties/$id'
     | '/admin/auctions'
@@ -394,6 +405,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/search'
     | '/sitemap.xml'
+    | '/states'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/auctions/$id'
@@ -429,11 +441,19 @@ export interface RootRouteChildren {
   ResourcesRoute: typeof ResourcesRoute
   SearchRoute: typeof SearchRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StatesRoute: typeof StatesRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/states': {
+      id: '/states'
+      path: '/states'
+      fullPath: '/states'
+      preLoaderRoute: typeof StatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -756,6 +776,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResourcesRoute: ResourcesRoute,
   SearchRoute: SearchRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StatesRoute: StatesRoute,
   PropertiesIdRoute: PropertiesIdRoute,
 }
 export const routeTree = rootRouteImport
