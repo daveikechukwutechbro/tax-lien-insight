@@ -19,6 +19,7 @@ import { Route as AuctionsRouteImport } from './routes/auctions'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StatesStateRouteImport } from './routes/states.$state'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as AuctionsIdRouteImport } from './routes/auctions.$id'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -91,6 +92,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const StatesStateRoute = StatesStateRouteImport.update({
+  id: '/$state',
+  path: '/$state',
+  getParentRoute: () => StatesRoute,
 } as any)
 const PropertiesIdRoute = PropertiesIdRouteImport.update({
   id: '/properties/$id',
@@ -234,11 +240,12 @@ export interface FileRoutesByFullPath {
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/states': typeof StatesRoute
+  '/states': typeof StatesRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
+  '/states/$state': typeof StatesStateRoute
   '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/admin/liens': typeof AuthenticatedAdminLiensRoute
@@ -268,9 +275,10 @@ export interface FileRoutesByTo {
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/states': typeof StatesRoute
+  '/states': typeof StatesRouteWithChildren
   '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
+  '/states/$state': typeof StatesStateRoute
   '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/admin/liens': typeof AuthenticatedAdminLiensRoute
@@ -302,11 +310,12 @@ export interface FileRoutesById {
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/states': typeof StatesRoute
+  '/states': typeof StatesRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
+  '/states/$state': typeof StatesStateRoute
   '/_authenticated/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
   '/_authenticated/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/_authenticated/admin/liens': typeof AuthenticatedAdminLiensRoute
@@ -343,6 +352,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/auctions/$id'
     | '/properties/$id'
+    | '/states/$state'
     | '/admin/auctions'
     | '/admin/counties'
     | '/admin/liens'
@@ -375,6 +385,7 @@ export interface FileRouteTypes {
     | '/states'
     | '/auctions/$id'
     | '/properties/$id'
+    | '/states/$state'
     | '/admin/auctions'
     | '/admin/counties'
     | '/admin/liens'
@@ -410,6 +421,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/auctions/$id'
     | '/properties/$id'
+    | '/states/$state'
     | '/_authenticated/admin/auctions'
     | '/_authenticated/admin/counties'
     | '/_authenticated/admin/liens'
@@ -441,7 +453,7 @@ export interface RootRouteChildren {
   ResourcesRoute: typeof ResourcesRoute
   SearchRoute: typeof SearchRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  StatesRoute: typeof StatesRoute
+  StatesRoute: typeof StatesRouteWithChildren
   PropertiesIdRoute: typeof PropertiesIdRoute
 }
 
@@ -516,6 +528,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/states/$state': {
+      id: '/states/$state'
+      path: '/$state'
+      fullPath: '/states/$state'
+      preLoaderRoute: typeof StatesStateRouteImport
+      parentRoute: typeof StatesRoute
     }
     '/properties/$id': {
       id: '/properties/$id'
@@ -766,6 +785,17 @@ const AuctionsRouteWithChildren = AuctionsRoute._addFileChildren(
   AuctionsRouteChildren,
 )
 
+interface StatesRouteChildren {
+  StatesStateRoute: typeof StatesStateRoute
+}
+
+const StatesRouteChildren: StatesRouteChildren = {
+  StatesStateRoute: StatesStateRoute,
+}
+
+const StatesRouteWithChildren =
+  StatesRoute._addFileChildren(StatesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -776,7 +806,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResourcesRoute: ResourcesRoute,
   SearchRoute: SearchRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  StatesRoute: StatesRoute,
+  StatesRoute: StatesRouteWithChildren,
   PropertiesIdRoute: PropertiesIdRoute,
 }
 export const routeTree = rootRouteImport
