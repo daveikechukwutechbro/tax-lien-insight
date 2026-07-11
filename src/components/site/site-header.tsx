@@ -7,6 +7,7 @@ import { useRouter } from "@tanstack/react-router";
 
 const nav = [
   { to: "/auctions", label: "Auctions" },
+  { to: "/states", label: "By State" },
   { to: "/search", label: "Search Properties" },
   { to: "/how-it-works", label: "How It Works" },
   { to: "/resources", label: "Resources" },
