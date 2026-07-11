@@ -46,7 +46,6 @@ export const auctionsListQuery = queryOptions({
 export type AuctionDetail = {
   id: string;
   title: string;
-  description: string | null;
   starts_at: string;
   ends_at: string;
   status: "draft" | "scheduled" | "live" | "closed" | "canceled";
@@ -78,7 +77,7 @@ export function auctionDetailQuery(id: string) {
       const { data, error } = await supabase
         .from("auctions")
         .select(
-          `id, title, description, starts_at, ends_at, status,
+          `id, title, starts_at, ends_at, status,
            county:counties!inner(id, name, state),
            liens(id, taxes_owed, min_bid, starting_rate, current_rate, status,
              property:properties!inner(id, parcel_id, address, city, state, zip, property_type, image_url))`,
