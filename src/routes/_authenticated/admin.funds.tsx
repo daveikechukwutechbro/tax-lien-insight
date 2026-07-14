@@ -26,7 +26,7 @@ function AdminFunds() {
   async function act(id: string, approve: boolean) {
     const notes = window.prompt(approve ? "Optional admin notes" : "Reason for rejection") ?? "";
     const { error } = await supabase.rpc("approve_fund_request", {
-      _request_id: id, _approve: approve, _notes: notes || null,
+      _id: id, _approve: approve, _admin_notes: notes || undefined,
     });
     if (error) return toast.error(error.message);
     toast.success(approve ? "Approved" : "Rejected");
