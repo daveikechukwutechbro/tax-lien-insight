@@ -211,6 +211,54 @@ export type Database = {
           },
         ]
       }
+      fund_requests: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["fund_request_kind"]
+          method: string
+          notes: string | null
+          processed_at: string | null
+          processed_by: string | null
+          reference: string | null
+          status: Database["public"]["Enums"]["fund_request_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["fund_request_kind"]
+          method: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["fund_request_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["fund_request_kind"]
+          method?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["fund_request_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       liens: {
         Row: {
           auction_id: string
@@ -277,11 +325,43 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          from_admin: boolean
+          id: string
+          read_at: string | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          from_admin?: boolean
+          id?: string
+          read_at?: string | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          from_admin?: boolean
+          id?: string
+          read_at?: string | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
           created_at: string
           id: string
+          kind: string
+          link: string | null
           read_at: string | null
           title: string
           user_id: string
@@ -290,6 +370,8 @@ export type Database = {
           body?: string | null
           created_at?: string
           id?: string
+          kind?: string
+          link?: string | null
           read_at?: string | null
           title: string
           user_id: string
@@ -298,6 +380,8 @@ export type Database = {
           body?: string | null
           created_at?: string
           id?: string
+          kind?: string
+          link?: string | null
           read_at?: string | null
           title?: string
           user_id?: string
@@ -423,6 +507,33 @@ export type Database = {
           },
         ]
       }
+      saved_searches: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notify: boolean
+          query: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notify?: boolean
+          query?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notify?: boolean
+          query?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -478,6 +589,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_fund_request: {
+        Args: { _admin_notes?: string; _approve: boolean; _id: string }
+        Returns: undefined
+      }
       claim_first_admin: { Args: never; Returns: boolean }
       has_role: {
         Args: {
@@ -495,6 +610,8 @@ export type Database = {
       app_role: "admin" | "moderator" | "user"
       auction_status: "draft" | "scheduled" | "live" | "closed" | "canceled"
       bid_status: "winning" | "outbid" | "won" | "lost" | "invalid"
+      fund_request_kind: "deposit" | "withdrawal"
+      fund_request_status: "pending" | "approved" | "rejected" | "completed"
       lien_status: "active" | "redeemed" | "canceled" | "expired"
       property_type: "residential" | "land" | "commercial"
     }
@@ -627,6 +744,8 @@ export const Constants = {
       app_role: ["admin", "moderator", "user"],
       auction_status: ["draft", "scheduled", "live", "closed", "canceled"],
       bid_status: ["winning", "outbid", "won", "lost", "invalid"],
+      fund_request_kind: ["deposit", "withdrawal"],
+      fund_request_status: ["pending", "approved", "rejected", "completed"],
       lien_status: ["active", "redeemed", "canceled", "expired"],
       property_type: ["residential", "land", "commercial"],
     },
