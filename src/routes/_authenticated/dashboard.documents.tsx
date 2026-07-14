@@ -20,8 +20,11 @@ function Documents() {
     },
   });
 
-  async function download(path: string) {
-    const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 60);
+  async function download(url: string) {
+    if (!url) return toast.error("No file attached");
+    // If the value is a storage path (no scheme), sign it; otherwise open directly.
+    if (/^https?:\/\//i.test(url)) { window.open(url, "_blank"); return; }
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(url, 60);
     if (error || !data) return toast.error(error?.message ?? "Failed to download");
     window.open(data.signedUrl, "_blank");
   }
@@ -39,10 +42,10 @@ function Documents() {
                 <li key={d.id} className="flex items-center gap-3 p-4">
                   <FileText className="size-5 text-navy" />
                   <div className="min-w-0 flex-1">
-                    <div className="font-500 text-navy">{d.title}</div>
+                    <div className="font-500 text-navy">{d.name}</div>
                     <div className="text-xs text-ink-muted">{d.kind}{p ? ` · ${p.address}, ${p.city}, ${p.state}` : ""}</div>
                   </div>
-                  <button onClick={()=>download(d.file_path)} className="flex items-center gap-1 rounded-md border border-hairline bg-surface px-3 py-1.5 text-xs font-600 text-navy hover:bg-surface-alt">
+                  <button onClick={()=>download(d.url)} className="flex items-center gap-1 rounded-md border border-hairline bg-surface px-3 py-1.5 text-xs font-600 text-navy hover:bg-surface-alt">
                     <Download className="size-3.5" /> Download
                   </button>
                 </li>
