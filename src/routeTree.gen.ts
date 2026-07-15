@@ -44,6 +44,7 @@ import { Route as AuthenticatedAdminRegistrationsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminPropertiesRouteImport } from './routes/_authenticated/admin.properties'
 import { Route as AuthenticatedAdminLiensRouteImport } from './routes/_authenticated/admin.liens'
 import { Route as AuthenticatedAdminFundsRouteImport } from './routes/_authenticated/admin.funds'
+import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authenticated/admin.documents'
 import { Route as AuthenticatedAdminCountiesRouteImport } from './routes/_authenticated/admin.counties'
 import { Route as AuthenticatedAdminBidsRouteImport } from './routes/_authenticated/admin.bids'
 import { Route as AuthenticatedAdminAuctionsRouteImport } from './routes/_authenticated/admin.auctions'
@@ -238,6 +239,12 @@ const AuthenticatedAdminFundsRoute = AuthenticatedAdminFundsRouteImport.update({
   path: '/funds',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminDocumentsRoute =
+  AuthenticatedAdminDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCountiesRoute =
   AuthenticatedAdminCountiesRouteImport.update({
     id: '/counties',
@@ -274,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
   '/admin/bids': typeof AuthenticatedAdminBidsRoute
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
+  '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/admin/funds': typeof AuthenticatedAdminFundsRoute
   '/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
@@ -311,6 +319,7 @@ export interface FileRoutesByTo {
   '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
   '/admin/bids': typeof AuthenticatedAdminBidsRoute
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
+  '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/admin/funds': typeof AuthenticatedAdminFundsRoute
   '/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
@@ -352,6 +361,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
   '/_authenticated/admin/bids': typeof AuthenticatedAdminBidsRoute
   '/_authenticated/admin/counties': typeof AuthenticatedAdminCountiesRoute
+  '/_authenticated/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/_authenticated/admin/funds': typeof AuthenticatedAdminFundsRoute
   '/_authenticated/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/_authenticated/admin/properties': typeof AuthenticatedAdminPropertiesRoute
@@ -393,6 +403,7 @@ export interface FileRouteTypes {
     | '/admin/auctions'
     | '/admin/bids'
     | '/admin/counties'
+    | '/admin/documents'
     | '/admin/funds'
     | '/admin/liens'
     | '/admin/properties'
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/admin/auctions'
     | '/admin/bids'
     | '/admin/counties'
+    | '/admin/documents'
     | '/admin/funds'
     | '/admin/liens'
     | '/admin/properties'
@@ -470,6 +482,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/auctions'
     | '/_authenticated/admin/bids'
     | '/_authenticated/admin/counties'
+    | '/_authenticated/admin/documents'
     | '/_authenticated/admin/funds'
     | '/_authenticated/admin/liens'
     | '/_authenticated/admin/properties'
@@ -753,6 +766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFundsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/documents': {
+      id: '/_authenticated/admin/documents'
+      path: '/documents'
+      fullPath: '/admin/documents'
+      preLoaderRoute: typeof AuthenticatedAdminDocumentsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/counties': {
       id: '/_authenticated/admin/counties'
       path: '/counties'
@@ -781,6 +801,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAuctionsRoute: typeof AuthenticatedAdminAuctionsRoute
   AuthenticatedAdminBidsRoute: typeof AuthenticatedAdminBidsRoute
   AuthenticatedAdminCountiesRoute: typeof AuthenticatedAdminCountiesRoute
+  AuthenticatedAdminDocumentsRoute: typeof AuthenticatedAdminDocumentsRoute
   AuthenticatedAdminFundsRoute: typeof AuthenticatedAdminFundsRoute
   AuthenticatedAdminLiensRoute: typeof AuthenticatedAdminLiensRoute
   AuthenticatedAdminPropertiesRoute: typeof AuthenticatedAdminPropertiesRoute
@@ -793,6 +814,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAuctionsRoute: AuthenticatedAdminAuctionsRoute,
   AuthenticatedAdminBidsRoute: AuthenticatedAdminBidsRoute,
   AuthenticatedAdminCountiesRoute: AuthenticatedAdminCountiesRoute,
+  AuthenticatedAdminDocumentsRoute: AuthenticatedAdminDocumentsRoute,
   AuthenticatedAdminFundsRoute: AuthenticatedAdminFundsRoute,
   AuthenticatedAdminLiensRoute: AuthenticatedAdminLiensRoute,
   AuthenticatedAdminPropertiesRoute: AuthenticatedAdminPropertiesRoute,
