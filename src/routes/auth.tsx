@@ -36,7 +36,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) router.navigate({ to: "/", replace: true });
+    if (!loading && user) router.navigate({ to: "/dashboard", replace: true });
   }, [user, loading, router]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -48,7 +48,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/dashboard`,
             data: { full_name: fullName },
           },
         });
@@ -59,7 +59,7 @@ function AuthPage() {
         if (error) throw error;
         toast.success("Welcome back.");
       }
-      router.navigate({ to: "/", replace: true });
+      router.navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       toast.error(msg);
@@ -72,14 +72,14 @@ function AuthPage() {
     setBusy(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/dashboard`,
       });
       if (result.error) {
         toast.error(result.error.message ?? "Google sign-in failed");
         return;
       }
       if (result.redirected) return;
-      router.navigate({ to: "/", replace: true });
+      router.navigate({ to: "/dashboard", replace: true });
     } finally {
       setBusy(false);
     }
