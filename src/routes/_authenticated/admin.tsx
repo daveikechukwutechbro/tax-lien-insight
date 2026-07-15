@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, LayoutDashboard, MapPin, Home, Gavel, FileText, Wallet } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, MapPin, Home, Gavel, FileText, Wallet, Users, ClipboardCheck, ScrollText, Activity, Files } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async () => {
@@ -22,7 +22,12 @@ const nav: Item[] = [
   { to: "/admin/properties", label: "Properties", icon: Home },
   { to: "/admin/auctions", label: "Auctions", icon: Gavel },
   { to: "/admin/liens", label: "Liens", icon: FileText },
+  { to: "/admin/documents", label: "Documents", icon: Files },
+  { to: "/admin/registrations", label: "Registrations", icon: ClipboardCheck },
+  { to: "/admin/bids", label: "Bids", icon: Activity },
+  { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/funds", label: "Fund Requests", icon: Wallet },
+  { to: "/admin/audit", label: "Audit Log", icon: ScrollText },
 ];
 
 function AdminLayout() {

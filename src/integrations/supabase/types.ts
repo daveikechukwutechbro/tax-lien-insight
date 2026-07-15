@@ -589,6 +589,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_balance: {
+        Args: { _delta: number; _reason: string; _user_id: string }
+        Returns: number
+      }
+      admin_delete_registration: { Args: { _id: string }; Returns: undefined }
+      admin_send_message: {
+        Args: { _body: string; _subject: string; _user_id: string }
+        Returns: string
+      }
+      admin_set_role: {
+        Args: {
+          _grant: boolean
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      admin_set_verified: {
+        Args: { _user_id: string; _verified: boolean }
+        Returns: undefined
+      }
       approve_fund_request: {
         Args: { _admin_notes?: string; _approve: boolean; _id: string }
         Returns: undefined
