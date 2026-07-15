@@ -14,6 +14,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuctionsRouteImport } from './routes/auctions'
 import { Route as AboutRouteImport } from './routes/about'
@@ -73,6 +74,11 @@ const ResourcesRoute = ResourcesRouteImport.update({
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -274,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auctions': typeof AuctionsRouteWithChildren
   '/auth': typeof AuthRoute
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
@@ -315,6 +322,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/auctions': typeof AuctionsRouteWithChildren
   '/auth': typeof AuthRoute
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
@@ -356,6 +364,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auctions': typeof AuctionsRouteWithChildren
   '/auth': typeof AuthRoute
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auctions'
     | '/auth'
+    | '/help'
     | '/how-it-works'
     | '/resources'
     | '/search'
@@ -440,6 +450,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auctions'
     | '/auth'
+    | '/help'
     | '/how-it-works'
     | '/resources'
     | '/search'
@@ -480,6 +491,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auctions'
     | '/auth'
+    | '/help'
     | '/how-it-works'
     | '/resources'
     | '/search'
@@ -523,6 +535,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuctionsRoute: typeof AuctionsRouteWithChildren
   AuthRoute: typeof AuthRoute
+  HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
   ResourcesRoute: typeof ResourcesRoute
   SearchRoute: typeof SearchRoute
@@ -566,6 +579,13 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -930,6 +950,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuctionsRoute: AuctionsRouteWithChildren,
   AuthRoute: AuthRoute,
+  HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
   ResourcesRoute: ResourcesRoute,
   SearchRoute: SearchRoute,
