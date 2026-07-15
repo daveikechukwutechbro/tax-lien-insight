@@ -47,6 +47,7 @@ import { Route as AuthenticatedAdminFundsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authenticated/admin.documents'
 import { Route as AuthenticatedAdminCountiesRouteImport } from './routes/_authenticated/admin.counties'
 import { Route as AuthenticatedAdminBidsRouteImport } from './routes/_authenticated/admin.bids'
+import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminAuctionsRouteImport } from './routes/_authenticated/admin.auctions'
 
 const StatesRoute = StatesRouteImport.update({
@@ -256,6 +257,11 @@ const AuthenticatedAdminBidsRoute = AuthenticatedAdminBidsRouteImport.update({
   path: '/bids',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminAuctionsRoute =
   AuthenticatedAdminAuctionsRouteImport.update({
     id: '/auctions',
@@ -279,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/properties/$id': typeof PropertiesIdRoute
   '/states/$state': typeof StatesStateRoute
   '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
+  '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bids': typeof AuthenticatedAdminBidsRoute
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
@@ -317,6 +324,7 @@ export interface FileRoutesByTo {
   '/properties/$id': typeof PropertiesIdRoute
   '/states/$state': typeof StatesStateRoute
   '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
+  '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bids': typeof AuthenticatedAdminBidsRoute
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
@@ -359,6 +367,7 @@ export interface FileRoutesById {
   '/properties/$id': typeof PropertiesIdRoute
   '/states/$state': typeof StatesStateRoute
   '/_authenticated/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
+  '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/bids': typeof AuthenticatedAdminBidsRoute
   '/_authenticated/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/_authenticated/admin/documents': typeof AuthenticatedAdminDocumentsRoute
@@ -401,6 +410,7 @@ export interface FileRouteTypes {
     | '/properties/$id'
     | '/states/$state'
     | '/admin/auctions'
+    | '/admin/audit'
     | '/admin/bids'
     | '/admin/counties'
     | '/admin/documents'
@@ -439,6 +449,7 @@ export interface FileRouteTypes {
     | '/properties/$id'
     | '/states/$state'
     | '/admin/auctions'
+    | '/admin/audit'
     | '/admin/bids'
     | '/admin/counties'
     | '/admin/documents'
@@ -480,6 +491,7 @@ export interface FileRouteTypes {
     | '/properties/$id'
     | '/states/$state'
     | '/_authenticated/admin/auctions'
+    | '/_authenticated/admin/audit'
     | '/_authenticated/admin/bids'
     | '/_authenticated/admin/counties'
     | '/_authenticated/admin/documents'
@@ -787,6 +799,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBidsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/audit': {
+      id: '/_authenticated/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/auctions': {
       id: '/_authenticated/admin/auctions'
       path: '/auctions'
@@ -799,6 +818,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAuctionsRoute: typeof AuthenticatedAdminAuctionsRoute
+  AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminBidsRoute: typeof AuthenticatedAdminBidsRoute
   AuthenticatedAdminCountiesRoute: typeof AuthenticatedAdminCountiesRoute
   AuthenticatedAdminDocumentsRoute: typeof AuthenticatedAdminDocumentsRoute
@@ -812,6 +832,7 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAuctionsRoute: AuthenticatedAdminAuctionsRoute,
+  AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminBidsRoute: AuthenticatedAdminBidsRoute,
   AuthenticatedAdminCountiesRoute: AuthenticatedAdminCountiesRoute,
   AuthenticatedAdminDocumentsRoute: AuthenticatedAdminDocumentsRoute,
