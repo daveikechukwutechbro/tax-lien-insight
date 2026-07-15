@@ -40,6 +40,7 @@ import { Route as AuthenticatedDashboardFundsRouteImport } from './routes/_authe
 import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
 import { Route as AuthenticatedDashboardBidsRouteImport } from './routes/_authenticated/dashboard.bids'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminRegistrationsRouteImport } from './routes/_authenticated/admin.registrations'
 import { Route as AuthenticatedAdminPropertiesRouteImport } from './routes/_authenticated/admin.properties'
 import { Route as AuthenticatedAdminLiensRouteImport } from './routes/_authenticated/admin.liens'
 import { Route as AuthenticatedAdminFundsRouteImport } from './routes/_authenticated/admin.funds'
@@ -214,6 +215,12 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminRegistrationsRoute =
+  AuthenticatedAdminRegistrationsRouteImport.update({
+    id: '/registrations',
+    path: '/registrations',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPropertiesRoute =
   AuthenticatedAdminPropertiesRouteImport.update({
     id: '/properties',
@@ -263,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/admin/funds': typeof AuthenticatedAdminFundsRoute
   '/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
+  '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
@@ -298,6 +306,7 @@ export interface FileRoutesByTo {
   '/admin/funds': typeof AuthenticatedAdminFundsRoute
   '/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
+  '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
@@ -337,6 +346,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/funds': typeof AuthenticatedAdminFundsRoute
   '/_authenticated/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/_authenticated/admin/properties': typeof AuthenticatedAdminPropertiesRoute
+  '/_authenticated/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/admin/funds'
     | '/admin/liens'
     | '/admin/properties'
+    | '/admin/registrations'
     | '/admin/users'
     | '/dashboard/bids'
     | '/dashboard/documents'
@@ -411,6 +422,7 @@ export interface FileRouteTypes {
     | '/admin/funds'
     | '/admin/liens'
     | '/admin/properties'
+    | '/admin/registrations'
     | '/admin/users'
     | '/dashboard/bids'
     | '/dashboard/documents'
@@ -449,6 +461,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/funds'
     | '/_authenticated/admin/liens'
     | '/_authenticated/admin/properties'
+    | '/_authenticated/admin/registrations'
     | '/_authenticated/admin/users'
     | '/_authenticated/dashboard/bids'
     | '/_authenticated/dashboard/documents'
@@ -700,6 +713,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/registrations': {
+      id: '/_authenticated/admin/registrations'
+      path: '/registrations'
+      fullPath: '/admin/registrations'
+      preLoaderRoute: typeof AuthenticatedAdminRegistrationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/properties': {
       id: '/_authenticated/admin/properties'
       path: '/properties'
@@ -744,6 +764,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminFundsRoute: typeof AuthenticatedAdminFundsRoute
   AuthenticatedAdminLiensRoute: typeof AuthenticatedAdminLiensRoute
   AuthenticatedAdminPropertiesRoute: typeof AuthenticatedAdminPropertiesRoute
+  AuthenticatedAdminRegistrationsRoute: typeof AuthenticatedAdminRegistrationsRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -754,6 +775,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminFundsRoute: AuthenticatedAdminFundsRoute,
   AuthenticatedAdminLiensRoute: AuthenticatedAdminLiensRoute,
   AuthenticatedAdminPropertiesRoute: AuthenticatedAdminPropertiesRoute,
+  AuthenticatedAdminRegistrationsRoute: AuthenticatedAdminRegistrationsRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
