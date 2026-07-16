@@ -21,7 +21,7 @@ function KycAdmin() {
   });
 
   async function review(id: string, approve: boolean) {
-    const notes = approve ? null : prompt("Reason for rejection (optional)");
+    const notes = approve ? undefined : (prompt("Reason for rejection (optional)") ?? undefined);
     const { error } = await supabase.rpc("review_kyc", { _id: id, _approve: approve, _notes: notes });
     if (error) return toast.error(error.message);
     toast.success(approve ? "Approved" : "Rejected");

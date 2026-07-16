@@ -47,6 +47,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminRegistrationsRouteImport } from './routes/_authenticated/admin.registrations'
 import { Route as AuthenticatedAdminPropertiesRouteImport } from './routes/_authenticated/admin.properties'
 import { Route as AuthenticatedAdminLiensRouteImport } from './routes/_authenticated/admin.liens'
+import { Route as AuthenticatedAdminKycRouteImport } from './routes/_authenticated/admin.kyc'
 import { Route as AuthenticatedAdminFundsRouteImport } from './routes/_authenticated/admin.funds'
 import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authenticated/admin.documents'
 import { Route as AuthenticatedAdminCountiesRouteImport } from './routes/_authenticated/admin.counties'
@@ -260,6 +261,11 @@ const AuthenticatedAdminLiensRoute = AuthenticatedAdminLiensRouteImport.update({
   path: '/liens',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminKycRoute = AuthenticatedAdminKycRouteImport.update({
+  id: '/kyc',
+  path: '/kyc',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminFundsRoute = AuthenticatedAdminFundsRouteImport.update({
   id: '/funds',
   path: '/funds',
@@ -318,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/admin/funds': typeof AuthenticatedAdminFundsRoute
+  '/admin/kyc': typeof AuthenticatedAdminKycRoute
   '/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
   '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
@@ -361,6 +368,7 @@ export interface FileRoutesByTo {
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/admin/funds': typeof AuthenticatedAdminFundsRoute
+  '/admin/kyc': typeof AuthenticatedAdminKycRoute
   '/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
   '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
@@ -408,6 +416,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/_authenticated/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/_authenticated/admin/funds': typeof AuthenticatedAdminFundsRoute
+  '/_authenticated/admin/kyc': typeof AuthenticatedAdminKycRoute
   '/_authenticated/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/_authenticated/admin/properties': typeof AuthenticatedAdminPropertiesRoute
   '/_authenticated/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
@@ -455,6 +464,7 @@ export interface FileRouteTypes {
     | '/admin/counties'
     | '/admin/documents'
     | '/admin/funds'
+    | '/admin/kyc'
     | '/admin/liens'
     | '/admin/properties'
     | '/admin/registrations'
@@ -498,6 +508,7 @@ export interface FileRouteTypes {
     | '/admin/counties'
     | '/admin/documents'
     | '/admin/funds'
+    | '/admin/kyc'
     | '/admin/liens'
     | '/admin/properties'
     | '/admin/registrations'
@@ -544,6 +555,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/counties'
     | '/_authenticated/admin/documents'
     | '/_authenticated/admin/funds'
+    | '/_authenticated/admin/kyc'
     | '/_authenticated/admin/liens'
     | '/_authenticated/admin/properties'
     | '/_authenticated/admin/registrations'
@@ -851,6 +863,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLiensRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/kyc': {
+      id: '/_authenticated/admin/kyc'
+      path: '/kyc'
+      fullPath: '/admin/kyc'
+      preLoaderRoute: typeof AuthenticatedAdminKycRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/funds': {
       id: '/_authenticated/admin/funds'
       path: '/funds'
@@ -903,6 +922,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCountiesRoute: typeof AuthenticatedAdminCountiesRoute
   AuthenticatedAdminDocumentsRoute: typeof AuthenticatedAdminDocumentsRoute
   AuthenticatedAdminFundsRoute: typeof AuthenticatedAdminFundsRoute
+  AuthenticatedAdminKycRoute: typeof AuthenticatedAdminKycRoute
   AuthenticatedAdminLiensRoute: typeof AuthenticatedAdminLiensRoute
   AuthenticatedAdminPropertiesRoute: typeof AuthenticatedAdminPropertiesRoute
   AuthenticatedAdminRegistrationsRoute: typeof AuthenticatedAdminRegistrationsRoute
@@ -917,6 +937,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCountiesRoute: AuthenticatedAdminCountiesRoute,
   AuthenticatedAdminDocumentsRoute: AuthenticatedAdminDocumentsRoute,
   AuthenticatedAdminFundsRoute: AuthenticatedAdminFundsRoute,
+  AuthenticatedAdminKycRoute: AuthenticatedAdminKycRoute,
   AuthenticatedAdminLiensRoute: AuthenticatedAdminLiensRoute,
   AuthenticatedAdminPropertiesRoute: AuthenticatedAdminPropertiesRoute,
   AuthenticatedAdminRegistrationsRoute: AuthenticatedAdminRegistrationsRoute,
