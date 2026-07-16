@@ -259,6 +259,69 @@ export type Database = {
         }
         Relationships: []
       }
+      kyc_submissions: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          admin_notes: string | null
+          city: string
+          country: string
+          created_at: string
+          date_of_birth: string
+          id: string
+          id_document_path: string | null
+          legal_name: string
+          postal_code: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          state: string
+          status: Database["public"]["Enums"]["kyc_status"]
+          tax_id_last4: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          admin_notes?: string | null
+          city: string
+          country?: string
+          created_at?: string
+          date_of_birth: string
+          id?: string
+          id_document_path?: string | null
+          legal_name: string
+          postal_code: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          state: string
+          status?: Database["public"]["Enums"]["kyc_status"]
+          tax_id_last4: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          admin_notes?: string | null
+          city?: string
+          country?: string
+          created_at?: string
+          date_of_birth?: string
+          id?: string
+          id_document_path?: string | null
+          legal_name?: string
+          postal_code?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          state?: string
+          status?: Database["public"]["Enums"]["kyc_status"]
+          tax_id_last4?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       liens: {
         Row: {
           auction_id: string
@@ -626,6 +689,10 @@ export type Database = {
         Args: { _interest_rate: number; _lien_id: string }
         Returns: string
       }
+      review_kyc: {
+        Args: { _approve: boolean; _id: string; _notes?: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
@@ -633,6 +700,7 @@ export type Database = {
       bid_status: "winning" | "outbid" | "won" | "lost" | "invalid"
       fund_request_kind: "deposit" | "withdrawal"
       fund_request_status: "pending" | "approved" | "rejected" | "completed"
+      kyc_status: "pending" | "approved" | "rejected"
       lien_status: "active" | "redeemed" | "canceled" | "expired"
       property_type: "residential" | "land" | "commercial"
     }
@@ -767,6 +835,7 @@ export const Constants = {
       bid_status: ["winning", "outbid", "won", "lost", "invalid"],
       fund_request_kind: ["deposit", "withdrawal"],
       fund_request_status: ["pending", "approved", "rejected", "completed"],
+      kyc_status: ["pending", "approved", "rejected"],
       lien_status: ["active", "redeemed", "canceled", "expired"],
       property_type: ["residential", "land", "commercial"],
     },

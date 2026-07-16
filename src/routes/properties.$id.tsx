@@ -135,6 +135,12 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
   const [rate, setRate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [remaining, setRemaining] = useState(0);
+  const { data: profile } = useQuery({
+    queryKey: ["profile-verify", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => (await supabase.from("profiles").select("verified, account_balance").eq("id", user!.id).maybeSingle()).data,
+  });
+  const isVerified = !!profile?.verified;
 
   useEffect(() => {
     if (!hydrated || !auction) return;
@@ -147,6 +153,7 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
   async function placeBid(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return toast.error("Sign in to place a bid");
+    if (!isVerified) return toast.error("Complete identity verification to place bids");
     if (!lien) return;
     setSubmitting(true);
     const { error } = await supabase.rpc("place_bid", { _lien_id: lien.id, _interest_rate: Number(rate) });
@@ -191,9 +198,14 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
 
         {lien && isLive ? (
           <form onSubmit={placeBid} className="mt-4 space-y-2 border-t border-hairline pt-4">
+            {!isVerified && user && (
+              <div className="rounded-md border border-gold/40 bg-gold/10 p-3 text-xs text-navy">
+                Identity verification required. <Link to="/dashboard/verify" className="font-600 underline">Verify now →</Link>
+              </div>
+            )}
             <label className="text-xs uppercase tracking-wider text-ink-muted">Your Interest Rate (%)</label>
             <input type="number" step="0.25" min="0" max={lien.starting_rate} required value={rate} onChange={(e) => setRate(e.target.value)} className="h-10 w-full rounded-md border border-hairline px-3 text-sm" />
-            <button type="submit" disabled={submitting} className="h-10 w-full rounded-md bg-navy text-sm font-600 text-primary-foreground disabled:opacity-60">
+            <button type="submit" disabled={submitting || !isVerified} className="h-10 w-full rounded-md bg-navy text-sm font-600 text-primary-foreground disabled:opacity-60">
               {submitting ? "Placing…" : "Place Bid"}
             </button>
           </form>

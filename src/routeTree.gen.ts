@@ -31,6 +31,7 @@ import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedDashboardWonRouteImport } from './routes/_authenticated/dashboard.won'
 import { Route as AuthenticatedDashboardWatchedRouteImport } from './routes/_authenticated/dashboard.watched'
+import { Route as AuthenticatedDashboardVerifyRouteImport } from './routes/_authenticated/dashboard.verify'
 import { Route as AuthenticatedDashboardSearchesRouteImport } from './routes/_authenticated/dashboard.searches'
 import { Route as AuthenticatedDashboardScheduledRouteImport } from './routes/_authenticated/dashboard.scheduled'
 import { Route as AuthenticatedDashboardProfileRouteImport } from './routes/_authenticated/dashboard.profile'
@@ -46,6 +47,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminRegistrationsRouteImport } from './routes/_authenticated/admin.registrations'
 import { Route as AuthenticatedAdminPropertiesRouteImport } from './routes/_authenticated/admin.properties'
 import { Route as AuthenticatedAdminLiensRouteImport } from './routes/_authenticated/admin.liens'
+import { Route as AuthenticatedAdminKycRouteImport } from './routes/_authenticated/admin.kyc'
 import { Route as AuthenticatedAdminFundsRouteImport } from './routes/_authenticated/admin.funds'
 import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authenticated/admin.documents'
 import { Route as AuthenticatedAdminCountiesRouteImport } from './routes/_authenticated/admin.counties'
@@ -165,6 +167,12 @@ const AuthenticatedDashboardWatchedRoute =
     path: '/watched',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardVerifyRoute =
+  AuthenticatedDashboardVerifyRouteImport.update({
+    id: '/verify',
+    path: '/verify',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardSearchesRoute =
   AuthenticatedDashboardSearchesRouteImport.update({
     id: '/searches',
@@ -253,6 +261,11 @@ const AuthenticatedAdminLiensRoute = AuthenticatedAdminLiensRouteImport.update({
   path: '/liens',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminKycRoute = AuthenticatedAdminKycRouteImport.update({
+  id: '/kyc',
+  path: '/kyc',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminFundsRoute = AuthenticatedAdminFundsRouteImport.update({
   id: '/funds',
   path: '/funds',
@@ -311,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/admin/funds': typeof AuthenticatedAdminFundsRoute
+  '/admin/kyc': typeof AuthenticatedAdminKycRoute
   '/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
   '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
@@ -326,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/dashboard/scheduled': typeof AuthenticatedDashboardScheduledRoute
   '/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
+  '/dashboard/verify': typeof AuthenticatedDashboardVerifyRoute
   '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -353,6 +368,7 @@ export interface FileRoutesByTo {
   '/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/admin/funds': typeof AuthenticatedAdminFundsRoute
+  '/admin/kyc': typeof AuthenticatedAdminKycRoute
   '/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
   '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
@@ -368,6 +384,7 @@ export interface FileRoutesByTo {
   '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/dashboard/scheduled': typeof AuthenticatedDashboardScheduledRoute
   '/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
+  '/dashboard/verify': typeof AuthenticatedDashboardVerifyRoute
   '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -399,6 +416,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/counties': typeof AuthenticatedAdminCountiesRoute
   '/_authenticated/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/_authenticated/admin/funds': typeof AuthenticatedAdminFundsRoute
+  '/_authenticated/admin/kyc': typeof AuthenticatedAdminKycRoute
   '/_authenticated/admin/liens': typeof AuthenticatedAdminLiensRoute
   '/_authenticated/admin/properties': typeof AuthenticatedAdminPropertiesRoute
   '/_authenticated/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
@@ -414,6 +432,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/_authenticated/dashboard/scheduled': typeof AuthenticatedDashboardScheduledRoute
   '/_authenticated/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
+  '/_authenticated/dashboard/verify': typeof AuthenticatedDashboardVerifyRoute
   '/_authenticated/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/_authenticated/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -445,6 +464,7 @@ export interface FileRouteTypes {
     | '/admin/counties'
     | '/admin/documents'
     | '/admin/funds'
+    | '/admin/kyc'
     | '/admin/liens'
     | '/admin/properties'
     | '/admin/registrations'
@@ -460,6 +480,7 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/dashboard/scheduled'
     | '/dashboard/searches'
+    | '/dashboard/verify'
     | '/dashboard/watched'
     | '/dashboard/won'
     | '/admin/'
@@ -487,6 +508,7 @@ export interface FileRouteTypes {
     | '/admin/counties'
     | '/admin/documents'
     | '/admin/funds'
+    | '/admin/kyc'
     | '/admin/liens'
     | '/admin/properties'
     | '/admin/registrations'
@@ -502,6 +524,7 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/dashboard/scheduled'
     | '/dashboard/searches'
+    | '/dashboard/verify'
     | '/dashboard/watched'
     | '/dashboard/won'
     | '/admin'
@@ -532,6 +555,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/counties'
     | '/_authenticated/admin/documents'
     | '/_authenticated/admin/funds'
+    | '/_authenticated/admin/kyc'
     | '/_authenticated/admin/liens'
     | '/_authenticated/admin/properties'
     | '/_authenticated/admin/registrations'
@@ -547,6 +571,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/profile'
     | '/_authenticated/dashboard/scheduled'
     | '/_authenticated/dashboard/searches'
+    | '/_authenticated/dashboard/verify'
     | '/_authenticated/dashboard/watched'
     | '/_authenticated/dashboard/won'
     | '/_authenticated/admin/'
@@ -726,6 +751,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardWatchedRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/verify': {
+      id: '/_authenticated/dashboard/verify'
+      path: '/verify'
+      fullPath: '/dashboard/verify'
+      preLoaderRoute: typeof AuthenticatedDashboardVerifyRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/searches': {
       id: '/_authenticated/dashboard/searches'
       path: '/searches'
@@ -831,6 +863,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLiensRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/kyc': {
+      id: '/_authenticated/admin/kyc'
+      path: '/kyc'
+      fullPath: '/admin/kyc'
+      preLoaderRoute: typeof AuthenticatedAdminKycRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/funds': {
       id: '/_authenticated/admin/funds'
       path: '/funds'
@@ -883,6 +922,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCountiesRoute: typeof AuthenticatedAdminCountiesRoute
   AuthenticatedAdminDocumentsRoute: typeof AuthenticatedAdminDocumentsRoute
   AuthenticatedAdminFundsRoute: typeof AuthenticatedAdminFundsRoute
+  AuthenticatedAdminKycRoute: typeof AuthenticatedAdminKycRoute
   AuthenticatedAdminLiensRoute: typeof AuthenticatedAdminLiensRoute
   AuthenticatedAdminPropertiesRoute: typeof AuthenticatedAdminPropertiesRoute
   AuthenticatedAdminRegistrationsRoute: typeof AuthenticatedAdminRegistrationsRoute
@@ -897,6 +937,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCountiesRoute: AuthenticatedAdminCountiesRoute,
   AuthenticatedAdminDocumentsRoute: AuthenticatedAdminDocumentsRoute,
   AuthenticatedAdminFundsRoute: AuthenticatedAdminFundsRoute,
+  AuthenticatedAdminKycRoute: AuthenticatedAdminKycRoute,
   AuthenticatedAdminLiensRoute: AuthenticatedAdminLiensRoute,
   AuthenticatedAdminPropertiesRoute: AuthenticatedAdminPropertiesRoute,
   AuthenticatedAdminRegistrationsRoute: AuthenticatedAdminRegistrationsRoute,
@@ -919,6 +960,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardProfileRoute: typeof AuthenticatedDashboardProfileRoute
   AuthenticatedDashboardScheduledRoute: typeof AuthenticatedDashboardScheduledRoute
   AuthenticatedDashboardSearchesRoute: typeof AuthenticatedDashboardSearchesRoute
+  AuthenticatedDashboardVerifyRoute: typeof AuthenticatedDashboardVerifyRoute
   AuthenticatedDashboardWatchedRoute: typeof AuthenticatedDashboardWatchedRoute
   AuthenticatedDashboardWonRoute: typeof AuthenticatedDashboardWonRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
@@ -938,6 +980,7 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardProfileRoute: AuthenticatedDashboardProfileRoute,
     AuthenticatedDashboardScheduledRoute: AuthenticatedDashboardScheduledRoute,
     AuthenticatedDashboardSearchesRoute: AuthenticatedDashboardSearchesRoute,
+    AuthenticatedDashboardVerifyRoute: AuthenticatedDashboardVerifyRoute,
     AuthenticatedDashboardWatchedRoute: AuthenticatedDashboardWatchedRoute,
     AuthenticatedDashboardWonRoute: AuthenticatedDashboardWonRoute,
     AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,

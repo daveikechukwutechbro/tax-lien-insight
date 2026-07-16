@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import {
   LayoutDashboard, Gavel, Bookmark, Trophy, XCircle, CalendarClock,
-  Receipt, CreditCard, Wallet, UserRound, Bell, Search, FileText, MessageSquare, LogOut, ShieldCheck,
+  Receipt, CreditCard, Wallet, UserRound, Bell, Search, FileText, MessageSquare, LogOut, ShieldCheck, BadgeCheck,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ const items: Item[] = [
   { to: "/dashboard/payments", label: "Payments & Invoices", icon: CreditCard },
   { to: "/dashboard/funds", label: "Account Funds", icon: Wallet },
   { to: "/dashboard/profile", label: "Profile Settings", icon: UserRound },
+  { to: "/dashboard/verify", label: "Identity Verification", icon: BadgeCheck },
   { to: "/dashboard/notifications", label: "Notifications", icon: Bell },
   { to: "/dashboard/searches", label: "Saved Searches", icon: Search },
   { to: "/dashboard/documents", label: "Documents", icon: FileText },
