@@ -31,6 +31,7 @@ import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedDashboardWonRouteImport } from './routes/_authenticated/dashboard.won'
 import { Route as AuthenticatedDashboardWatchedRouteImport } from './routes/_authenticated/dashboard.watched'
+import { Route as AuthenticatedDashboardVerifyRouteImport } from './routes/_authenticated/dashboard.verify'
 import { Route as AuthenticatedDashboardSearchesRouteImport } from './routes/_authenticated/dashboard.searches'
 import { Route as AuthenticatedDashboardScheduledRouteImport } from './routes/_authenticated/dashboard.scheduled'
 import { Route as AuthenticatedDashboardProfileRouteImport } from './routes/_authenticated/dashboard.profile'
@@ -163,6 +164,12 @@ const AuthenticatedDashboardWatchedRoute =
   AuthenticatedDashboardWatchedRouteImport.update({
     id: '/watched',
     path: '/watched',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardVerifyRoute =
+  AuthenticatedDashboardVerifyRouteImport.update({
+    id: '/verify',
+    path: '/verify',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardSearchesRoute =
@@ -326,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/dashboard/scheduled': typeof AuthenticatedDashboardScheduledRoute
   '/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
+  '/dashboard/verify': typeof AuthenticatedDashboardVerifyRoute
   '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -368,6 +376,7 @@ export interface FileRoutesByTo {
   '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/dashboard/scheduled': typeof AuthenticatedDashboardScheduledRoute
   '/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
+  '/dashboard/verify': typeof AuthenticatedDashboardVerifyRoute
   '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -414,6 +423,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/_authenticated/dashboard/scheduled': typeof AuthenticatedDashboardScheduledRoute
   '/_authenticated/dashboard/searches': typeof AuthenticatedDashboardSearchesRoute
+  '/_authenticated/dashboard/verify': typeof AuthenticatedDashboardVerifyRoute
   '/_authenticated/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/_authenticated/dashboard/won': typeof AuthenticatedDashboardWonRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -460,6 +470,7 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/dashboard/scheduled'
     | '/dashboard/searches'
+    | '/dashboard/verify'
     | '/dashboard/watched'
     | '/dashboard/won'
     | '/admin/'
@@ -502,6 +513,7 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/dashboard/scheduled'
     | '/dashboard/searches'
+    | '/dashboard/verify'
     | '/dashboard/watched'
     | '/dashboard/won'
     | '/admin'
@@ -547,6 +559,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/profile'
     | '/_authenticated/dashboard/scheduled'
     | '/_authenticated/dashboard/searches'
+    | '/_authenticated/dashboard/verify'
     | '/_authenticated/dashboard/watched'
     | '/_authenticated/dashboard/won'
     | '/_authenticated/admin/'
@@ -724,6 +737,13 @@ declare module '@tanstack/react-router' {
       path: '/watched'
       fullPath: '/dashboard/watched'
       preLoaderRoute: typeof AuthenticatedDashboardWatchedRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/verify': {
+      id: '/_authenticated/dashboard/verify'
+      path: '/verify'
+      fullPath: '/dashboard/verify'
+      preLoaderRoute: typeof AuthenticatedDashboardVerifyRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/searches': {
@@ -919,6 +939,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardProfileRoute: typeof AuthenticatedDashboardProfileRoute
   AuthenticatedDashboardScheduledRoute: typeof AuthenticatedDashboardScheduledRoute
   AuthenticatedDashboardSearchesRoute: typeof AuthenticatedDashboardSearchesRoute
+  AuthenticatedDashboardVerifyRoute: typeof AuthenticatedDashboardVerifyRoute
   AuthenticatedDashboardWatchedRoute: typeof AuthenticatedDashboardWatchedRoute
   AuthenticatedDashboardWonRoute: typeof AuthenticatedDashboardWonRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
@@ -938,6 +959,7 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardProfileRoute: AuthenticatedDashboardProfileRoute,
     AuthenticatedDashboardScheduledRoute: AuthenticatedDashboardScheduledRoute,
     AuthenticatedDashboardSearchesRoute: AuthenticatedDashboardSearchesRoute,
+    AuthenticatedDashboardVerifyRoute: AuthenticatedDashboardVerifyRoute,
     AuthenticatedDashboardWatchedRoute: AuthenticatedDashboardWatchedRoute,
     AuthenticatedDashboardWonRoute: AuthenticatedDashboardWonRoute,
     AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
