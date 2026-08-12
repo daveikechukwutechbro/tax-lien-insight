@@ -41,6 +41,8 @@ export const auctionsListQuery = queryOptions({
     });
   },
   staleTime: 30_000,
+  retry: 2,
+  retryDelay: 500,
 });
 
 export type AuctionDetail = {
