@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 
 export type ScheduledPropertyRow = {
   lien_id: string;

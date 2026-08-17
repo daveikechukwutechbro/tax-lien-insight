@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 import { useSession } from "@/hooks/use-session";
 import { profileQuery } from "@/lib/queries/dashboard";
 import { useEffect, useState } from "react";
@@ -33,7 +33,7 @@ function Profile() {
   }
 
   async function claimAdmin() {
-    const { data, error } = await supabase.rpc("claim_first_admin");
+    const { data, error } = await supabase.rpc("claim_first_admin", { _bootstrap_secret: "" });
     if (error) return toast.error(error.message);
     if (data) { toast.success("You are now an admin"); qc.invalidateQueries({ queryKey: ["is-admin"] }); }
     else toast.error("An admin already exists");

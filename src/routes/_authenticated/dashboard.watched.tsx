@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "@/hooks/use-session";
 import { watchlistQuery } from "@/lib/queries/dashboard";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 import { Bookmark, CalendarDays, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 

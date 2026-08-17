@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 import { useSession } from "@/hooks/use-session";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -47,6 +47,7 @@ function Verify() {
         const path = `kyc/${user.id}/${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
         const up = await supabase.storage.from("documents").upload(path, file, { upsert: false });
         if (up.error) throw up.error;
+        if (!up.data) throw new Error("Upload failed");
         id_document_path = up.data.path;
       }
       const { error } = await supabase.from("kyc_submissions").insert({
@@ -141,33 +142,98 @@ function Verify() {
       {submissions.length > 0 && (
         <div className="mt-8">
           <h2 className="font-display text-lg font-600 text-navy">Submission history</h2>
-          <div className="mt-3 overflow-hidden rounded-xl border border-hairline bg-surface">
-            {isLoading ? <p className="p-6 text-center text-sm text-ink-muted">Loading…</p> : (
-              <table className="w-full text-sm">
-                <thead className="border-b border-hairline bg-surface-alt text-left text-xs uppercase tracking-wider text-ink-muted">
-                  <tr><th className="px-4 py-2">Date</th><th className="px-4 py-2">Name</th><th className="px-4 py-2">Status</th><th className="px-4 py-2">Notes</th></tr>
-                </thead>
-                <tbody>
-                  {submissions.map((s) => (
-                    <tr key={s.id} className="border-b border-hairline/50 last:border-0">
-                      <td className="px-4 py-2 text-xs">{new Date(s.created_at).toLocaleString()}</td>
-                      <td className="px-4 py-2">{s.legal_name}</td>
-                      <td className="px-4 py-2">
-                        {s.status === "approved" && <span className="inline-flex items-center gap-1 text-success"><CheckCircle2 className="size-3.5" /> Approved</span>}
-                        {s.status === "pending" && <span className="inline-flex items-center gap-1 text-gold"><Clock className="size-3.5" /> Pending</span>}
-                        {s.status === "rejected" && <span className="inline-flex items-center gap-1 text-destructive"><XCircle className="size-3.5" /> Rejected</span>}
-                      </td>
-                      <td className="px-4 py-2 text-xs text-ink-muted">{s.admin_notes ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+          {isLoading ? (
+            <p className="mt-3 rounded-xl border border-hairline bg-surface p-8 text-center text-sm text-ink-muted">
+              Loading…
+            </p>
+          ) : (
+            <>
+              {/* Mobile cards */}
+              <div className="mt-3 space-y-3 sm:hidden">
+                {submissions.map((s) => (
+                  <div
+                    key={s.id}
+                    className="rounded-xl border border-hairline bg-surface p-4"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-600 text-navy">{s.legal_name}</div>
+                        <div className="text-xs text-ink-muted">
+                          {new Date(s.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                      <SubmissionStatus status={s.status} />
+                    </div>
+                    <div className="mt-2 text-xs text-ink-muted">
+                      {s.admin_notes ?? "—"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table */}
+              <div className="mt-3 hidden sm:block">
+                <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="border-b border-hairline bg-surface-alt text-left text-xs uppercase tracking-wider text-ink-muted">
+                        <tr>
+                          <th className="px-4 py-2">Date</th>
+                          <th className="px-4 py-2">Name</th>
+                          <th className="px-4 py-2">Status</th>
+                          <th className="px-4 py-2">Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {submissions.map((s) => (
+                          <tr
+                            key={s.id}
+                            className="border-b border-hairline/50 last:border-0"
+                          >
+                            <td className="px-4 py-2 text-xs">
+                              {new Date(s.created_at).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-2">{s.legal_name}</td>
+                            <td className="px-4 py-2">
+                              <SubmissionStatus status={s.status} />
+                            </td>
+                            <td className="px-4 py-2 text-xs text-ink-muted">
+                              {s.admin_notes ?? "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       <style>{`.input{height:36px;border-radius:6px;border:1px solid var(--hairline);background:var(--surface);padding:0 10px;font-size:14px;width:100%;display:block}`}</style>
     </div>
   );
+}
+
+function SubmissionStatus({ status }: { status: string }) {
+  if (status === "approved")
+    return (
+      <span className="inline-flex items-center gap-1 text-success">
+        <CheckCircle2 className="size-3.5" /> Approved
+      </span>
+    );
+  if (status === "pending")
+    return (
+      <span className="inline-flex items-center gap-1 text-gold">
+        <Clock className="size-3.5" /> Pending
+      </span>
+    );
+  if (status === "rejected")
+    return (
+      <span className="inline-flex items-center gap-1 text-destructive">
+        <XCircle className="size-3.5" /> Rejected
+      </span>
+    );
+  return <span className="capitalize text-ink-muted">{status}</span>;
 }

@@ -1,13 +1,21 @@
 import { Link } from "@tanstack/react-router";
 import {
   LayoutDashboard, Gavel, Bookmark, Trophy, XCircle, CalendarClock,
-  Receipt, CreditCard, Wallet, UserRound, Bell, Search, FileText, MessageSquare, LogOut, ShieldCheck, BadgeCheck,
+  Receipt, CreditCard, Wallet, UserRound, Bell, Search, FileText, MessageSquare, LogOut, ShieldCheck, BadgeCheck, ChevronDown, User, Settings, Image,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAdminQuery, profileQuery } from "@/lib/queries/dashboard";
 import { useRouter } from "@tanstack/react-router";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 type Item = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 const items: Item[] = [
@@ -36,7 +44,7 @@ export function DashboardSidebar() {
   const { data: isAdmin } = useQuery(isAdminQuery(user?.id));
 
   const displayName = profile?.full_name ?? user?.email?.split("@")[0] ?? "Bidder";
-  const initials = displayName.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  const initials = displayName.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase();
 
   async function signOut() {
     await qc.cancelQueries();
@@ -47,20 +55,50 @@ export function DashboardSidebar() {
 
   return (
     <aside className="w-full shrink-0 lg:w-[240px]">
-      <div className="rounded-xl border border-hairline bg-surface p-4">
-        <div className="flex items-center gap-3">
-          <span className="grid size-12 place-items-center rounded-full bg-navy text-sm font-600 text-gold">
-            {initials}
-          </span>
-          <div className="min-w-0">
-            <div className="truncate font-600 text-navy">{displayName}</div>
-            <div className="flex items-center gap-1 text-xs text-ink-muted">
-              Investor Member
-              {profile?.verified && <span className="ml-1 rounded bg-success-soft px-1.5 py-0.5 text-[10px] font-600 text-success">Verified</span>}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="rounded-xl border border-hairline bg-surface p-4">
+            <div className="flex items-center gap-3">
+              <span className="grid size-12 place-items-center rounded-full bg-navy text-sm font-600 text-gold">
+                {initials}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-600 text-navy flex items-center gap-1">
+                  {displayName}
+                  <ChevronDown className="size-4 text-ink-muted" />
+                </div>
+                <div className="flex items-center gap-1 text-xs text-ink-muted">
+                  Investor Member
+                  {profile?.verified && <span className="ml-1 rounded bg-success-soft px-1.5 py-0.5 text-[10px] font-600 text-success">Verified</span>}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuLabel className="px-2 py-1 text-xs font-medium text-ink-muted">
+            {displayName}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/dashboard/profile" className="flex items-center gap-2">
+              <User className="size-4" /> View Profile
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/dashboard/profile" className="flex items-center gap-2">
+              <Settings className="size-4" /> Edit Profile
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="flex items-center gap-2">
+            <Image className="size-4" /> Upload Photo
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+            <LogOut className="size-4" /> Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <nav className="mt-3 rounded-xl border border-hairline bg-surface p-2 text-sm">
         {items.map(({ to, label, icon: Icon, exact }) => (

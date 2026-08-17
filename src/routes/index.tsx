@@ -358,9 +358,17 @@ function PropertyTable({ properties }: { properties: ScheduledPropertyRow[] }) {
       <h2 className="mb-3 font-display text-lg font-600 text-navy">
         Scheduled Properties ({properties.length})
       </h2>
-      <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] text-sm">
+      {/* Mobile cards */}
+      <div className="space-y-3 sm:hidden">
+        {properties.map((p) => (
+          <PropertyCard key={p.lien_id} p={p} fmt={fmt} />
+        ))}
+      </div>
+      {/* Desktop table */}
+      <div className="hidden sm:block">
+        <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[960px] text-sm">
             <thead>
               <tr className="border-b border-hairline bg-surface-alt text-left text-xs font-600 uppercase tracking-wider text-ink-muted">
                 <th className="px-5 py-3">Property Details</th>
@@ -439,7 +447,63 @@ function PropertyTable({ properties }: { properties: ScheduledPropertyRow[] }) {
           </table>
         </div>
       </div>
+      </div>
     </section>
+  );
+}
+
+function PropertyCard({ p, fmt }: { p: ScheduledPropertyRow; fmt: (n: number) => string }) {
+  return (
+    <div className="rounded-xl border border-hairline bg-surface p-4">
+      <div className="flex items-center gap-3">
+        {p.image_url ? (
+          <img
+            src={p.image_url}
+            alt={`${p.address} exterior`}
+            loading="lazy"
+            className="size-12 rounded-md object-cover"
+          />
+        ) : (
+          <div className="size-12 rounded-md bg-surface-alt" />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="font-600 text-navy">{p.address}</div>
+          <div className="text-xs text-ink-muted">
+            {p.city}, {p.state} {p.zip}
+          </div>
+          <div className="text-xs text-ink-muted">
+            {p.description ?? p.property_type}
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <div className="text-xs text-ink-muted">Taxes Owed</div>
+          <div className="font-600 text-navy tabular-nums">{fmt(p.taxes_owed)}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-ink-muted">Interest Rate</div>
+          <div className="font-600 text-navy tabular-nums">{(p.current_rate ?? p.starting_rate).toFixed(2)}%</div>
+        </div>
+        <div>
+          <div className="text-xs text-ink-muted">Min. Bid</div>
+          <div className="font-600 text-navy tabular-nums">{fmt(p.min_bid)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-ink-muted">Status</div>
+          <StatusPill status={p.auction_status} />
+        </div>
+      </div>
+      <div className="mt-3">
+        <Link
+          to="/properties/$id"
+          params={{ id: p.property_id }}
+          className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-xs font-500 text-ink transition-colors hover:border-navy hover:text-navy"
+        >
+          <Eye className="size-3.5" /> View Details
+        </Link>
+      </div>
+    </div>
   );
 }
 

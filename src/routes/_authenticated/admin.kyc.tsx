@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -32,6 +32,7 @@ function KycAdmin() {
     if (!path) return toast.error("No document uploaded");
     const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 300);
     if (error) return toast.error(error.message);
+    if (!data) return;
     window.open(data.signedUrl, "_blank");
   }
 

@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
-import { Wallet, CreditCard, Trophy, Gavel, ArrowRight, CalendarDays } from "lucide-react";
+import { Wallet, CreditCard, Trophy, Gavel, ArrowRight, CalendarDays, Lock, Receipt, Award, BadgeCheck } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { myBidsQuery, watchlistQuery, profileQuery } from "@/lib/queries/dashboard";
+import { myBidsQuery, watchlistQuery, profileQuery, dashboardSummaryQuery } from "@/lib/queries/dashboard";
 import { scheduledAuctionQuery } from "@/lib/queries/auctions";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
@@ -17,11 +17,10 @@ function DashboardOverview() {
   const { data: bids = [] } = useQuery(myBidsQuery(user?.id));
   const { data: watched = [] } = useQuery(watchlistQuery(user?.id));
   const { data: profile } = useQuery(profileQuery(user?.id));
+  const { data: summary } = useQuery(dashboardSummaryQuery(user?.id));
 
-  const wonBids = bids.filter((b) => b.status === "won");
   const activeBids = bids.filter((b) => b.status === "winning" || b.status === "outbid");
-  const totalWon = wonBids.reduce((s, b) => s + b.lien.taxes_owed, 0);
-  const totalBids = bids.reduce((s, b) => s + b.lien.taxes_owed, 0);
+  const sf = (v: number | undefined) => fmt(v ?? 0);
 
   return (
     <div>
@@ -33,10 +32,17 @@ function DashboardOverview() {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={<Wallet className="size-5" />} label="Account Balance" value={fmt(Number(profile?.account_balance ?? 0))} accent="text-success" cta="Add Funds" href="/dashboard/funds" />
-        <Stat icon={<CreditCard className="size-5" />} label="Total Paid" value={fmt(totalWon)} cta="View Payment History" href="/dashboard/payments" />
-        <Stat icon={<Trophy className="size-5" />} label="Total Won" value={fmt(totalWon)} subvalue={`${wonBids.length} Properties`} accent="text-warning" cta="View Won Properties" href="/dashboard/won" />
-        <Stat icon={<Gavel className="size-5" />} label="Total Bids" value={fmt(totalBids)} subvalue={`${bids.length} Bids`} cta="View My Bids" href="/dashboard/bids" />
+        <Stat icon={<Wallet className="size-5" />} label="Available USDC" value={sf(summary?.funds.available)} accent="text-success" subvalue={!summary ? "loading…" : undefined} cta="Add Funds" href="/dashboard/funds" />
+        <Stat icon={<Lock className="size-5" />} label="Funds on Hold" value={sf(summary?.funds.held)} subvalue={!summary ? "loading…" : undefined} cta="View Holds" href="/dashboard/funds" />
+        <Stat icon={<Receipt className="size-5" />} label="Pending Payments" value={sf(summary?.payments.pending)} accent="text-warning" subvalue={!summary ? "loading…" : undefined} cta="View Invoices" href="/dashboard/payments" />
+        <Stat icon={<Gavel className="size-5" />} label="Total Bids" value={summary ? String(summary.bids.count) : "…"} subvalue={summary ? `${summary.bids.winning} winning · ${summary.bids.outbid} outbid` : "loading…"} cta="View My Bids" href="/dashboard/bids" />
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat icon={<CreditCard className="size-5" />} label="Total Paid" value={sf(summary?.payments.paid)} cta="Payment History" href="/dashboard/payments" />
+        <Stat icon={<Trophy className="size-5" />} label="Certificates Won" value={summary ? String(summary.awards.count) : "…"} accent="text-warning" value2={summary ? fmt(summary.awards.principal_value) : undefined} cta="Won Properties" href="/dashboard/won" />
+        <Stat icon={<Award className="size-5" />} label="Awaiting Redemption" value={summary ? String(summary.redemptions.active) : "…"} subvalue={summary ? `${summary.redemptions.completed} completed` : undefined} cta="Redemptions" href="/dashboard/history" />
+        <Stat icon={<BadgeCheck className="size-5" />} label="Redeemed Certificates" value={summary ? String(summary.redemptions.completed) : "…"} subvalue={summary ? `Realized interest ${fmt(summary.redemptions.realized_interest)}` : undefined} cta="History" href="/dashboard/history" />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -110,8 +116,8 @@ function DashboardOverview() {
   );
 }
 
-function Stat({ icon, label, value, subvalue, accent, cta, href }: {
-  icon: React.ReactNode; label: string; value: string; subvalue?: string;
+function Stat({ icon, label, value, value2, subvalue, accent, cta, href }: {
+  icon: React.ReactNode; label: string; value: string; value2?: string; subvalue?: string;
   accent?: string; cta: string; href: string;
 }) {
   return (
@@ -121,6 +127,7 @@ function Stat({ icon, label, value, subvalue, accent, cta, href }: {
         {label}
       </div>
       <div className={`mt-3 font-display text-2xl font-600 ${accent ?? "text-navy"}`}>{value}</div>
+      {value2 && <div className="text-sm font-600 text-navy tabular-nums">{value2}</div>}
       {subvalue && <div className="text-xs text-ink-muted">{subvalue}</div>}
       <Link to={href} className="mt-2 inline-flex items-center gap-1 text-xs font-500 text-navy hover:underline">
         {cta} <ArrowRight className="size-3" />

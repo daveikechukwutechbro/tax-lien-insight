@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 
 export type DashboardBid = {
   bid_id: string;
@@ -152,5 +152,31 @@ export function isAdminQuery(userId: string | undefined) {
       if (error) throw error;
       return !!data;
     },
+  });
+}
+
+// Authoritative account/dashboard metrics straight from the backend (issue #16/#17).
+export type DashboardSummary = {
+  bids: { count: number; active: number; winning: number; outbid: number; lost: number };
+  awards: { count: number; principal_value: number };
+  funds: { available: number; held: number; pending: number };
+  payments: { pending: number; paid: number };
+  redemptions: { active: number; completed: number; realized_interest: number };
+  certificates: { pending: number };
+};
+
+export function dashboardSummaryQuery(userId: string | undefined) {
+  return queryOptions({
+    queryKey: ["dashboard-summary", userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<DashboardSummary | null> => {
+      if (!userId) return null;
+      const { data, error } = await supabase.rpc("get_user_dashboard_summary", {
+        _user_id: userId,
+      });
+      if (error) throw error;
+      return (data as unknown as DashboardSummary | null) ?? null;
+    },
+    staleTime: 30_000,
   });
 }

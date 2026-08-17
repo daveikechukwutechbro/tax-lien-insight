@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { propertyDetailQuery, type PropertyDetail as PD } from "@/lib/queries/property-detail";
 import { useSession } from "@/hooks/use-session";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -135,12 +135,23 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
   const [rate, setRate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [remaining, setRemaining] = useState(0);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const { data: profile } = useQuery({
     queryKey: ["profile-verify", user?.id],
     enabled: !!user?.id,
     queryFn: async () => (await supabase.from("profiles").select("verified, account_balance").eq("id", user!.id).maybeSingle()).data,
   });
   const isVerified = !!profile?.verified;
+
+  const { data: eligibility } = useQuery<{ eligible: boolean; reasons: string[] } | null>({
+    queryKey: ["bid-eligibility", user?.id, lien?.id],
+    enabled: !!user?.id && !!lien?.id,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_bid_eligibility", { _user_id: user!.id, _lien_id: lien!.id });
+      return (data as unknown as { eligible: boolean; reasons: string[] } | null) ?? null;
+    },
+    staleTime: 15_000,
+  });
 
   useEffect(() => {
     if (!hydrated || !auction) return;
@@ -153,15 +164,26 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
   async function placeBid(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return toast.error("Sign in to place a bid");
-    if (!isVerified) return toast.error("Complete identity verification to place bids");
     if (!lien) return;
     setSubmitting(true);
-    const { error } = await supabase.rpc("place_bid", { _lien_id: lien.id, _interest_rate: Number(rate) });
+    setErrorCode(null);
+    const requestId = `${user.id}:${lien.id}:${Date.now()}`;
+    const { data, error } = await supabase.rpc("place_bid_secure", {
+      _lien_id: lien.id,
+      _interest_rate: Number(rate),
+      _request_id: requestId,
+    });
     setSubmitting(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const code = (data as { code?: string } | null)?.code ?? null;
+      setErrorCode(code);
+      const msg = (data as { message?: string } | null)?.message ?? error.message;
+      return toast.error(code ? `${code}: ${msg}` : msg);
+    }
     setRate("");
     qc.invalidateQueries({ queryKey: ["property", property.id] });
     qc.invalidateQueries({ queryKey: ["dashboard", "bids"] });
+    qc.invalidateQueries({ queryKey: ["profile-verify", user.id] });
     toast.success("Bid placed");
   }
 
@@ -169,6 +191,7 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
   const hours = Math.floor((remaining / 3_600_000) % 24);
   const minutes = Math.floor((remaining / 60_000) % 60);
   const isLive = auction?.status === "live";
+  const eligReasons: string[] = eligibility?.reasons ?? [];
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
@@ -198,16 +221,40 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
 
         {lien && isLive ? (
           <form onSubmit={placeBid} className="mt-4 space-y-2 border-t border-hairline pt-4">
-            {!isVerified && user && (
+            {user && eligReasons.length > 0 && (
               <div className="rounded-md border border-gold/40 bg-gold/10 p-3 text-xs text-navy">
-                Identity verification required. <Link to="/dashboard/verify" className="font-600 underline">Verify now →</Link>
+                <div className="font-600">Not eligible to bid</div>
+                <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                  {eligReasons.map((r) => {
+                    const links: Record<string, string> = {
+                      KYC_REQUIRED: "/dashboard/verify",
+                      REGISTRATION_REQUIRED: "/auctions",
+                      INSUFFICIENT_FUNDS: "/dashboard/funds",
+                    };
+                    return (
+                      <li key={r}>
+                        {r}
+                        {links[r] && (
+                          <>
+                            {" "}· <Link to={links[r]} className="font-600 underline">Fix →</Link>
+                          </>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             )}
             <label className="text-xs uppercase tracking-wider text-ink-muted">Your Interest Rate (%)</label>
             <input type="number" step="0.25" min="0" max={lien.starting_rate} required value={rate} onChange={(e) => setRate(e.target.value)} className="h-10 w-full rounded-md border border-hairline px-3 text-sm" />
-            <button type="submit" disabled={submitting || !isVerified} className="h-10 w-full rounded-md bg-navy text-sm font-600 text-primary-foreground disabled:opacity-60">
+            <button type="submit" disabled={submitting || !isVerified || (eligReasons.length > 0)} className="h-10 w-full rounded-md bg-navy text-sm font-600 text-primary-foreground disabled:opacity-60">
               {submitting ? "Placing…" : "Place Bid"}
             </button>
+            {errorCode && (
+              <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                {errorCode} — the bid was rejected. See the message above for details.
+              </div>
+            )}
           </form>
         ) : lien && (
           <div className="mt-4 rounded-md border border-hairline bg-surface-alt p-3 text-xs text-ink-muted">

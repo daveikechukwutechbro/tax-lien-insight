@@ -1,12 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
+import type { LienStatus } from "@/integrations/firebase/types";
 import { Trash2 } from "lucide-react";
-
-type LienStatus = Database["public"]["Enums"]["lien_status"];
 
 export const Route = createFileRoute("/_authenticated/admin/liens")({
   component: LiensAdmin,

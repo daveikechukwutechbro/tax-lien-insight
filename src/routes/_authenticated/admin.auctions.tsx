@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
+import type { AuctionStatus } from "@/integrations/firebase/types";
 
-type Status = Database["public"]["Enums"]["auction_status"];
+type Status = AuctionStatus;
 
 export const Route = createFileRoute("/_authenticated/admin/auctions")({
   component: AuctionsAdmin,

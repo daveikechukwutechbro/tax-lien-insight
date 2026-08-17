@@ -2,8 +2,10 @@ import { createFileRoute, Link, useRouter, useSearch } from "@tanstack/react-rou
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 import { lovable } from "@/integrations/lovable";
+import { enableDemoMode, disableDemoMode, isDemoMode } from "@/integrations/firebase/mock";
+import { isFirebaseConfigured as firebaseConfigured } from "@/integrations/firebase";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
 
@@ -43,22 +45,34 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      if (isSignup) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-            data: { full_name: fullName },
-          },
-        });
-        if (error) throw error;
-        toast.success("Account created — you're signed in.");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("Welcome back.");
-      }
+      // Real Firebase auth is used whenever configured; otherwise the forms
+      // fall back to the in-memory demo account for local browsing.
+      disableDemoMode();
+      const result = isSignup
+        ? await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signInWithPassword({ email, password });
+      const { error } = result as { error: unknown };
+      if (error) throw error;
+      toast.success(isSignup ? "Account created — you're signed in." : "Welcome back.");
+      router.navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function signInAsDemo() {
+    setBusy(true);
+    try {
+      enableDemoMode();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: "demo@taxlieninsight.com",
+        password: "demo",
+      });
+      if (error) throw error;
+      toast.success("Signed in to demo account.");
       router.navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -71,14 +85,25 @@ function AuthPage() {
   async function signInWithGoogle() {
     setBusy(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/dashboard`,
-      });
-      if (result.error) {
-        toast.error(result.error.message ?? "Google sign-in failed");
-        return;
+      if (firebaseConfigured()) {
+        // Real Firebase OAuth popup.
+        disableDemoMode();
+        const res = await (supabase.auth as unknown as {
+          signInWithGoogle: () => Promise<{ error: unknown }>;
+        }).signInWithGoogle();
+        if (res.error) throw res.error;
+        toast.success("Signed in with Google.");
+      } else {
+        // Not configured — fall back to the demo account.
+        enableDemoMode();
+        toast.success("Signed in to demo account (Google not configured).");
       }
-      if (result.redirected) return;
+      router.navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // If the popup/flow failed for any reason, allow demo browsing.
+      if (!isDemoMode()) enableDemoMode();
+      toast.success("Signed in to demo account (Google unavailable).");
       router.navigate({ to: "/dashboard", replace: true });
     } finally {
       setBusy(false);
@@ -110,7 +135,16 @@ function AuthPage() {
           <span className="h-px flex-1 bg-hairline" /> or <span className="h-px flex-1 bg-hairline" />
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-3">
+        <button
+          type="button"
+          onClick={signInAsDemo}
+          disabled={busy}
+          className="mt-1 flex w-full items-center justify-center gap-2 rounded-md bg-navy/5 px-4 py-2.5 text-sm font-600 text-navy transition-colors hover:bg-navy/10 disabled:opacity-60"
+        >
+          Continue as Demo Account
+        </button>
+
+        <form onSubmit={onSubmit} className="mt-5 space-y-3">
           {isSignup && (
             <Field label="Full name">
               <input

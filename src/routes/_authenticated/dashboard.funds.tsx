@@ -7,7 +7,7 @@ import {
   Lock, ArrowRight, Wallet, Send, BadgeCheck, PiggyBank, Copy,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 import { profileQuery } from "@/lib/queries/dashboard";
 import {
   NETWORKS, NETWORK_DISPLAY, QUICK_AMOUNTS, USDC_ADDRESSES, type NetworkKey,
@@ -289,22 +289,57 @@ function FundsPage() {
         {rows.length === 0 ? (
           <p className="p-8 text-center text-sm text-ink-muted">No requests yet.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="border-b border-hairline bg-surface-alt text-left text-xs uppercase tracking-wider text-ink-muted">
-              <tr><th className="px-4 py-2">Date</th><th className="px-4 py-2">Type</th><th className="px-4 py-2">Amount</th><th className="px-4 py-2">Method</th><th className="px-4 py-2">Status</th></tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Mobile cards */}
+            <div className="space-y-3 sm:hidden">
               {rows.map((r) => (
-                <tr key={r.id} className="border-b border-hairline/50 last:border-0">
-                  <td className="px-4 py-2 text-xs">{new Date(r.created_at).toLocaleDateString()}</td>
-                  <td className="px-4 py-2 capitalize">{r.kind}</td>
-                  <td className="px-4 py-2 font-600">{fmt(Number(r.amount))}</td>
-                  <td className="px-4 py-2 text-xs">{r.method}</td>
-                  <td className="px-4 py-2"><StatusPill s={r.status} /></td>
-                </tr>
+                <div key={r.id} className="border-b border-hairline/60 p-4 last:border-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-600 capitalize text-navy">{r.kind}</div>
+                      <div className="text-xs text-ink-muted">{r.method}</div>
+                      <div className="text-xs text-ink-muted">
+                        {new Date(r.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-600 text-navy">{fmt(Number(r.amount))}</div>
+                      <StatusPill s={r.status} />
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+            {/* Desktop table */}
+            <div className="hidden sm:block">
+              <table className="w-full text-sm">
+                <thead className="border-b border-hairline bg-surface-alt text-left text-xs uppercase tracking-wider text-ink-muted">
+                  <tr>
+                    <th className="px-4 py-2">Date</th>
+                    <th className="px-4 py-2">Type</th>
+                    <th className="px-4 py-2">Amount</th>
+                    <th className="px-4 py-2">Method</th>
+                    <th className="px-4 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id} className="border-b border-hairline/50 last:border-0">
+                      <td className="px-4 py-2 text-xs">
+                        {new Date(r.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2 capitalize">{r.kind}</td>
+                      <td className="px-4 py-2 font-600">{fmt(Number(r.amount))}</td>
+                      <td className="px-4 py-2 text-xs">{r.method}</td>
+                      <td className="px-4 py-2">
+                        <StatusPill s={r.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
       <style>{`.input{height:36px;border-radius:6px;border:1px solid var(--hairline);background:var(--surface);padding:0 10px;font-size:14px;width:100%;display:block}`}</style>

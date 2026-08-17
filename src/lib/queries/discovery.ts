@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/firebase/client";
 
 export type AuctionListRow = {
   id: string;
@@ -98,7 +98,7 @@ export function auctionDetailQuery(id: string) {
           starting_rate: Number(l.starting_rate),
           current_rate: l.current_rate === null ? null : Number(l.current_rate),
         })),
-      } as AuctionDetail;
+      } as unknown as AuctionDetail;
     },
   });
 }
