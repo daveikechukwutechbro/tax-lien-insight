@@ -23,15 +23,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-  SheetOverlay,
-  SheetClose,
-} from "@/components/ui/sheet";
+import { Sheet, SheetTrigger, SheetContent, SheetOverlay, SheetClose } from "@/components/ui/sheet";
 
-const nav = [
+type NavItem = { to: string; label: string; adminOnly?: boolean };
+
+const nav: NavItem[] = [
   { to: "/auctions", label: "Auctions" },
   { to: "/states", label: "By State" },
   { to: "/search", label: "Search Properties" },
@@ -39,7 +35,8 @@ const nav = [
   { to: "/resources", label: "Resources" },
   { to: "/help", label: "Help" },
   { to: "/about", label: "About Us" },
-] as const;
+  { to: "/admin", label: "Admin", adminOnly: true },
+];
 
 export function SiteHeader() {
   const { user, loading } = useSession();
@@ -72,16 +69,18 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">
-          {nav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="text-sm font-500 text-ink transition-colors hover:text-navy"
-              activeProps={{ className: "text-navy" }}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {nav
+            .filter((item) => !(item.adminOnly && !isAdmin))
+            .map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`text-sm font-500 text-ink transition-colors hover:text-navy ${item.adminOnly ? "text-navy" : ""}`}
+                activeProps={{ className: "text-navy" }}
+              >
+                {item.label}
+              </Link>
+            ))}
           {!loading && user && (
             <Link
               to="/dashboard"
@@ -108,17 +107,19 @@ export function SiteHeader() {
             <SheetOverlay />
             <SheetContent side="left" className="w-[260px]">
               <nav className="flex h-[calc(100vh-4rem)] flex-col gap-1 py-4">
-                {nav.map((item) => (
-                  <SheetClose key={item.to} asChild>
-                    <Link
-                      to={item.to}
-                      className="flex items-center gap-3 rounded-md border-b border-hairline px-4 py-3 text-sm font-500 text-ink transition-colors hover:bg-surface-alt"
-                      activeProps={{ className: "text-navy" }}
-                    >
-                      {item.label}
-                    </Link>
-                  </SheetClose>
-                ))}
+                {nav
+                  .filter((item) => !(item.adminOnly && !isAdmin))
+                  .map((item) => (
+                    <SheetClose key={item.to} asChild>
+                      <Link
+                        to={item.to}
+                        className="flex items-center gap-3 rounded-md border-b border-hairline px-4 py-3 text-sm font-500 text-ink transition-colors hover:bg-surface-alt"
+                        activeProps={{ className: "text-navy" }}
+                      >
+                        {item.label}
+                      </Link>
+                    </SheetClose>
+                  ))}
                 {!loading && user && (
                   <SheetClose asChild>
                     <Link
@@ -181,7 +182,10 @@ export function SiteHeader() {
                     <Image className="size-4" /> Upload Photo
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+                  <DropdownMenuItem
+                    onClick={signOut}
+                    className="text-destructive focus:text-destructive"
+                  >
                     <LogOut className="size-4" /> Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>

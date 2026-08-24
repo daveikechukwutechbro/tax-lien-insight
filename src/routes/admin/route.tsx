@@ -1,8 +1,22 @@
 import { createFileRoute, Outlet, Link, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/firebase/client";
-import { ShieldCheck, LayoutDashboard, MapPin, Home, Gavel, FileText, Wallet, Users, ClipboardCheck, ScrollText, Activity, Files, BadgeCheck } from "lucide-react";
+import {
+  ShieldCheck,
+  LayoutDashboard,
+  MapPin,
+  Home,
+  Gavel,
+  FileText,
+  Wallet,
+  Users,
+  ClipboardCheck,
+  ScrollText,
+  Activity,
+  Files,
+  BadgeCheck,
+} from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin")({
+export const Route = createFileRoute("/admin")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/auth" });
@@ -53,7 +67,9 @@ function AdminLayout() {
               </Link>
             ))}
           </nav>
-          <div className="min-w-0"><Outlet /></div>
+          <div className="min-w-0">
+            <Outlet />
+          </div>
         </div>
       </div>
     </div>

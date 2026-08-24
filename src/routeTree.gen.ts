@@ -20,15 +20,26 @@ import { Route as FaqRouteImport } from './routes/faq'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuctionsRouteImport } from './routes/auctions'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as StatesStateRouteImport } from './routes/states.$state'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as AuctionsIdRouteImport } from './routes/auctions.$id'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminRegistrationsRouteImport } from './routes/admin/registrations'
+import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
+import { Route as AdminLiensRouteImport } from './routes/admin/liens'
+import { Route as AdminKycRouteImport } from './routes/admin/kyc'
+import { Route as AdminFundsRouteImport } from './routes/admin/funds'
+import { Route as AdminDocumentsRouteImport } from './routes/admin/documents'
+import { Route as AdminCountiesRouteImport } from './routes/admin/counties'
+import { Route as AdminBidsRouteImport } from './routes/admin/bids'
+import { Route as AdminAuditRouteImport } from './routes/admin/audit'
+import { Route as AdminAuctionsRouteImport } from './routes/admin/auctions'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedDashboardWonRouteImport } from './routes/_authenticated/dashboard.won'
 import { Route as AuthenticatedDashboardWatchedRouteImport } from './routes/_authenticated/dashboard.watched'
 import { Route as AuthenticatedDashboardVerifyRouteImport } from './routes/_authenticated/dashboard.verify'
@@ -43,17 +54,6 @@ import { Route as AuthenticatedDashboardHistoryRouteImport } from './routes/_aut
 import { Route as AuthenticatedDashboardFundsRouteImport } from './routes/_authenticated/dashboard.funds'
 import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
 import { Route as AuthenticatedDashboardBidsRouteImport } from './routes/_authenticated/dashboard.bids'
-import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
-import { Route as AuthenticatedAdminRegistrationsRouteImport } from './routes/_authenticated/admin.registrations'
-import { Route as AuthenticatedAdminPropertiesRouteImport } from './routes/_authenticated/admin.properties'
-import { Route as AuthenticatedAdminLiensRouteImport } from './routes/_authenticated/admin.liens'
-import { Route as AuthenticatedAdminKycRouteImport } from './routes/_authenticated/admin.kyc'
-import { Route as AuthenticatedAdminFundsRouteImport } from './routes/_authenticated/admin.funds'
-import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authenticated/admin.documents'
-import { Route as AuthenticatedAdminCountiesRouteImport } from './routes/_authenticated/admin.counties'
-import { Route as AuthenticatedAdminBidsRouteImport } from './routes/_authenticated/admin.bids'
-import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
-import { Route as AuthenticatedAdminAuctionsRouteImport } from './routes/_authenticated/admin.auctions'
 
 const StatesRoute = StatesRouteImport.update({
   id: '/states',
@@ -110,6 +110,11 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -118,6 +123,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const StatesStateRoute = StatesStateRouteImport.update({
   id: '/$state',
@@ -134,14 +144,64 @@ const AuctionsIdRoute = AuctionsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuctionsRoute,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminRegistrationsRoute = AdminRegistrationsRouteImport.update({
+  id: '/registrations',
+  path: '/registrations',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
+  id: '/properties',
+  path: '/properties',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminLiensRoute = AdminLiensRouteImport.update({
+  id: '/liens',
+  path: '/liens',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminKycRoute = AdminKycRouteImport.update({
+  id: '/kyc',
+  path: '/kyc',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminFundsRoute = AdminFundsRouteImport.update({
+  id: '/funds',
+  path: '/funds',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminDocumentsRoute = AdminDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminCountiesRoute = AdminCountiesRouteImport.update({
+  id: '/counties',
+  path: '/counties',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminBidsRoute = AdminBidsRouteImport.update({
+  id: '/bids',
+  path: '/bids',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAuctionsRoute = AdminAuctionsRouteImport.update({
+  id: '/auctions',
+  path: '/auctions',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardIndexRoute =
@@ -150,11 +210,6 @@ const AuthenticatedDashboardIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
 const AuthenticatedDashboardWonRoute =
   AuthenticatedDashboardWonRouteImport.update({
     id: '/won',
@@ -239,69 +294,10 @@ const AuthenticatedDashboardBidsRoute =
     path: '/bids',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
-const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminRegistrationsRoute =
-  AuthenticatedAdminRegistrationsRouteImport.update({
-    id: '/registrations',
-    path: '/registrations',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminPropertiesRoute =
-  AuthenticatedAdminPropertiesRouteImport.update({
-    id: '/properties',
-    path: '/properties',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminLiensRoute = AuthenticatedAdminLiensRouteImport.update({
-  id: '/liens',
-  path: '/liens',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminKycRoute = AuthenticatedAdminKycRouteImport.update({
-  id: '/kyc',
-  path: '/kyc',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminFundsRoute = AuthenticatedAdminFundsRouteImport.update({
-  id: '/funds',
-  path: '/funds',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminDocumentsRoute =
-  AuthenticatedAdminDocumentsRouteImport.update({
-    id: '/documents',
-    path: '/documents',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminCountiesRoute =
-  AuthenticatedAdminCountiesRouteImport.update({
-    id: '/counties',
-    path: '/counties',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminBidsRoute = AuthenticatedAdminBidsRouteImport.update({
-  id: '/bids',
-  path: '/bids',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminAuctionsRoute =
-  AuthenticatedAdminAuctionsRouteImport.update({
-    id: '/auctions',
-    path: '/auctions',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/auctions': typeof AuctionsRouteWithChildren
   '/auth': typeof AuthRoute
@@ -313,22 +309,22 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/states': typeof StatesRouteWithChildren
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/admin/auctions': typeof AdminAuctionsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/bids': typeof AdminBidsRoute
+  '/admin/counties': typeof AdminCountiesRoute
+  '/admin/documents': typeof AdminDocumentsRoute
+  '/admin/funds': typeof AdminFundsRoute
+  '/admin/kyc': typeof AdminKycRoute
+  '/admin/liens': typeof AdminLiensRoute
+  '/admin/properties': typeof AdminPropertiesRoute
+  '/admin/registrations': typeof AdminRegistrationsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/states/$state': typeof StatesStateRoute
-  '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
-  '/admin/audit': typeof AuthenticatedAdminAuditRoute
-  '/admin/bids': typeof AuthenticatedAdminBidsRoute
-  '/admin/counties': typeof AuthenticatedAdminCountiesRoute
-  '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
-  '/admin/funds': typeof AuthenticatedAdminFundsRoute
-  '/admin/kyc': typeof AuthenticatedAdminKycRoute
-  '/admin/liens': typeof AuthenticatedAdminLiensRoute
-  '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
-  '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
-  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/': typeof AdminIndexRoute
   '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
@@ -343,7 +339,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/verify': typeof AuthenticatedDashboardVerifyRoute
   '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/dashboard/won': typeof AuthenticatedDashboardWonRoute
-  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -359,20 +354,21 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/states': typeof StatesRouteWithChildren
+  '/admin/auctions': typeof AdminAuctionsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/bids': typeof AdminBidsRoute
+  '/admin/counties': typeof AdminCountiesRoute
+  '/admin/documents': typeof AdminDocumentsRoute
+  '/admin/funds': typeof AdminFundsRoute
+  '/admin/kyc': typeof AdminKycRoute
+  '/admin/liens': typeof AdminLiensRoute
+  '/admin/properties': typeof AdminPropertiesRoute
+  '/admin/registrations': typeof AdminRegistrationsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/states/$state': typeof StatesStateRoute
-  '/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
-  '/admin/audit': typeof AuthenticatedAdminAuditRoute
-  '/admin/bids': typeof AuthenticatedAdminBidsRoute
-  '/admin/counties': typeof AuthenticatedAdminCountiesRoute
-  '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
-  '/admin/funds': typeof AuthenticatedAdminFundsRoute
-  '/admin/kyc': typeof AuthenticatedAdminKycRoute
-  '/admin/liens': typeof AuthenticatedAdminLiensRoute
-  '/admin/properties': typeof AuthenticatedAdminPropertiesRoute
-  '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
-  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin': typeof AdminIndexRoute
   '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
@@ -387,13 +383,13 @@ export interface FileRoutesByTo {
   '/dashboard/verify': typeof AuthenticatedDashboardVerifyRoute
   '/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/dashboard/won': typeof AuthenticatedDashboardWonRoute
-  '/admin': typeof AuthenticatedAdminIndexRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/auctions': typeof AuctionsRouteWithChildren
   '/auth': typeof AuthRoute
@@ -405,22 +401,22 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/states': typeof StatesRouteWithChildren
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/admin/auctions': typeof AdminAuctionsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/bids': typeof AdminBidsRoute
+  '/admin/counties': typeof AdminCountiesRoute
+  '/admin/documents': typeof AdminDocumentsRoute
+  '/admin/funds': typeof AdminFundsRoute
+  '/admin/kyc': typeof AdminKycRoute
+  '/admin/liens': typeof AdminLiensRoute
+  '/admin/properties': typeof AdminPropertiesRoute
+  '/admin/registrations': typeof AdminRegistrationsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/states/$state': typeof StatesStateRoute
-  '/_authenticated/admin/auctions': typeof AuthenticatedAdminAuctionsRoute
-  '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
-  '/_authenticated/admin/bids': typeof AuthenticatedAdminBidsRoute
-  '/_authenticated/admin/counties': typeof AuthenticatedAdminCountiesRoute
-  '/_authenticated/admin/documents': typeof AuthenticatedAdminDocumentsRoute
-  '/_authenticated/admin/funds': typeof AuthenticatedAdminFundsRoute
-  '/_authenticated/admin/kyc': typeof AuthenticatedAdminKycRoute
-  '/_authenticated/admin/liens': typeof AuthenticatedAdminLiensRoute
-  '/_authenticated/admin/properties': typeof AuthenticatedAdminPropertiesRoute
-  '/_authenticated/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
-  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/': typeof AdminIndexRoute
   '/_authenticated/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/_authenticated/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
@@ -435,13 +431,13 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/verify': typeof AuthenticatedDashboardVerifyRoute
   '/_authenticated/dashboard/watched': typeof AuthenticatedDashboardWatchedRoute
   '/_authenticated/dashboard/won': typeof AuthenticatedDashboardWonRoute
-  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/about'
     | '/auctions'
     | '/auth'
@@ -453,11 +449,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/sitemap.xml'
     | '/states'
-    | '/admin'
     | '/dashboard'
-    | '/auctions/$id'
-    | '/properties/$id'
-    | '/states/$state'
     | '/admin/auctions'
     | '/admin/audit'
     | '/admin/bids'
@@ -469,6 +461,10 @@ export interface FileRouteTypes {
     | '/admin/properties'
     | '/admin/registrations'
     | '/admin/users'
+    | '/auctions/$id'
+    | '/properties/$id'
+    | '/states/$state'
+    | '/admin/'
     | '/dashboard/bids'
     | '/dashboard/documents'
     | '/dashboard/funds'
@@ -483,7 +479,6 @@ export interface FileRouteTypes {
     | '/dashboard/verify'
     | '/dashboard/watched'
     | '/dashboard/won'
-    | '/admin/'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -499,9 +494,6 @@ export interface FileRouteTypes {
     | '/search'
     | '/sitemap.xml'
     | '/states'
-    | '/auctions/$id'
-    | '/properties/$id'
-    | '/states/$state'
     | '/admin/auctions'
     | '/admin/audit'
     | '/admin/bids'
@@ -513,6 +505,10 @@ export interface FileRouteTypes {
     | '/admin/properties'
     | '/admin/registrations'
     | '/admin/users'
+    | '/auctions/$id'
+    | '/properties/$id'
+    | '/states/$state'
+    | '/admin'
     | '/dashboard/bids'
     | '/dashboard/documents'
     | '/dashboard/funds'
@@ -527,12 +523,12 @@ export interface FileRouteTypes {
     | '/dashboard/verify'
     | '/dashboard/watched'
     | '/dashboard/won'
-    | '/admin'
     | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/admin'
     | '/about'
     | '/auctions'
     | '/auth'
@@ -544,22 +540,22 @@ export interface FileRouteTypes {
     | '/search'
     | '/sitemap.xml'
     | '/states'
-    | '/_authenticated/admin'
     | '/_authenticated/dashboard'
+    | '/admin/auctions'
+    | '/admin/audit'
+    | '/admin/bids'
+    | '/admin/counties'
+    | '/admin/documents'
+    | '/admin/funds'
+    | '/admin/kyc'
+    | '/admin/liens'
+    | '/admin/properties'
+    | '/admin/registrations'
+    | '/admin/users'
     | '/auctions/$id'
     | '/properties/$id'
     | '/states/$state'
-    | '/_authenticated/admin/auctions'
-    | '/_authenticated/admin/audit'
-    | '/_authenticated/admin/bids'
-    | '/_authenticated/admin/counties'
-    | '/_authenticated/admin/documents'
-    | '/_authenticated/admin/funds'
-    | '/_authenticated/admin/kyc'
-    | '/_authenticated/admin/liens'
-    | '/_authenticated/admin/properties'
-    | '/_authenticated/admin/registrations'
-    | '/_authenticated/admin/users'
+    | '/admin/'
     | '/_authenticated/dashboard/bids'
     | '/_authenticated/dashboard/documents'
     | '/_authenticated/dashboard/funds'
@@ -574,13 +570,13 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/verify'
     | '/_authenticated/dashboard/watched'
     | '/_authenticated/dashboard/won'
-    | '/_authenticated/admin/'
     | '/_authenticated/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuctionsRoute: typeof AuctionsRouteWithChildren
   AuthRoute: typeof AuthRoute
@@ -674,6 +670,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -687,6 +690,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/states/$state': {
       id: '/states/$state'
@@ -709,18 +719,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuctionsIdRouteImport
       parentRoute: typeof AuctionsRoute
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/registrations': {
+      id: '/admin/registrations'
+      path: '/registrations'
+      fullPath: '/admin/registrations'
+      preLoaderRoute: typeof AdminRegistrationsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/properties': {
+      id: '/admin/properties'
+      path: '/properties'
+      fullPath: '/admin/properties'
+      preLoaderRoute: typeof AdminPropertiesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/liens': {
+      id: '/admin/liens'
+      path: '/liens'
+      fullPath: '/admin/liens'
+      preLoaderRoute: typeof AdminLiensRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/kyc': {
+      id: '/admin/kyc'
+      path: '/kyc'
+      fullPath: '/admin/kyc'
+      preLoaderRoute: typeof AdminKycRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/funds': {
+      id: '/admin/funds'
+      path: '/funds'
+      fullPath: '/admin/funds'
+      preLoaderRoute: typeof AdminFundsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/documents': {
+      id: '/admin/documents'
+      path: '/documents'
+      fullPath: '/admin/documents'
+      preLoaderRoute: typeof AdminDocumentsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/counties': {
+      id: '/admin/counties'
+      path: '/counties'
+      fullPath: '/admin/counties'
+      preLoaderRoute: typeof AdminCountiesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/bids': {
+      id: '/admin/bids'
+      path: '/bids'
+      fullPath: '/admin/bids'
+      preLoaderRoute: typeof AdminBidsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/auctions': {
+      id: '/admin/auctions'
+      path: '/auctions'
+      fullPath: '/admin/auctions'
+      preLoaderRoute: typeof AdminAuctionsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard/': {
@@ -729,13 +809,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/dashboard/won': {
       id: '/_authenticated/dashboard/won'
@@ -835,118 +908,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardBidsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
-    '/_authenticated/admin/users': {
-      id: '/_authenticated/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/registrations': {
-      id: '/_authenticated/admin/registrations'
-      path: '/registrations'
-      fullPath: '/admin/registrations'
-      preLoaderRoute: typeof AuthenticatedAdminRegistrationsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/properties': {
-      id: '/_authenticated/admin/properties'
-      path: '/properties'
-      fullPath: '/admin/properties'
-      preLoaderRoute: typeof AuthenticatedAdminPropertiesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/liens': {
-      id: '/_authenticated/admin/liens'
-      path: '/liens'
-      fullPath: '/admin/liens'
-      preLoaderRoute: typeof AuthenticatedAdminLiensRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/kyc': {
-      id: '/_authenticated/admin/kyc'
-      path: '/kyc'
-      fullPath: '/admin/kyc'
-      preLoaderRoute: typeof AuthenticatedAdminKycRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/funds': {
-      id: '/_authenticated/admin/funds'
-      path: '/funds'
-      fullPath: '/admin/funds'
-      preLoaderRoute: typeof AuthenticatedAdminFundsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/documents': {
-      id: '/_authenticated/admin/documents'
-      path: '/documents'
-      fullPath: '/admin/documents'
-      preLoaderRoute: typeof AuthenticatedAdminDocumentsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/counties': {
-      id: '/_authenticated/admin/counties'
-      path: '/counties'
-      fullPath: '/admin/counties'
-      preLoaderRoute: typeof AuthenticatedAdminCountiesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/bids': {
-      id: '/_authenticated/admin/bids'
-      path: '/bids'
-      fullPath: '/admin/bids'
-      preLoaderRoute: typeof AuthenticatedAdminBidsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/audit': {
-      id: '/_authenticated/admin/audit'
-      path: '/audit'
-      fullPath: '/admin/audit'
-      preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/auctions': {
-      id: '/_authenticated/admin/auctions'
-      path: '/auctions'
-      fullPath: '/admin/auctions'
-      preLoaderRoute: typeof AuthenticatedAdminAuctionsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
   }
 }
-
-interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminAuctionsRoute: typeof AuthenticatedAdminAuctionsRoute
-  AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
-  AuthenticatedAdminBidsRoute: typeof AuthenticatedAdminBidsRoute
-  AuthenticatedAdminCountiesRoute: typeof AuthenticatedAdminCountiesRoute
-  AuthenticatedAdminDocumentsRoute: typeof AuthenticatedAdminDocumentsRoute
-  AuthenticatedAdminFundsRoute: typeof AuthenticatedAdminFundsRoute
-  AuthenticatedAdminKycRoute: typeof AuthenticatedAdminKycRoute
-  AuthenticatedAdminLiensRoute: typeof AuthenticatedAdminLiensRoute
-  AuthenticatedAdminPropertiesRoute: typeof AuthenticatedAdminPropertiesRoute
-  AuthenticatedAdminRegistrationsRoute: typeof AuthenticatedAdminRegistrationsRoute
-  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
-}
-
-const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminAuctionsRoute: AuthenticatedAdminAuctionsRoute,
-  AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
-  AuthenticatedAdminBidsRoute: AuthenticatedAdminBidsRoute,
-  AuthenticatedAdminCountiesRoute: AuthenticatedAdminCountiesRoute,
-  AuthenticatedAdminDocumentsRoute: AuthenticatedAdminDocumentsRoute,
-  AuthenticatedAdminFundsRoute: AuthenticatedAdminFundsRoute,
-  AuthenticatedAdminKycRoute: AuthenticatedAdminKycRoute,
-  AuthenticatedAdminLiensRoute: AuthenticatedAdminLiensRoute,
-  AuthenticatedAdminPropertiesRoute: AuthenticatedAdminPropertiesRoute,
-  AuthenticatedAdminRegistrationsRoute: AuthenticatedAdminRegistrationsRoute,
-  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
-  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
-}
-
-const AuthenticatedAdminRouteWithChildren =
-  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardBidsRoute: typeof AuthenticatedDashboardBidsRoute
@@ -992,17 +955,49 @@ const AuthenticatedDashboardRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface AdminRouteRouteChildren {
+  AdminAuctionsRoute: typeof AdminAuctionsRoute
+  AdminAuditRoute: typeof AdminAuditRoute
+  AdminBidsRoute: typeof AdminBidsRoute
+  AdminCountiesRoute: typeof AdminCountiesRoute
+  AdminDocumentsRoute: typeof AdminDocumentsRoute
+  AdminFundsRoute: typeof AdminFundsRoute
+  AdminKycRoute: typeof AdminKycRoute
+  AdminLiensRoute: typeof AdminLiensRoute
+  AdminPropertiesRoute: typeof AdminPropertiesRoute
+  AdminRegistrationsRoute: typeof AdminRegistrationsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAuctionsRoute: AdminAuctionsRoute,
+  AdminAuditRoute: AdminAuditRoute,
+  AdminBidsRoute: AdminBidsRoute,
+  AdminCountiesRoute: AdminCountiesRoute,
+  AdminDocumentsRoute: AdminDocumentsRoute,
+  AdminFundsRoute: AdminFundsRoute,
+  AdminKycRoute: AdminKycRoute,
+  AdminLiensRoute: AdminLiensRoute,
+  AdminPropertiesRoute: AdminPropertiesRoute,
+  AdminRegistrationsRoute: AdminRegistrationsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
 
 interface AuctionsRouteChildren {
   AuctionsIdRoute: typeof AuctionsIdRoute
@@ -1030,6 +1025,7 @@ const StatesRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuctionsRoute: AuctionsRouteWithChildren,
   AuthRoute: AuthRoute,
