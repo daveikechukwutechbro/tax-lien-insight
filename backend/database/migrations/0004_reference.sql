@@ -24,41 +24,6 @@ INSERT INTO permissions (name, description) VALUES
   ('system.manage', 'Manage system settings')
 ON CONFLICT (name) DO NOTHING;
 
--- Roles (idempotent: match by name and wire permissions)
-DO $$
-DECLARE
-  r RECORD;
-  perm_id UUID;
-BEGIN
-  FOR r IN SELECT unnest(ARRAY[
-    'bidder','verified_bidder','support_agent','kyc_reviewer','auction_manager',
-    'property_manager','finance_manager','compliance_officer','content_manager',
-    'auditor','admin','super_admin'
-  ]) AS role_name
-  LOOP
-    INSERT INTO roles (name, description)
-    VALUES (r.role_name, r.role_name || ' role')
-    ON CONFLICT (name) DO NOTHING;
-  END LOOP;
-
-  -- Wire permissions per role
-  FOR r IN SELECT unnest(ARRAY[
-    'bidder','verified_bidder','support_agent','kyc_reviewer','auction_manager',
-    'property_manager','finance_manager','compliance_officer','content_manager',
-    'auditor','admin','super_admin'
-  ]) AS role_name
-  LOOP
-    FOR perm_id IN
-      SELECT p.id FROM permissions p
-      WHERE p.name = ANY(get_role_permissions(r.role_name))
-    LOOP
-      INSERT INTO role_permissions (role_id, permission_id)
-      SELECT roles.id, perm_id FROM roles WHERE roles.name = r.role_name
-      ON CONFLICT DO NOTHING;
-    END LOOP;
-  END LOOP;
-END $$;
-
 CREATE OR REPLACE FUNCTION get_role_permissions(role_name TEXT)
 RETURNS TEXT[] AS $$
 BEGIN
@@ -79,3 +44,36 @@ BEGIN
   END;
 END;
 $$ LANGUAGE plpgsql;
+
+DO $$
+DECLARE
+  r RECORD;
+  perm_id UUID;
+BEGIN
+  FOR r IN SELECT unnest(ARRAY[
+    'bidder','verified_bidder','support_agent','kyc_reviewer','auction_manager',
+    'property_manager','finance_manager','compliance_officer','content_manager',
+    'auditor','admin','super_admin'
+  ]) AS role_name
+  LOOP
+    INSERT INTO roles (name, description)
+    VALUES (r.role_name, r.role_name || ' role')
+    ON CONFLICT (name) DO NOTHING;
+  END LOOP;
+
+  FOR r IN SELECT unnest(ARRAY[
+    'bidder','verified_bidder','support_agent','kyc_reviewer','auction_manager',
+    'property_manager','finance_manager','compliance_officer','content_manager',
+    'auditor','admin','super_admin'
+  ]) AS role_name
+  LOOP
+    FOR perm_id IN
+      SELECT p.id FROM permissions p
+      WHERE p.name = ANY(get_role_permissions(r.role_name))
+    LOOP
+      INSERT INTO role_permissions (role_id, permission_id)
+      SELECT roles.id, perm_id FROM roles WHERE roles.name = r.role_name
+      ON CONFLICT DO NOTHING;
+    END LOOP;
+  END LOOP;
+END $$;

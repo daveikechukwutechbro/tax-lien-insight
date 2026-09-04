@@ -447,22 +447,7 @@ CREATE TABLE kyc_events (
 -- ---------------------------------------------------------------------------
 -- Documents
 -- ---------------------------------------------------------------------------
-CREATE TABLE documents (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_id UUID REFERENCES users(id),
-  resource_type TEXT,
-  resource_id UUID,
-  access_scope TEXT NOT NULL DEFAULT 'owner_only'
-    CHECK (access_scope IN ('public','owner_only','auction_participants','certificate_holder','support_only','admin_only','kyc_sensitive','system_internal')),
-  mime_type TEXT,
-  size_bytes BIGINT,
-  checksum TEXT,
-  version INT NOT NULL DEFAULT 1,
-  storage_key TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'active',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+-- documents table already exists (moved to 0001)
 
 CREATE TABLE document_versions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
