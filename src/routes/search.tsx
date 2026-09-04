@@ -68,22 +68,32 @@ function SearchPage() {
             {results.map((r) => {
               const lien = (r.liens as { taxes_owed: number; current_rate: number | null; starting_rate: number }[])?.[0];
               return (
-                <li key={r.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-hairline bg-surface p-4">
-                  {r.image_url ? <img src={r.image_url} alt="" className="size-24 rounded-md object-cover" /> : <div className="size-24 rounded-md bg-surface-alt" />}
-                  <div className="min-w-0 flex-1">
-                    <Link to="/properties/$id" params={{ id: r.id }} className="font-600 text-navy hover:underline">{r.address}</Link>
-                    <div className="text-xs text-ink-muted">{r.city}, {r.state} {r.zip} · {(r.county as { name?: string })?.name} · Parcel {r.parcel_id}</div>
-                    <div className="mt-1 text-xs uppercase tracking-wider text-ink-muted capitalize">{r.property_type}</div>
+                <li key={r.id} className="rounded-xl border border-hairline bg-surface p-4">
+                  <div className="flex flex-wrap items-start gap-4">
+                    {r.image_url ? <img src={r.image_url} alt="" className="size-20 rounded-md object-cover" /> : <div className="size-20 shrink-0 rounded-md bg-surface-alt" />}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                        <Link to="/properties/$id" params={{ id: r.id }} className="font-display text-base font-600 text-navy hover:underline">{r.address}</Link>
+                        <div className="text-xs text-ink-muted capitalize">
+                          {(r.county as { name?: string })?.name} · Parcel {r.parcel_id} · {r.property_type}
+                        </div>
+                      </div>
+                      <div className="mt-0.5 text-sm text-ink">{r.city}, {r.state} {r.zip}</div>
+                      <div className="mt-3 flex flex-wrap gap-x-8 gap-y-2 border-t border-hairline pt-3">
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-ink-muted">Taxes Owed</div>
+                          <div className="mt-0.5 font-600 tabular-nums text-navy">{fmt(lien ? Number(lien.taxes_owed) : null)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-ink-muted">Interest Rate</div>
+                          <div className="mt-0.5 font-600 tabular-nums text-navy">{lien ? `${Number(lien.current_rate ?? lien.starting_rate).toFixed(2)}%` : "—"}</div>
+                        </div>
+                        <div className="ml-auto flex items-center">
+                          <Link to="/properties/$id" params={{ id: r.id }} className="rounded-md border border-hairline px-3 py-1.5 text-sm hover:border-navy hover:text-navy">View</Link>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm">
-                    <div className="text-xs text-ink-muted">Taxes Owed</div>
-                    <div className="font-600 text-navy">{fmt(lien ? Number(lien.taxes_owed) : null)}</div>
-                  </div>
-                  <div className="text-sm">
-                    <div className="text-xs text-ink-muted">Rate</div>
-                    <div className="font-600 text-navy">{lien ? `${Number(lien.current_rate ?? lien.starting_rate).toFixed(2)}%` : "—"}</div>
-                  </div>
-                  <Link to="/properties/$id" params={{ id: r.id }} className="rounded-md border border-hairline px-3 py-1.5 text-sm hover:border-navy hover:text-navy">View</Link>
                 </li>
               );
             })}

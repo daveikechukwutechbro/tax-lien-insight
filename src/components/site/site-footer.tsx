@@ -34,7 +34,7 @@ export function SiteFooter() {
           links={[
             { to: "/auth", label: "Log in" },
             { to: "/auth", label: "Create account" },
-            { to: "/resources", label: "Contact support" },
+            { to: "/support", label: "Contact support" },
           ]}
         />
       </div>

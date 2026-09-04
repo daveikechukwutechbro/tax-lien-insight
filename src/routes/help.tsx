@@ -19,7 +19,7 @@ const cats: { icon: typeof BookOpen; title: string; desc: string; to: string }[]
   { icon: Wallet, title: "Payments & Funds", desc: "Accepted methods, deposit approvals, withdrawals, and processing times.", to: "/faq" },
   { icon: ShieldCheck, title: "Redemption & Payouts", desc: "How redemption works, timelines, and how you get paid.", to: "/glossary" },
   { icon: Landmark, title: "Certificates & Titles", desc: "Certificate issuance, foreclosure timelines, and jurisdictional rules.", to: "/resources" },
-  { icon: LifeBuoy, title: "Contact Support", desc: "Reach the ChicagoTaxLien support team directly from your dashboard.", to: "/dashboard/messages" },
+  { icon: LifeBuoy, title: "Contact Support", desc: "Reach the ChicagoTaxLien support team by email, or message them from your dashboard.", to: "/support" },
 ];
 
 function HelpCenter() {
@@ -45,7 +45,7 @@ function HelpCenter() {
         <div className="mt-10 flex flex-wrap gap-3">
           <Link to="/faq" className="inline-flex items-center gap-2 rounded-md border border-hairline bg-surface px-4 py-2 text-sm font-600 text-navy hover:border-navy"><ScrollText className="size-4" /> FAQ</Link>
           <Link to="/glossary" className="inline-flex items-center gap-2 rounded-md border border-hairline bg-surface px-4 py-2 text-sm font-600 text-navy hover:border-navy"><BookOpen className="size-4" /> Glossary</Link>
-          <Link to="/dashboard/messages" className="inline-flex items-center gap-2 rounded-md bg-navy px-4 py-2 text-sm font-600 text-primary-foreground"><LifeBuoy className="size-4" /> Contact support</Link>
+          <Link to="/support" className="inline-flex items-center gap-2 rounded-md bg-navy px-4 py-2 text-sm font-600 text-primary-foreground"><LifeBuoy className="size-4" /> Contact support</Link>
         </div>
       </section>
     </main>
