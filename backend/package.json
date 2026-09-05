@@ -16,6 +16,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "hono": "^4.6.0",

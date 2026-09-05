@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, Link, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/firebase/client";
+import { getMe } from "@/lib/backend-auth";
 import {
   ShieldCheck,
   LayoutDashboard,
@@ -17,14 +17,13 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
+  ssr: false,
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      _user_id: data.user.id,
-      _role: "admin",
-    });
+    const user = await getMe();
+    if (!user) throw redirect({ to: "/auth" });
+    const isAdmin = user.roles.includes("admin") || user.roles.includes("super_admin");
     if (!isAdmin) throw redirect({ to: "/dashboard" });
+    return { user };
   },
   component: AdminLayout,
 });

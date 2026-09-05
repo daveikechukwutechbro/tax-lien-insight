@@ -9,10 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as StatesRouteImport } from './routes/states'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ResourcesRouteImport } from './routes/resources'
+import { Route as ResetRouteImport } from './routes/reset'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as GlossaryRouteImport } from './routes/glossary'
@@ -55,6 +58,16 @@ import { Route as AuthenticatedDashboardFundsRouteImport } from './routes/_authe
 import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
 import { Route as AuthenticatedDashboardBidsRouteImport } from './routes/_authenticated/dashboard.bids'
 
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatesRoute = StatesRouteImport.update({
   id: '/states',
   path: '/states',
@@ -73,6 +86,11 @@ const SearchRoute = SearchRouteImport.update({
 const ResourcesRoute = ResourcesRouteImport.update({
   id: '/resources',
   path: '/resources',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetRoute = ResetRouteImport.update({
+  id: '/reset',
+  path: '/reset',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
@@ -305,10 +323,13 @@ export interface FileRoutesByFullPath {
   '/glossary': typeof GlossaryRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/reset': typeof ResetRoute
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/states': typeof StatesRouteWithChildren
+  '/support': typeof SupportRoute
+  '/verify': typeof VerifyRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/admin/auctions': typeof AdminAuctionsRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -350,10 +371,13 @@ export interface FileRoutesByTo {
   '/glossary': typeof GlossaryRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/reset': typeof ResetRoute
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/states': typeof StatesRouteWithChildren
+  '/support': typeof SupportRoute
+  '/verify': typeof VerifyRoute
   '/admin/auctions': typeof AdminAuctionsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bids': typeof AdminBidsRoute
@@ -397,10 +421,13 @@ export interface FileRoutesById {
   '/glossary': typeof GlossaryRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/reset': typeof ResetRoute
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/states': typeof StatesRouteWithChildren
+  '/support': typeof SupportRoute
+  '/verify': typeof VerifyRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/admin/auctions': typeof AdminAuctionsRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -445,10 +472,13 @@ export interface FileRouteTypes {
     | '/glossary'
     | '/help'
     | '/how-it-works'
+    | '/reset'
     | '/resources'
     | '/search'
     | '/sitemap.xml'
     | '/states'
+    | '/support'
+    | '/verify'
     | '/dashboard'
     | '/admin/auctions'
     | '/admin/audit'
@@ -490,10 +520,13 @@ export interface FileRouteTypes {
     | '/glossary'
     | '/help'
     | '/how-it-works'
+    | '/reset'
     | '/resources'
     | '/search'
     | '/sitemap.xml'
     | '/states'
+    | '/support'
+    | '/verify'
     | '/admin/auctions'
     | '/admin/audit'
     | '/admin/bids'
@@ -536,10 +569,13 @@ export interface FileRouteTypes {
     | '/glossary'
     | '/help'
     | '/how-it-works'
+    | '/reset'
     | '/resources'
     | '/search'
     | '/sitemap.xml'
     | '/states'
+    | '/support'
+    | '/verify'
     | '/_authenticated/dashboard'
     | '/admin/auctions'
     | '/admin/audit'
@@ -584,15 +620,32 @@ export interface RootRouteChildren {
   GlossaryRoute: typeof GlossaryRoute
   HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  ResetRoute: typeof ResetRoute
   ResourcesRoute: typeof ResourcesRoute
   SearchRoute: typeof SearchRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatesRoute: typeof StatesRouteWithChildren
+  SupportRoute: typeof SupportRoute
+  VerifyRoute: typeof VerifyRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/states': {
       id: '/states'
       path: '/states'
@@ -619,6 +672,13 @@ declare module '@tanstack/react-router' {
       path: '/resources'
       fullPath: '/resources'
       preLoaderRoute: typeof ResourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset': {
+      id: '/reset'
+      path: '/reset'
+      fullPath: '/reset'
+      preLoaderRoute: typeof ResetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-it-works': {
@@ -1033,10 +1093,13 @@ const rootRouteChildren: RootRouteChildren = {
   GlossaryRoute: GlossaryRoute,
   HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
+  ResetRoute: ResetRoute,
   ResourcesRoute: ResourcesRoute,
   SearchRoute: SearchRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatesRoute: StatesRouteWithChildren,
+  SupportRoute: SupportRoute,
+  VerifyRoute: VerifyRoute,
   PropertiesIdRoute: PropertiesIdRoute,
 }
 export const routeTree = rootRouteImport

@@ -215,5 +215,15 @@
     "rootFrontendBuild": "PASS (npm run build)",
     "frontendLintNewFiles": "PASS (eslint src/lib/backend-proxy.ts src/routes/api/v1)"
   },
+  "deployment": {
+    "target": "Cloudflare Workers (backend) + Cloudflare Pages/Workers (frontend) + Neon PostgreSQL",
+    "workerEntry": "backend/src/worker.ts",
+    "dbRuntimeStrategy": "db/pool.ts is runtime-adaptive: @neondatabase/serverless (WebSocket pool) on Cloudflare Workers — full interactive-transaction support preserved; node-postgres on Node/CLI/tests",
+    "pgIsolationOnWorkers": "wrangler.jsonc aliases pg -> src/db/pg-unavailable.ts so node-postgres is never bundled into the Worker",
+    "workerBundleDryRun": "PASS (wrangler deploy --dry-run: 696.12 KiB / gzip 150.17 KiB; stub verified present, no pg internals bundled)",
+    "migration0006": "settlement categories on ledger_entries + partial unique index preventing duplicate USDC credits per (network_code, token_contract, transaction_hash)",
+    "settlementDestinations": "USDC_SETTLEMENT_ADDRESS_PLATFORM / USDC_SETTLEMENT_ADDRESS_PROCEEDS env config — platform revenue never conflated with auction proceeds",
+    "guide": "backend/DEPLOYMENT-cloudflare.md"
+  },
   "notes": "Frontend pages still read from the legacy mock; they were NOT wired to the new backend in this phase per the backend-only directive. The full /api/v1 surface is exposed by the standalone backend (npm run dev in backend/) and proxied through the TanStack app. To connect the UI later, swap the mock client for calls to /api/v1. Registration now creates accounts as pending_verification; login is refused until email verification completes. Run `npm run admin:bootstrap` (requires ADMIN_BOOTSTRAP_SECRET, optional ADMIN_EMAIL/ADMIN_PASSWORD) to create the first super_admin — it refuses once any super_admin exists. Invoice payment debits through an immutable ledger entry inside a transaction (row-locked invoice + account), never a raw balance write."
 }

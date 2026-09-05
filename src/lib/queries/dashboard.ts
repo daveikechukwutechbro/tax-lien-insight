@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { supabase } from "@/integrations/firebase/client";
+import { getMe } from "@/lib/backend-auth";
 
 export type DashboardBid = {
   bid_id: string;
@@ -145,12 +145,9 @@ export function isAdminQuery(userId: string | undefined) {
     enabled: !!userId,
     queryFn: async () => {
       if (!userId) return false;
-      const { data, error } = await supabase.rpc("has_role", {
-        _user_id: userId,
-        _role: "admin",
-      });
-      if (error) throw error;
-      return !!data;
+      const me = await getMe();
+      if (!me) return false;
+      return me.roles.includes("admin") || me.roles.includes("super_admin");
     },
   });
 }

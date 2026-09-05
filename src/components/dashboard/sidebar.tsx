@@ -4,8 +4,8 @@ import {
   Receipt, CreditCard, Wallet, UserRound, Bell, Search, FileText, MessageSquare, LogOut, ShieldCheck, BadgeCheck, ChevronDown, User, Settings, Image,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { supabase } from "@/integrations/firebase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { logout, emitAuthChange } from "@/lib/backend-auth";
 import { isAdminQuery, profileQuery } from "@/lib/queries/dashboard";
 import { useRouter } from "@tanstack/react-router";
 import {
@@ -49,7 +49,8 @@ export function DashboardSidebar() {
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
-    await supabase.auth.signOut();
+    await logout();
+    emitAuthChange();
     router.navigate({ to: "/", replace: true });
   }
 

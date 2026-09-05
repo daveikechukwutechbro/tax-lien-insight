@@ -60,6 +60,13 @@ export const config = {
   blockchainRpcUrl: str("BLOCKCHAIN_RPC_URL"),
   blockchainWebhookSecret: str("BLOCKCHAIN_WEBHOOK_SECRET"),
 
+  // Settlement destinations. NEVER hardcode wallets in source. The platform
+  // must not assume one address receives all money: platform revenue and
+  // auction/tax-sale proceeds are distinct financial categories with
+  // distinct legal owners (see migration 0006 categories).
+  usdcSettlementAddressPlatform: str("USDC_SETTLEMENT_ADDRESS_PLATFORM"),
+  usdcSettlementAddressProceeds: str("USDC_SETTLEMENT_ADDRESS_PROCEEDS"),
+
   objectStorageEndpoint: str("OBJECT_STORAGE_ENDPOINT"),
   objectStorageBucket: str("OBJECT_STORAGE_BUCKET"),
   objectStorageAccessKey: str("OBJECT_STORAGE_ACCESS_KEY"),

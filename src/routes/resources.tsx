@@ -260,18 +260,18 @@ const sections: GuideSection[] = [
       },
       {
         title: "Payment Methods",
-        summary: "Accepted payment options at registration and close.",
+        summary: "Funding your bidding balance with USDC — bank and card options coming soon.",
         body: [
-          "We accept ACH, wire transfer, and Zelle for deposits into your bidding balance. All deposits are verified by our finance team before credit — same-day for wires, typically 1–2 business days for ACH and Zelle.",
-          "Winning auction amounts are deducted from your balance. You may withdraw available funds at any time; withdrawals are processed within 3 business days after approval.",
+          "Your bidding balance is currently funded with USDC (USD Coin), a widely used U.S. dollar-backed stablecoin — 1 USDC is always equal to 1 USD. From the Add Funds page, pick the blockchain network, generate a unique deposit address, and send USDC. Your balance updates once the deposit is confirmed on-chain.",
+          "U.S. bank transfers (ACH and wire) and debit/credit card funding are coming soon while we complete our banking and payment processing integrations. Withdrawals are paid out in USDC to your wallet.",
         ],
         bullets: [
-          "ACH and Zelle: 1–2 business day verification.",
-          "Wire: same-day verification when received before cutoff.",
-          "Winning bids settle from your balance automatically.",
-          "Withdrawals: 3 business days after approval.",
+          "USDC: 1:1 with USD, fast settlement, available 24/7.",
+          "Bank transfers (ACH / wire) and debit/credit cards: coming soon.",
+          "Deposits are verified on-chain before they are credited to your balance.",
+          "Withdrawals are paid out in USDC to your wallet.",
         ],
-        link: { to: "/dashboard/funds", label: "Go to Account Funds" },
+        link: { to: "/dashboard/funds", label: "Go to Add Funds" },
       },
       {
         title: "Support",

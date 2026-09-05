@@ -19,11 +19,14 @@ import {
 import {
   registerUser,
   loginUser,
-  logoutUser,
   verifyEmail,
   requestPasswordReset,
   resetPassword,
+  resendVerification,
   bootstrapAdmin,
+  getCurrentUser,
+  revokeUserSessions,
+  type MeUser,
 } from "../auth/auth.service.js";
 import { assignRole, revokeRole, isAdmin } from "../auth/rbac.js";
 import { listStates, listJurisdictions, getJurisdictionRules } from "../jurisdictions/jurisdictions.service.js";
@@ -178,7 +181,7 @@ export function createApp(): Hono {
     const token = c.req.header("cookie");
     // best-effort; rely on cookie from context
     const ctx = getAuth(c);
-    if (ctx) await logoutUser(ctx.userId).catch(() => {});
+    if (ctx) await revokeUserSessions(ctx.userId).catch(() => {});
     setCookie(c, config.sessionCookieName, "", { maxAge: 0, path: "/" });
     return c.json(json({ success: true }));
   });
@@ -189,10 +192,18 @@ export function createApp(): Hono {
     return c.json(json({ verified: true }));
   });
 
+  app.post("/api/v1/auth/resend-verification", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    if (!body.email) throw new ValidationError("Email is required");
+    const res = await resendVerification(body.email);
+    return c.json(json(res));
+  });
+
   app.post("/api/v1/auth/request-password-reset", async (c) => {
     const body = await c.req.json().catch(() => ({}));
-    await requestPasswordReset(body.email);
-    return c.json(json({ requested: true }));
+    if (!body.email) throw new ValidationError("Email is required");
+    const res = await requestPasswordReset(body.email);
+    return c.json(json(res));
   });
 
   app.post("/api/v1/auth/reset-password", async (c) => {
@@ -208,9 +219,10 @@ export function createApp(): Hono {
   });
 
   // ---- Me ----
-  app.get("/api/v1/me", (c) => {
+  app.get("/api/v1/me", async (c) => {
     const ctx = requireUser(c);
-    return c.json(json({ id: ctx.userId, roles: ctx.roles }));
+    const user = await getCurrentUser(ctx.userId);
+    return c.json(json(user as MeUser));
   });
 
   app.get("/api/v1/me/dashboard", async (c) => {
@@ -669,8 +681,8 @@ export function createApp(): Hono {
       );
       await client.query(
         `INSERT INTO ledger_entries
-           (funds_account_id, entry_type, direction, amount, currency, reference_type, reference_id, balance_after, metadata)
-         VALUES ($1,'purchase','debit',$2,'USDC','invoice',$3,$4,$5)`,
+           (funds_account_id, entry_type, direction, amount, currency, reference_type, reference_id, balance_after, metadata, category)
+         VALUES ($1,'purchase','debit',$2,'USDC','invoice',$3,$4,$5,'auction_proceeds')`,
         [acct.rows[0].id, amount, id, available - amount, JSON.stringify({ invoiceId: id })],
       );
       await client.query(`UPDATE invoices SET status='paid', paid_at=now() WHERE id=$1`, [id]);

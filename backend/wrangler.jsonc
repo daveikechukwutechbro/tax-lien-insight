@@ -1,0 +1,24 @@
+// wrangler configuration for the Tax Lien Insight backend Worker.
+// Secrets (DATABASE_URL, AUTH_SECRET, RESEND_API_KEY, ...) are set via:
+//   npx wrangler secret put DATABASE_URL
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tax-lien-insight-backend",
+  "main": "src/worker.ts",
+  "compatibility_date": "2025-05-05",
+  // node:crypto, bcryptjs (pure JS) and jose rely on this flag.
+  "compatibility_flags": ["nodejs_compat"],
+  // node-postgres cannot run on Workers; alias it out of the bundle.
+  // db/pool.ts selects @neondatabase/serverless in this runtime instead.
+  "alias": {
+    "pg": "./src/db/pg-unavailable.ts",
+    "pg-native": "./src/db/pg-unavailable.ts"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    // Non-secret defaults only. NEVER put real credentials here — use secrets.
+    "ENVIRONMENT": "production"
+  }
+}

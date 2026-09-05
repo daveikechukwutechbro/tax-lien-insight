@@ -160,6 +160,10 @@ class OutboxEmailProvider implements EmailProvider {
   }
 }
 
+export function isEmailConfigured(): boolean {
+  return Boolean(config.resendApiKey && config.emailProvider === "resend") && getEmailProvider() instanceof ResendEmailProvider;
+}
+
 let provider: EmailProvider | null = null;
 export function getEmailProvider(): EmailProvider {
   if (provider) return provider;

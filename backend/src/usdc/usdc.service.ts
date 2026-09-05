@@ -129,6 +129,7 @@ export async function applyConfirmedDeposit(
       referenceType: "crypto_deposit",
       referenceId: depositId,
       idempotencyKey: `deposit:${depositId}`,
+      category: "customer_deposit",
     });
     return { status: "confirmed", creditedCents: v.receivedCents };
   });

@@ -53,7 +53,7 @@ async function ledgerEntry(
   entryType: LedgerEntryType,
   direction: "credit" | "debit",
   amount: Cents,
-  opts: { referenceType?: string; referenceId?: string; idempotencyKey?: string; metadata?: Record<string, unknown> },
+  opts: { referenceType?: string; referenceId?: string; idempotencyKey?: string; metadata?: Record<string, unknown>; category?: string },
 ): Promise<void> {
   if (opts.idempotencyKey) {
     const dup = await client.query(`SELECT id FROM ledger_entries WHERE idempotency_key = $1`, [
@@ -69,8 +69,8 @@ async function ledgerEntry(
   const balanceAfter = Number(acc.available_balance) + Number(acc.held_balance);
   await client.query(
     `INSERT INTO ledger_entries
-       (funds_account_id, entry_type, direction, amount, currency, reference_type, reference_id, idempotency_key, balance_after, metadata)
-     VALUES ($1,$2,$3,$4,'USDC',$5,$6,$7,$8,$9)`,
+       (funds_account_id, entry_type, direction, amount, currency, reference_type, reference_id, idempotency_key, balance_after, metadata, category)
+     VALUES ($1,$2,$3,$4,'USDC',$5,$6,$7,$8,$9,$10)`,
     [
       accountId,
       entryType,
@@ -81,6 +81,7 @@ async function ledgerEntry(
       opts.idempotencyKey ?? null,
       balanceAfter,
       JSON.stringify(opts.metadata ?? {}),
+      opts.category ?? null,
     ],
   );
 }
@@ -89,7 +90,7 @@ export async function credit(
   accountId: string,
   amount: Cents,
   entryType: LedgerEntryType,
-  ref: { referenceType?: string; referenceId?: string; idempotencyKey?: string; metadata?: Record<string, unknown> } = {},
+  ref: { referenceType?: string; referenceId?: string; idempotencyKey?: string; metadata?: Record<string, unknown>; category?: string } = {},
 ): Promise<void> {
   await transaction(async (client) => {
     await client.query(

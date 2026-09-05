@@ -11,8 +11,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { supabase } from "@/integrations/firebase/client";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { logout, emitAuthChange } from "@/lib/backend-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { isAdminQuery } from "@/lib/queries/dashboard";
 import {
@@ -46,7 +46,8 @@ export function SiteHeader() {
 
   async function signOut() {
     await queryClient.cancelQueries();
-    await supabase.auth.signOut();
+    await logout();
+    emitAuthChange();
     queryClient.removeQueries();
     router.navigate({ to: "/", replace: true });
   }

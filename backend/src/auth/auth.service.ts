@@ -3,8 +3,8 @@ import { getPool, transaction, type TxClient } from "../db/pool.js";
 import { hashPassword, verifyPassword, normalizeEmail, isValidEmail } from "./password.js";
 import { createSession, revokeSession, revokeAllUserSessions } from "./session.js";
 import { AppError, ConflictError, NotFoundError, ValidationError, UnauthorizedError } from "../shared/errors.js";
-import { sendEmail } from "../providers/email/index.js";
-import { assignRole } from "./rbac.js";
+import { sendEmail, isEmailConfigured } from "../providers/email/index.js";
+import { assignRole, getUserRoles } from "./rbac.js";
 import { config } from "../shared/config.js";
 import { logger } from "../shared/logger.js";
 
@@ -66,7 +66,22 @@ export async function registerUser(input: RegisterInput, meta: { ip: string; use
     });
 
     logger.info("User registered", { userId: user.id });
-    return { id: user.id, email: user.email };
+
+    // Email provider may be unconfigured (outbox mode). In that case the
+    // verification token can never be delivered, so hand it to the caller so
+    // the frontend can show the verification link directly. Once a real email
+    // provider is configured, the token is NOT returned — it goes by email only.
+    const emailConfigured = isEmailConfigured();
+    if (emailConfigured) {
+      return { id: user.id, email: user.email, status: user.status };
+    }
+    return {
+      id: user.id,
+      email: user.email,
+      status: user.status,
+      verificationToken: token,
+      verificationRequired: true,
+    };
   });
 }
 
@@ -122,6 +137,39 @@ export async function logoutUser(sessionId: string): Promise<void> {
   await revokeSession(sessionId);
 }
 
+export async function getCurrentUser(userId: string) {
+  const { rows } = await getPool().query(
+    `SELECT id, email, full_name, status, email_verified, created_at, last_login_at
+     FROM users WHERE id = $1`,
+    [userId],
+  );
+  const user = rows[0];
+  if (!user) throw new NotFoundError("User not found");
+  const profile = await getPool().query(
+    `SELECT kyc_status FROM profiles WHERE user_id = $1`,
+    [userId],
+  );
+  const roles = await getUserRoles(userId);
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.full_name ?? null,
+    status: user.status,
+    emailVerified: user.email_verified,
+    emailVerifiedAt: user.email_verified_at ?? null,
+    kycStatus: profile.rows[0]?.kyc_status ?? "not_started",
+    roles,
+    createdAt: user.created_at,
+    lastLoginAt: user.last_login_at,
+  };
+}
+
+export async function revokeUserSessions(userId: string): Promise<void> {
+  await revokeAllUserSessions(userId);
+}
+
+export type MeUser = Awaited<ReturnType<typeof getCurrentUser>>;
+
 export async function verifyEmail(token: string): Promise<void> {
   const hash = sha256(token);
   const { rows } = await getPool().query(
@@ -140,10 +188,10 @@ export async function verifyEmail(token: string): Promise<void> {
   });
 }
 
-export async function requestPasswordReset(email: string): Promise<void> {
+export async function requestPasswordReset(email: string): Promise<{ requested: boolean; resetToken?: string }> {
   const normalized = normalizeEmail(email);
   const { rows } = await getPool().query(`SELECT id, email FROM users WHERE email_normalized = $1`, [normalized]);
-  if (rows.length === 0) return; // do not leak existence
+  if (rows.length === 0) return { requested: true }; // do not leak existence
   const user = rows[0];
   const token = generateToken();
   const expires = new Date(Date.now() + 60 * 60 * 1000);
@@ -156,6 +204,50 @@ export async function requestPasswordReset(email: string): Promise<void> {
     to: user.email,
     variables: { resetToken: token, appUrl: config.appUrl },
   });
+  // Outbox mode (no email provider configured): expose the token so the
+  // frontend can build the reset link directly, else it is undeliverable.
+  const emailConfigured = isEmailConfigured();
+  if (emailConfigured) return { requested: true };
+  return { requested: true, resetToken: token };
+}
+
+export async function resendVerification(email: string): Promise<{
+  requested: boolean;
+  verificationToken?: string;
+  status?: string;
+  emailVerified?: boolean;
+}> {
+  const normalized = normalizeEmail(email);
+  const { rows } = await getPool().query(
+    `SELECT id, email, status, email_verified FROM users WHERE email_normalized = $1`,
+    [normalized],
+  );
+  if (rows.length === 0) return { requested: true }; // do not leak existence
+  const user = rows[0];
+  if (user.status !== "pending_verification" || user.email_verified) {
+    return { requested: true, status: user.status, emailVerified: user.email_verified };
+  }
+  // Invalidate previous unused tokens for this user to keep it one-time.
+  await getPool().query(
+    `UPDATE verification_tokens SET consumed = true
+     WHERE user_id = $1 AND purpose = 'email_verify' AND consumed = false`,
+    [user.id],
+  );
+  const token = generateToken();
+  const expires = new Date(Date.now() + 24 * 3600 * 1000);
+  await getPool().query(
+    `INSERT INTO verification_tokens (user_id, token_hash, purpose, expires_at)
+     VALUES ($1,$2,'email_verify',$3)`,
+    [user.id, sha256(token), expires],
+  );
+  await sendEmail({
+    template: "verification",
+    to: user.email,
+    variables: { verificationToken: token, appUrl: config.appUrl },
+  });
+  const emailConfigured = isEmailConfigured();
+  if (emailConfigured) return { requested: true, status: user.status };
+  return { requested: true, status: user.status, verificationToken: token };
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<void> {
