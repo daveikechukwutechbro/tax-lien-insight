@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { logout, emitAuthChange } from "@/lib/backend-auth";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { isAdminQuery } from "@/lib/queries/dashboard";
 import {
