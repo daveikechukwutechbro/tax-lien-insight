@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { proxyToBackend } from "./lib/backend-proxy";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -46,6 +47,13 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    // The back end owns everything under /api/v1 — forward it directly so the
+    // session cookie set by the backend flows through unchanged. This runs
+    // before the router so it works identically in dev and every deploy.
+    const pathname = new URL(request.url).pathname;
+    if (pathname === "/api/v1" || pathname.startsWith("/api/v1/")) {
+      return proxyToBackend(request);
+    }
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

@@ -1,5 +1,7 @@
 {
+  "framework": null,
+  "buildCommand": "npm run build",
   "env": {
-    "BACKEND_API_URL": "https://tax-lien-insight-backend.daveikechukwutechbro.workers.dev"
+    "VITE_BACKEND_API_URL": "https://tax-lien-insight-backend.daveikechukwutechbro.workers.dev"
   }
 }

@@ -4,9 +4,9 @@
  * forwards requests (including cookies/headers) so auth/session cookies propagate.
  */
 const BACKEND_URL =
-  (import.meta.env?.BACKEND_API_URL as string | undefined) ??
+  (import.meta.env?.VITE_BACKEND_API_URL as string | undefined) ??
   (typeof process !== "undefined" ? process.env.BACKEND_API_URL : undefined) ??
-  "http://localhost:8787";
+  "https://tax-lien-insight-backend.daveikechukwutechbro.workers.dev";
 
 export async function proxyToBackend(request: Request): Promise<Response> {
   const url = new URL(request.url);
