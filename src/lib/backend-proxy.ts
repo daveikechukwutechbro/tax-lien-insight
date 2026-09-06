@@ -14,6 +14,9 @@ export async function proxyToBackend(request: Request): Promise<Response> {
   const headers = new Headers(request.headers);
   // Ensure host header points at the backend, not the original.
   headers.delete("host");
+  // Let the fetch layer recompute framing for the forwarded body.
+  headers.delete("content-length");
+  headers.delete("transfer-encoding");
   const init: RequestInit & { duplex?: "half" } = {
     method: request.method,
     headers,
