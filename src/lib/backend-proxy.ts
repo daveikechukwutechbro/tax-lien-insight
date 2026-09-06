@@ -26,9 +26,15 @@ export async function proxyToBackend(request: Request): Promise<Response> {
     init.duplex = "half";
   }
   const upstream = await fetch(target.toString(), init);
-  return new Response(upstream.body, {
+  const responseHeaders = new Headers(upstream.headers);
+  responseHeaders.delete("content-encoding");
+  responseHeaders.delete("content-length");
+  responseHeaders.delete("transfer-encoding");
+  responseHeaders.delete("connection");
+  const body = await upstream.arrayBuffer();
+  return new Response(body, {
     status: upstream.status,
     statusText: upstream.statusText,
-    headers: upstream.headers,
+    headers: responseHeaders,
   });
 }
