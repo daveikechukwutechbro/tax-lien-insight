@@ -6,7 +6,7 @@ import { auctionsListQuery } from "@/lib/queries/discovery";
 export const Route = createFileRoute("/auctions")({
   head: () => ({
     meta: [
-      { title: "Tax Lien Auctions Calendar — Chicago TaxLien Auctions" },
+      { title: "Tax Lien Auctions Calendar — Auction Ledger" },
       { name: "description", content: "Browse every upcoming and live tax lien auction across participating US counties." },
       { property: "og:title", content: "Tax Lien Auctions Calendar" },
       { property: "og:description", content: "Live and upcoming sales, sorted by start date." },

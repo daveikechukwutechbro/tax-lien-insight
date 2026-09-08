@@ -4,7 +4,7 @@ import { UserPlus, Wallet, Gavel, Coins } from "lucide-react";
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
     meta: [
-      { title: "How It Works — Chicago TaxLien Auctions" },
+      { title: "How It Works — Auction Ledger" },
       { name: "description", content: "Learn how to register, fund your account, bid on tax lien certificates, and collect returns." },
       { property: "og:title", content: "How Tax Lien Auctions Work" },
       { property: "og:description", content: "The four steps from registration to redemption." },

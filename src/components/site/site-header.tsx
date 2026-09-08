@@ -61,10 +61,10 @@ export function SiteHeader() {
           </span>
           <span className="flex flex-col leading-none">
             <span className="font-display text-[15px] font-700 tracking-tight text-navy">
-              Chicago<span className="text-gold">TaxLien</span>
+              Auction<span className="text-gold">Ledger</span>
             </span>
             <span className="mt-0.5 text-[9px] font-600 uppercase tracking-[0.28em] text-ink-muted">
-              Auctions
+              Tax Lien Auctions
             </span>
           </span>
         </Link>

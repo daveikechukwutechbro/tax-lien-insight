@@ -3,9 +3,9 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "FAQ — ChicagoTaxLien" },
-      { name: "description", content: "Frequently asked questions about tax lien investing, bidding, deposits, redemptions and payouts on ChicagoTaxLien." },
-      { property: "og:title", content: "FAQ — ChicagoTaxLien" },
+      { title: "FAQ — Auction Ledger" },
+      { name: "description", content: "Frequently asked questions about tax lien investing, bidding, deposits, redemptions and payouts on Auction Ledger." },
+      { property: "og:title", content: "FAQ — Auction Ledger" },
       { property: "og:description", content: "Answers to the most common questions from tax lien investors." },
     ],
   }),
@@ -20,7 +20,7 @@ const items: { q: string; a: string }[] = [
   { q: "How do I withdraw funds?", a: "Submit a withdrawal request from Account Funds. Withdrawals are typically processed within 3 business days after approval." },
   { q: "What happens if I win a lien?", a: "The winning bid amount is debited from your balance. The certificate is issued in your name. You collect principal plus your winning interest rate when the owner redeems." },
   { q: "What is the redemption period?", a: "The window during which the property owner may pay back the lien plus interest. Length varies by jurisdiction — commonly 12 to 36 months." },
-  { q: "What if the lien is not redeemed?", a: "You may pursue foreclosure or deed application per your jurisdiction's rules. ChicagoTaxLien surfaces upcoming deadlines in your dashboard." },
+  { q: "What if the lien is not redeemed?", a: "You may pursue foreclosure or deed application per your jurisdiction's rules. Auction Ledger surfaces upcoming deadlines in your dashboard." },
   { q: "Are tax lien investments guaranteed?", a: "No. Returns depend on redemption, jurisdiction rules, and property condition. Do your own due diligence on every property." },
   { q: "Can I cancel a bid?", a: "Bids are binding once placed. Contact support immediately if you believe a bid was placed in error." },
 ];

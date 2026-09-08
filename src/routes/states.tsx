@@ -6,7 +6,7 @@ import { statesListQuery } from "@/lib/queries/discovery";
 export const Route = createFileRoute("/states")({
   head: () => ({
     meta: [
-      { title: "Browse by State — Chicago TaxLien Auctions" },
+      { title: "Browse by State — Auction Ledger" },
       { name: "description", content: "Explore tax lien investment opportunities by state and county." },
       { property: "og:title", content: "Tax Lien Auctions by State" },
       { property: "og:description", content: "Counties and upcoming auctions across the US." },

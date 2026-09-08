@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { Pool } from "pg";
 import { config } from "../shared/config.js";
 import { logger } from "../shared/logger.js";
@@ -50,7 +50,7 @@ export async function runMigrations(): Promise<void> {
 }
 
 // Run directly: tsx src/db/migrate.ts
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   runMigrations().then(
     () => process.exit(0),
     (err) => {

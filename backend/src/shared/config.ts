@@ -48,7 +48,7 @@ export const config = {
 
   emailProvider: str("EMAIL_PROVIDER", "resend"),
   resendApiKey: str("RESEND_API_KEY"),
-  emailFrom: str("EMAIL_FROM", "no-reply@taxlieninsight.example"),
+  emailFrom: str("EMAIL_FROM", "no-reply@auctionledger.com"),
   emailReplyTo: str("EMAIL_REPLY_TO", ""),
 
   usdcNetwork: str("USDC_NETWORK", "base"),
@@ -75,7 +75,7 @@ export const config = {
 
   cronSecret: str("CRON_SECRET"),
   adminBootstrapSecret: str("ADMIN_BOOTSTRAP_SECRET"),
-  adminBootstrapEmail: str("ADMIN_BOOTSTRAP_EMAIL", "admin@taxlieninsight.example"),
+  adminBootstrapEmail: str("ADMIN_BOOTSTRAP_EMAIL", "admin@auctionledger.com"),
 
   rateLimit: {
     login: int("RATE_LIMIT_LOGIN", 10),

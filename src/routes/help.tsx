@@ -4,9 +4,9 @@ import { BookOpen, HelpCircle, LifeBuoy, ScrollText, Landmark, Gavel, Wallet, Sh
 export const Route = createFileRoute("/help")({
   head: () => ({
     meta: [
-      { title: "Help Center — ChicagoTaxLien" },
+      { title: "Help Center — Auction Ledger" },
       { name: "description", content: "Guides, tutorials, and answers for tax lien investors. Learn how auctions, bidding, redemptions and payouts work." },
-      { property: "og:title", content: "Help Center — ChicagoTaxLien" },
+      { property: "og:title", content: "Help Center — Auction Ledger" },
       { property: "og:description", content: "Guides, tutorials and answers for tax lien investors." },
     ],
   }),
@@ -19,7 +19,7 @@ const cats: { icon: typeof BookOpen; title: string; desc: string; to: string }[]
   { icon: Wallet, title: "Payments & Funds", desc: "Accepted methods, deposit approvals, withdrawals, and processing times.", to: "/faq" },
   { icon: ShieldCheck, title: "Redemption & Payouts", desc: "How redemption works, timelines, and how you get paid.", to: "/glossary" },
   { icon: Landmark, title: "Certificates & Titles", desc: "Certificate issuance, foreclosure timelines, and jurisdictional rules.", to: "/resources" },
-  { icon: LifeBuoy, title: "Contact Support", desc: "Reach the ChicagoTaxLien support team by email, or message them from your dashboard.", to: "/support" },
+  { icon: LifeBuoy, title: "Contact Support", desc: "Reach the Auction Ledger support team by email, or message them from your dashboard.", to: "/support" },
 ];
 
 function HelpCenter() {

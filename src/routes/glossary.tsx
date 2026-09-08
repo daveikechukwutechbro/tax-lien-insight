@@ -3,9 +3,9 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/glossary")({
   head: () => ({
     meta: [
-      { title: "Glossary — ChicagoTaxLien" },
+      { title: "Glossary — Auction Ledger" },
       { name: "description", content: "Plain-language definitions for tax lien investing terms: certificate, redemption, bid-down, over-the-counter, and more." },
-      { property: "og:title", content: "Glossary — ChicagoTaxLien" },
+      { property: "og:title", content: "Glossary — Auction Ledger" },
       { property: "og:description", content: "Key tax lien investing terms defined." },
     ],
   }),

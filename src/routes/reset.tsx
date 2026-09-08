@@ -14,7 +14,7 @@ export const Route = createFileRoute("/reset")({
   validateSearch: zodValidator(resetSearch),
   head: () => ({
     meta: [
-      { title: "Reset your password — Chicago TaxLien Auctions" },
+      { title: "Reset your password — Auction Ledger" },
       { name: "robots", content: "noindex" },
     ],
   }),

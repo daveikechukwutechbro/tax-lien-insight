@@ -6,16 +6,16 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/support")({
   head: () => ({
     meta: [
-      { title: "Contact Support — Chicago TaxLien Auctions" },
+      { title: "Contact Support — Auction Ledger" },
       { name: "description", content: "Reach our support team by email or live message. Get help with bids, funds, certificates, and redemption pay-outs." },
-      { property: "og:title", content: "Contact Support — Chicago TaxLien Auctions" },
-      { property: "og:description", content: "Email or message the ChicagoTaxLien support team for help with your account, bids, funds and certificates." },
+      { property: "og:title", content: "Contact Support — Auction Ledger" },
+      { property: "og:description", content: "Email or message the Auction Ledger support team for help with your account, bids, funds and certificates." },
     ],
   }),
   component: SupportPage,
 });
 
-const SUPPORT_EMAIL = "support@taxlieninsight.example";
+const SUPPORT_EMAIL = "auctionledger@gmail.com";
 
 function SupportPage() {
   const [sent, setSent] = useState(false);

@@ -89,10 +89,10 @@ export async function logout(): Promise<void> {
   await request<{ success: boolean }>("/api/v1/auth/logout", { method: "POST" }).catch(() => undefined);
 }
 
-export async function verifyEmail(token: string): Promise<void> {
+export async function verifyEmail(input: { token?: string; code?: string }): Promise<void> {
   await request<{ verified: boolean }>("/api/v1/auth/verify-email", {
     method: "POST",
-    body: JSON.stringify({ token }),
+    body: JSON.stringify(input),
   });
 }
 

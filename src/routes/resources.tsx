@@ -12,7 +12,7 @@ import {
 export const Route = createFileRoute("/resources")({
   head: () => ({
     meta: [
-      { title: "Resources — Chicago TaxLien Auctions" },
+      { title: "Resources — Auction Ledger" },
       { name: "description", content: "Investor guides, state interest rate schedules, and glossary for tax lien investing." },
       { property: "og:title", content: "Tax Lien Resources" },
       { property: "og:description", content: "Guides and reference material for tax lien investors." },
@@ -136,7 +136,7 @@ const sections: GuideSection[] = [
           "Certificate issued after your winning amount is settled.",
           "Redemption windows vary: Florida 2 years, Illinois ~2.5 years, Arizona 3 years.",
           "You can be outbid at a later tax sale — track notices carefully.",
-          "ChicagoTaxLien surfaces upcoming redemption deadlines in your dashboard.",
+          "Auction Ledger surfaces upcoming redemption deadlines in your dashboard.",
         ],
         link: { to: "/glossary", label: "Browse the glossary" },
       },

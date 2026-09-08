@@ -16,6 +16,10 @@ export function generateToken(): string {
   return randomBytes(32).toString("hex");
 }
 
+export function generateVerifyCode(): string {
+  return String(100000 + (randomBytes(4).readUInt32BE(0) % 900000));
+}
+
 export interface RegisterInput {
   email: string;
   password: string;
@@ -52,17 +56,18 @@ export async function registerUser(input: RegisterInput, meta: { ip: string; use
     );
 
     const token = generateToken();
+    const code = generateVerifyCode();
     const expires = new Date(Date.now() + 24 * 3600 * 1000);
     await client.query(
-      `INSERT INTO verification_tokens (user_id, token_hash, purpose, expires_at)
-       VALUES ($1,$2,'email_verify',$3)`,
-      [user.id, sha256(token), expires],
+      `INSERT INTO verification_tokens (user_id, token_hash, code_hash, purpose, expires_at)
+       VALUES ($1,$2,$3,'email_verify',$4)`,
+      [user.id, sha256(token), sha256(code), expires],
     );
 
     await sendEmail({
       template: "verification",
       to: user.email,
-      variables: { verificationToken: token, appUrl: config.appUrl },
+      variables: { verificationToken: token, verificationCode: code, appUrl: config.appUrl },
     });
 
     logger.info("User registered", { userId: user.id });
@@ -170,17 +175,33 @@ export async function revokeUserSessions(userId: string): Promise<void> {
 
 export type MeUser = Awaited<ReturnType<typeof getCurrentUser>>;
 
-export async function verifyEmail(token: string): Promise<void> {
-  const hash = sha256(token);
+export async function verifyEmail(opts: { token?: string; code?: string }): Promise<void> {
+  if (!opts.token && !opts.code) {
+    throw new ValidationError("Verification token or code is required");
+  }
+  const tokenHash = opts.token ? sha256(opts.token) : null;
+  const codeHash = opts.code ? sha256(opts.code) : null;
+  let where: string;
+  let params: string[];
+  if (tokenHash && codeHash) {
+    where = `(token_hash = $1 OR code_hash = $2)`;
+    params = [tokenHash, codeHash];
+  } else if (tokenHash) {
+    where = `token_hash = $1`;
+    params = [tokenHash];
+  } else {
+    where = `code_hash = $1`;
+    params = [codeHash as string];
+  }
   const { rows } = await getPool().query(
     `SELECT id, user_id, expires_at, consumed FROM verification_tokens
-     WHERE token_hash = $1 AND purpose = 'email_verify'`,
-    [hash],
+     WHERE ${where} AND purpose = 'email_verify'`,
+    params,
   );
   const rec = rows[0];
   if (!rec) throw new NotFoundError("Verification token not found");
-  if (rec.consumed) throw new AppError("TOKEN_USED", "Token already used", 400);
-  if (new Date(rec.expires_at).getTime() < Date.now()) throw new AppError("TOKEN_EXPIRED", "Token expired", 400);
+  if (rec.consumed) throw new AppError("TOKEN_USED", "Code already used", 400);
+  if (new Date(rec.expires_at).getTime() < Date.now()) throw new AppError("TOKEN_EXPIRED", "Code expired", 400);
 
   await transaction(async (client) => {
     await client.query(`UPDATE verification_tokens SET consumed = true WHERE id = $1`, [rec.id]);
@@ -234,16 +255,17 @@ export async function resendVerification(email: string): Promise<{
     [user.id],
   );
   const token = generateToken();
+  const code = generateVerifyCode();
   const expires = new Date(Date.now() + 24 * 3600 * 1000);
   await getPool().query(
-    `INSERT INTO verification_tokens (user_id, token_hash, purpose, expires_at)
-     VALUES ($1,$2,'email_verify',$3)`,
-    [user.id, sha256(token), expires],
+    `INSERT INTO verification_tokens (user_id, token_hash, code_hash, purpose, expires_at)
+     VALUES ($1,$2,$3,'email_verify',$4)`,
+    [user.id, sha256(token), sha256(code), expires],
   );
   await sendEmail({
     template: "verification",
     to: user.email,
-    variables: { verificationToken: token, appUrl: config.appUrl },
+    variables: { verificationToken: token, verificationCode: code, appUrl: config.appUrl },
   });
   const emailConfigured = isEmailConfigured();
   if (emailConfigured) return { requested: true, status: user.status };

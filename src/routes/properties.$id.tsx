@@ -11,7 +11,7 @@ import { Bookmark, BookmarkCheck, FileText, MapPin } from "lucide-react";
 export const Route = createFileRoute("/properties/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: `Property Details — TaxLien Auctions` },
+      { title: `Property Details — Auction Ledger` },
       { name: "description", content: `Tax lien property details, assessed values, documents, and live bidding.` },
       { property: "og:title", content: `Property Details` },
       { property: "og:url", content: `/properties/${params.id}` },

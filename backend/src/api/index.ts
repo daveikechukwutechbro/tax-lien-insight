@@ -188,7 +188,7 @@ export function createApp(): Hono {
 
   app.post("/api/v1/auth/verify-email", async (c) => {
     const body = await c.req.json().catch(() => ({}));
-    await verifyEmail(body.token);
+    await verifyEmail({ token: body.token, code: body.code });
     return c.json(json({ verified: true }));
   });
 

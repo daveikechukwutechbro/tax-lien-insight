@@ -5,7 +5,7 @@ import { stateDetailQuery } from "@/lib/queries/discovery";
 export const Route = createFileRoute("/states/$state")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.state} Tax Lien Counties — Chicago TaxLien Auctions` },
+      { title: `${params.state} Tax Lien Counties — Auction Ledger` },
       { name: "description", content: `Counties and tax lien auctions in ${params.state}.` },
     ],
   }),

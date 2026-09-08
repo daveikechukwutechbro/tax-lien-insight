@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { toast } from "sonner";
-import { MailCheck, CheckCircle2, XCircle, Clock, RotateCcw } from "lucide-react";
+import { MailCheck, CheckCircle2, XCircle, Clock, RotateCcw, KeyRound } from "lucide-react";
 import { verifyEmail, resendVerification, AuthError, onAuthChange } from "@/lib/backend-auth";
 
 const verifySearch = z.object({
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/verify")({
   validateSearch: zodValidator(verifySearch),
   head: () => ({
     meta: [
-      { title: "Verify your email — Chicago TaxLien Auctions" },
+      { title: "Verify your email — Auction Ledger" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -28,25 +28,23 @@ function VerifyPage() {
   const { token, email } = useSearch({ from: "/verify" });
   const hasToken = !!token;
   const [status, setStatus] = useState<Status>("idle");
+  const [code, setCode] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [showResendForm, setShowResendForm] = useState(false);
   const [resendEmail, setResendEmail] = useState(email);
-  const [newToken, setNewToken] = useState<string | null>(null);
 
   const finalToken = useMemo(() => token.trim(), [token]);
 
   useEffect(() => {
     if (!hasToken) {
-      // No token in the URL: this is the "check your email" landing page.
       setStatus("idle");
       return;
     }
     let cancelled = false;
     setStatus("checking");
-    verifyEmail(finalToken)
+    verifyEmail({ token: finalToken })
       .then(() => {
-        // Notify the session hook so next /me reflects email_verified=true.
         onAuthChange();
         if (!cancelled) {
           setStatus("verified");
@@ -65,6 +63,30 @@ function VerifyPage() {
     };
   }, [finalToken, hasToken]);
 
+  // Auto-submit once the user has typed all 6 digits.
+  useEffect(() => {
+    if (busy || status !== "idle" || code.trim().length < 6) return;
+    submitCode(code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, busy, status]);
+
+  async function submitCode(value: string) {
+    setBusy(true);
+    try {
+      await verifyEmail({ code: value.trim() });
+      onAuthChange();
+      setStatus("verified");
+      toast.success("Your email has been verified. You can now log in.");
+    } catch (err) {
+      const e = err instanceof AuthError ? err : new Error(String(err));
+      setErrorMsg(e.message);
+      setStatus("error");
+      setShowResendForm(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function sendAgain(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -75,12 +97,13 @@ function VerifyPage() {
         return;
       }
       if (res.verificationToken) {
-        setNewToken(res.verificationToken);
-        setStatus("idle");
-        toast.success("New verification link generated.");
+        toast.success("A new verification link has been generated.");
       } else {
-        toast.success("A new verification link has been emailed to you.");
+        toast.success("A new verification code has been emailed to you.");
       }
+      setStatus("idle");
+      setErrorMsg("");
+      setShowResendForm(false);
     } catch (err) {
       const e = err instanceof AuthError ? err : new Error(String(err));
       toast.error(e.message);
@@ -100,7 +123,7 @@ function VerifyPage() {
           ) : status === "checking" ? (
             <Clock className="size-6 text-gold" />
           ) : (
-            <MailCheck className="size-6 text-navy" />
+            <KeyRound className="size-6 text-navy" />
           )}
         </div>
 
@@ -130,33 +153,37 @@ function VerifyPage() {
           <>
             <p className="mt-2 text-center text-sm text-ink-muted">{errorMsg}</p>
             <p className="mt-2 text-center text-sm text-ink-muted">
-              The link may be expired or already used. Generate a new one below.
+              The code may be expired or already used. Request a new one below.
             </p>
-            {newToken ? (
-              <Link
-                to="/verify"
-                search={{ token: newToken, email: resendEmail }}
-                className="mt-6 block w-full rounded-md bg-navy px-4 py-2.5 text-center text-sm font-600 text-primary-foreground hover:bg-navy-deep"
-              >
-                Verify now
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowResendForm(true)}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-md border border-hairline bg-surface px-4 py-2.5 text-sm font-600 text-navy transition-colors hover:border-navy"
-              >
-                <RotateCcw className="size-4" /> Resend verification link
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setShowResendForm(true)}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-md border border-hairline bg-surface px-4 py-2.5 text-sm font-600 text-navy transition-colors hover:border-navy"
+            >
+              <RotateCcw className="size-4" /> Resend verification code
+            </button>
           </>
         )}
 
-        {isIdleOrChecking() && (
+        {(status === "idle" || status === "checking") && (
           <>
             <p className="mt-2 text-center text-sm text-ink-muted">
-              We sent a verification link to <span className="font-600 text-navy">{email || resendEmail || "your email"}</span>.
-              Click the link to activate your account.
+              We emailed a 6-digit code to{" "}
+              <span className="font-600 text-navy">{email || resendEmail || "your email"}</span>.
+              Enter it below to activate your account.
+            </p>
+            <input
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              value={code}
+              disabled={status === "checking" || busy}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="••••••"
+              className="mt-6 w-full rounded-lg border border-hairline bg-surface px-4 py-4 text-center text-2xl font-700 tracking-[0.5em] text-navy focus:border-navy focus:outline-none"
+            />
+            <p className="mt-2 text-center text-xs text-ink-muted">
+              {busy ? "Verifying…" : code.length === 6 ? "Verifying…" : `${code.length}/6 digits entered`}
             </p>
             <button
               type="button"
@@ -186,7 +213,7 @@ function VerifyPage() {
               disabled={busy}
               className="w-full rounded-md bg-navy px-4 py-2 text-sm font-600 text-primary-foreground hover:bg-navy-deep disabled:opacity-60"
             >
-              {busy ? "Sending…" : "Send new link"}
+              {busy ? "Sending…" : "Send new code"}
             </button>
           </form>
         )}
@@ -215,8 +242,4 @@ function VerifyPage() {
       `}</style>
     </div>
   );
-
-  function isIdleOrChecking() {
-    return status === "idle" || status === "checking";
-  }
 }

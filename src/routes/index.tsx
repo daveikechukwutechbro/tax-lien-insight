@@ -24,7 +24,7 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(scheduledAuctionQuery),
   head: () => ({
     meta: [
-      { title: "Upcoming Tax Lien Auction — Chicago TaxLien Auctions" },
+      { title: "Upcoming Tax Lien Auction — Auction Ledger" },
       {
         name: "description",
         content:

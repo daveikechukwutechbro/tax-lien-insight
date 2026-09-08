@@ -16,8 +16,8 @@ import {
 export const Route = createFileRoute("/_authenticated/dashboard/funds")({
   head: () => ({
     meta: [
-      { title: "Add Funds — TaxLien Auctions" },
-      { name: "description", content: "Securely fund your TaxLien investment account with USDC." },
+      { title: "Add Funds — Auction Ledger" },
+      { name: "description", content: "Securely fund your Auction Ledger account with USDC." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -107,7 +107,7 @@ function FundsPage() {
         <h1 className="font-display text-3xl font-600 text-navy">Add Funds</h1>
         <p className="mt-1 text-sm font-500 text-ink">Securely Fund Your Investment Account</p>
         <p className="mt-3 max-w-2xl text-sm text-ink-muted">
-          Add funds to your TaxLien account to participate in available tax lien investment
+          Add funds to your Auction Ledger to participate in available tax lien investment
           opportunities. All deposits are securely tracked and credited to your account after
           successful confirmation.
         </p>

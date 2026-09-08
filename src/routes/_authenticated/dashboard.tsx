@@ -11,7 +11,7 @@ import {
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "My Dashboard — TaxLien Auctions" },
+      { title: "My Dashboard — Auction Ledger" },
       { name: "robots", content: "noindex" },
     ],
   }),

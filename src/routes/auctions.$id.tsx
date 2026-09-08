@@ -9,7 +9,7 @@ export const Route = createFileRoute("/auctions/$id")({
     const d = loaderData as { title: string; liens: unknown[]; county: { name: string; state: string } } | undefined;
     return {
       meta: [
-        { title: d ? `${d.title} — Chicago TaxLien Auctions` : "Auction" },
+        { title: d ? `${d.title} — Auction Ledger` : "Auction" },
         { name: "description", content: d ? `${d.liens.length} liens in ${d.county.name}, ${d.county.state}.` : "Auction details" },
       ],
     };

@@ -6,7 +6,7 @@ import { useState } from "react";
 export const Route = createFileRoute("/search")({
   head: () => ({
     meta: [
-      { title: "Search Properties — Chicago TaxLien Auctions" },
+      { title: "Search Properties — Auction Ledger" },
       { name: "description", content: "Search tax lien properties by address, city, county, or parcel ID." },
       { property: "og:title", content: "Search Properties" },
       { property: "og:description", content: "Find liened properties across participating counties." },

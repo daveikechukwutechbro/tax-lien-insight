@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
-import { register, login, AuthError } from "@/lib/backend-auth";
+import { register, login, AuthError, emitAuthChange } from "@/lib/backend-auth";
 
 const authSearch = z.object({
   mode: z.enum(["login", "signup"]).optional().default("login"),
@@ -14,8 +14,8 @@ export const Route = createFileRoute("/auth")({
   validateSearch: zodValidator(authSearch),
   head: () => ({
     meta: [
-      { title: "Log In or Create Account — Chicago TaxLien Auctions" },
-      { name: "description", content: "Log in or create a bidder account for Chicago TaxLien Auctions." },
+      { title: "Log In or Create Account — Auction Ledger" },
+      { name: "description", content: "Log in or create a bidder account for Auction Ledger." },
       { name: "robots", content: "noindex" },
       { property: "og:url", content: "/auth" },
     ],
@@ -54,6 +54,7 @@ function AuthPage() {
         return;
       }
       await login({ email, password });
+      emitAuthChange();
       toast.success("Welcome back.");
       router.navigate({ to: "/dashboard", replace: true });
     } catch (err) {
