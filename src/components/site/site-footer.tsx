@@ -18,7 +18,7 @@ export function SiteFooter() {
           links={[
             { to: "/auctions", label: "Upcoming auctions" },
             { to: "/search", label: "Search properties" },
-            { to: "/resources", label: "Interest rates by state" },
+            { to: "/rates", label: "Interest rates by state" },
           ]}
         />
         <FooterCol

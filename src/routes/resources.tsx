@@ -5,7 +5,6 @@ import {
   Landmark,
   HelpCircle,
   ChevronDown,
-  Download,
   FileText,
 } from "lucide-react";
 
@@ -196,46 +195,18 @@ const sections: GuideSection[] = [
     subtitle: "Key rules by state — max rates, redemption windows, and quirks.",
     items: [
       {
-        title: "Florida — Up to 18%",
-        summary: "Up to 18% max interest, 2-year redemption.",
+        title: "Interest rates by state",
+        summary: "The statutory lien rate, how it is set, and any minimum — for every US state and DC.",
         body: [
-          "Florida tax certificates pay a statutory minimum of 5% plus the bid-down rate on the unpaid taxes, with a maximum bid-down cap of 18%. Certificates earn simple interest and the certificate holder can make subsequent 'ace' payments on later-year taxes to protect their position.",
-          "Redemption runs roughly two years from the date of sale. If left unredeemed, the certificate holder may apply for a tax deed, gaining title to the property at the following public auction.",
+          "Each jurisdiction decides its own model. Lien states pay a statutory interest rate on redemption, hybrid states run both lien and deed paths, and deed states pay no investor interest at all — your return there comes from acquiring the property.",
+          "The full reference shows the maximum rate, how it is set (bid-down auction, fixed statute, or county law), any statutory minimum, and redemption quirks for all 50 states and DC — verified against state statutes.",
         ],
         bullets: [
-          "Max statutory rate: 18% (min 5%).",
-          "Redemption: ~2 years from the date of sale.",
-          "You may pay subsequent-year taxes to keep your position senior.",
-          "Unredeemed → apply for tax deed after redemption period.",
+          "Iowa tops the list at 24%; typical ceilings run 10–18%.",
+          "In bid-down states the rate is set at auction, often well below the ceiling.",
+          "Deed states pay no interest — model the property, not the rate.",
         ],
-      },
-      {
-        title: "Illinois — Up to 18%",
-        summary: "18% max, ~2.5-year redemption for most properties.",
-        body: [
-          "Illinois annual tax sales cap the interest at 18% on the base taxes. The redemption period for most property types is 2 years and 6 months; for some commercial property and vacant land it can be shorter (e.g., 6 months to 3 years depending on the sale and property type).",
-          "Because redemption periods vary heavily by property type, Illinois requires the most careful reading of each certificate's sale terms.",
-        ],
-        bullets: [
-          "Max statutory rate: 18%.",
-          "Redemption: commonly 2.5 years; shorter for some property types.",
-          "Owners must redeem with the county, which pays the certificate holder.",
-          "Unredeemed → petition for tax deed.",
-        ],
-      },
-      {
-        title: "Arizona — Up to 16%",
-        summary: "16% max, 3-year redemption.",
-        body: [
-          "Arizona tax lien sales award a lien with a 16% maximum annual rate. The property owner has three years to redeem before the investor may pursue foreclosure. Arizona is popular among longer-horizon investors because of the three-year window combined with a predictable 16% cap.",
-          "Bidding in Arizona also happens online in most counties, and the fee schedules are standardized across the state.",
-        ],
-        bullets: [
-          "Max statutory rate: 16%.",
-          "Redemption: 3 years.",
-          "Uniform process across Arizona counties.",
-          "Foreclosure available to the investor after the redemption window.",
-        ],
+        link: { to: "/rates", label: "See interest rates by state" },
       },
     ],
   },
@@ -367,7 +338,7 @@ function ResourcesPage() {
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <QuickLink icon={<BookOpen className="size-5" />} title="Glossary" desc="Every tax lien term, explained in plain English." to="/glossary" />
           <QuickLink icon={<HelpCircle className="size-5" />} title="FAQ" desc="More questions? Browse the full list of answers." to="/faq" />
-          <QuickLink icon={<Download className="size-5" />} title="One-page cheat sheet" desc="Download the key numbers for every state." to="/support" />
+          <QuickLink icon={<Landmark className="size-5" />} title="Interest rates by state" desc="Statutory rates for every US state and DC." to="/rates" />
         </div>
 
         <div className="mt-8"><Link to="/" className="text-sm font-500 text-navy underline underline-offset-4">← Back home</Link></div>
