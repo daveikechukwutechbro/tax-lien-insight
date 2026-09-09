@@ -55,7 +55,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
       <div className="container-tight flex h-16 items-center gap-8">
-        <Link to="/" className="flex items-center gap-2.5">
+        <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5">
           <span className="grid size-9 place-items-center rounded-md bg-navy text-gold">
             <Landmark className="size-5" strokeWidth={2.25} />
           </span>
@@ -179,8 +179,10 @@ export function SiteHeader() {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem className="flex items-center gap-2">
-                    <Image className="size-4" /> Upload Photo
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/profile" className="flex items-center gap-2">
+                      <Image className="size-4" /> Upload Photo
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

@@ -40,9 +40,9 @@ function DashboardOverview() {
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat icon={<CreditCard className="size-5" />} label="Total Paid" value={sf(summary?.payments.paid)} cta="Payment History" href="/dashboard/payments" />
-        <Stat icon={<Trophy className="size-5" />} label="Certificates Won" value={summary ? String(summary.awards.count) : "…"} accent="text-warning" value2={summary ? fmt(summary.awards.principal_value) : undefined} cta="Won Properties" href="/dashboard/won" />
+        <Stat icon={<Trophy className="size-5" />} label="Certificates Won" value={summary ? String(summary.awards.count) : "…"} accent="text-warning" value2={summary ? fmt(summary.awards.principalValue) : undefined} cta="Won Properties" href="/dashboard/won" />
         <Stat icon={<Award className="size-5" />} label="Awaiting Redemption" value={summary ? String(summary.redemptions.active) : "…"} subvalue={summary ? `${summary.redemptions.completed} completed` : undefined} cta="Redemptions" href="/dashboard/history" />
-        <Stat icon={<BadgeCheck className="size-5" />} label="Redeemed Certificates" value={summary ? String(summary.redemptions.completed) : "…"} subvalue={summary ? `Realized interest ${fmt(summary.redemptions.realized_interest)}` : undefined} cta="History" href="/dashboard/history" />
+        <Stat icon={<BadgeCheck className="size-5" />} label="Redeemed Certificates" value={summary ? String(summary.redemptions.completed) : "…"} subvalue={summary ? `Realized interest ${fmt(summary.redemptions.realizedInterest)}` : undefined} cta="History" href="/dashboard/history" />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">

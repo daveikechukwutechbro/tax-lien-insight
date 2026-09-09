@@ -12,6 +12,15 @@ export interface BackendUser {
   emailVerified: boolean;
   emailVerifiedAt: string | null;
   kycStatus: string;
+  phone: string | null;
+  address: {
+    addressLine: string | null;
+    city: string | null;
+    state: string | null;
+    postalCode: string | null;
+    country: string | null;
+  } | null;
+  avatar: string | null;
   roles: string[];
   createdAt: string;
   lastLoginAt: string | null;
@@ -36,7 +45,7 @@ export class AuthError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
     credentials: "same-origin",

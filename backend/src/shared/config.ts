@@ -47,9 +47,19 @@ export const config = {
   cookieDomain: str("COOKIE_DOMAIN", ""),
 
   emailProvider: str("EMAIL_PROVIDER", "resend"),
+  providerConfigured: (() => {
+    const p = str("EMAIL_PROVIDER", "resend").toLowerCase();
+    return p === "resend" || p === "smtp" || p === "outbox" ? p : "resend";
+  })(),
   resendApiKey: str("RESEND_API_KEY"),
   emailFrom: str("EMAIL_FROM", "no-reply@auctionledger.com"),
+  emailFromName: str("EMAIL_FROM_NAME", "Auction Ledger"),
   emailReplyTo: str("EMAIL_REPLY_TO", ""),
+  smtpHost: str("SMTP_HOST", "smtp.gmail.com"),
+  smtpPort: int("SMTP_PORT", 465),
+  smtpSecure: bool("SMTP_SECURE", true),
+  smtpUser: str("SMTP_USER"),
+  smtpPass: str("SMTP_PASS"),
 
   usdcNetwork: str("USDC_NETWORK", "base"),
   usdcTokenContract: str(

@@ -29,6 +29,7 @@ import {
   type MeUser,
 } from "../auth/auth.service.js";
 import { assignRole, revokeRole, isAdmin } from "../auth/rbac.js";
+import { isEmailConfigured } from "../providers/email/index.js";
 import { listStates, listJurisdictions, getJurisdictionRules } from "../jurisdictions/jurisdictions.service.js";
 import {
   listProperties,
@@ -131,7 +132,7 @@ export function createApp(): Hono {
     } catch {
       database = "error";
     }
-    const emailConfigured = Boolean(config.resendApiKey && config.emailProvider === "resend");
+    const emailConfigured = isEmailConfigured();
     const blockchainConfigured = Boolean(config.blockchainRpcUrl);
     const storageConfigured = Boolean(config.objectStorageBucket && config.objectStorageAccessKey);
     const degraded = database === "error";
@@ -221,6 +222,39 @@ export function createApp(): Hono {
   // ---- Me ----
   app.get("/api/v1/me", async (c) => {
     const ctx = requireUser(c);
+    const user = await getCurrentUser(ctx.userId);
+    return c.json(json(user as MeUser));
+  });
+
+  app.patch("/api/v1/me/profile", async (c) => {
+    const ctx = requireUser(c);
+    const body = await c.req.json().catch(() => ({}));
+    await getPool().query(
+      `UPDATE users SET full_name = COALESCE($1, full_name), updated_at = now() WHERE id = $2`,
+      [body.fullName ?? null, ctx.userId],
+    );
+    await getPool().query(
+      `UPDATE profiles SET
+         phone = COALESCE($1, phone),
+         address_line = COALESCE($2, address_line),
+         city = COALESCE($3, city),
+         state = COALESCE($4, state),
+         postal_code = COALESCE($5, postal_code),
+         country = COALESCE($6, country),
+         avatar_data = COALESCE($7, avatar_data),
+         updated_at = now()
+       WHERE user_id = $8`,
+      [
+        body.phone ?? null,
+        body.addressLine ?? null,
+        body.city ?? null,
+        body.state ?? null,
+        body.postalCode ?? null,
+        body.country ?? null,
+        body.avatarData ?? null,
+        ctx.userId,
+      ],
+    );
     const user = await getCurrentUser(ctx.userId);
     return c.json(json(user as MeUser));
   });
@@ -424,7 +458,18 @@ export function createApp(): Hono {
   });
   app.get("/api/v1/my/watchlist", async (c) => {
     const ctx = requireUser(c);
-    const { rows } = await getPool().query(`SELECT * FROM watchlist WHERE user_id=$1`, [ctx.userId]);
+    const { rows } = await getPool().query(
+      `SELECT w.id, w.auction_id, w.lot_id, w.created_at,
+              p.id AS property_id, p.address, p.city, p.state, p.postal_code,
+              al.starting_rate, al.current_rate,
+              a.starts_at AS auction_starts_at
+       FROM watchlist w
+       LEFT JOIN auction_lots al ON al.id = w.lot_id
+       LEFT JOIN properties p ON p.id = al.property_id
+       LEFT JOIN auctions a ON a.id = w.auction_id
+       WHERE w.user_id = $1 ORDER BY w.created_at DESC`,
+      [ctx.userId],
+    );
     return c.json(json(rows));
   });
   app.get("/api/v1/my/saved-searches", async (c) => {

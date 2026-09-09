@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/firebase/client";
+import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/hooks/use-session";
+import { getKycStatus, submitKyc, createDocument, updateProfile, type KycStatus } from "@/lib/backend";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ShieldCheck, Upload, CheckCircle2, Clock, XCircle } from "lucide-react";
@@ -10,54 +10,56 @@ export const Route = createFileRoute("/_authenticated/dashboard/verify")({
   component: Verify,
 });
 
+const STATUS: Record<string, { label: string; cls: string }> = {
+  verified: { label: "Approved", cls: "text-success" },
+  submitted: { label: "Pending", cls: "text-gold" },
+  rejected: { label: "Rejected", cls: "text-destructive" },
+  not_started: { label: "Not started", cls: "text-ink-muted" },
+};
+
 function Verify() {
   const { user } = useSession();
-  const qc = useQueryClient();
-  const { data: submissions = [], isLoading } = useQuery({
-    queryKey: ["kyc", user?.id],
+  const { data: kyc, isLoading } = useQuery({
+    queryKey: ["kyc-status"],
     enabled: !!user?.id,
-    queryFn: async () =>
-      (await supabase.from("kyc_submissions").select("*").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
-  });
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => (await supabase.from("profiles").select("verified").eq("id", user!.id).maybeSingle()).data,
+    queryFn: getKycStatus,
   });
 
   const [form, setForm] = useState({
-    legal_name: "", date_of_birth: "", address_line1: "", address_line2: "",
-    city: "", state: "", postal_code: "", country: "US", tax_id_last4: "",
+    legal_name: "", date_of_birth: "", address_line1: "", city: "", state: "", postal_code: "", tax_id_last4: "",
   });
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof typeof form>(k: K, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  const pending = submissions.find((s) => s.status === "pending");
-  const isVerified = !!profile?.verified;
+  const status = kyc?.status ?? "not_started";
+  const pending = status === "submitted";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
     if (form.tax_id_last4.length !== 4) return toast.error("Enter the last 4 digits of your SSN/EIN");
+    if (!file) return toast.error("Attach a government-issued ID (driver's license or passport)");
     setBusy(true);
     try {
-      let id_document_path: string | null = null;
-      if (file) {
-        const path = `kyc/${user.id}/${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
-        const up = await supabase.storage.from("documents").upload(path, file, { upsert: false });
-        if (up.error) throw up.error;
-        if (!up.data) throw new Error("Upload failed");
-        id_document_path = up.data.path;
-      }
-      const { error } = await supabase.from("kyc_submissions").insert({
-        user_id: user.id, ...form, id_document_path,
+      const b64 = await fileToBase64(file);
+      const documentId = await createDocument({
+        bodyBase64: b64,
+        mimeType: file.type || "application/octet-stream",
+        resourceType: "kyc_id",
+        accessScope: "kyc_sensitive",
       });
-      if (error) throw error;
+      await submitKyc([{ documentType: "government_id", documentId }]);
+      await updateProfile({
+        fullName: form.legal_name,
+        addressLine: form.address_line1,
+        city: form.city,
+        state: form.state,
+        postalCode: form.postal_code,
+      });
       toast.success("Verification submitted for review");
-      setForm({ legal_name: "", date_of_birth: "", address_line1: "", address_line2: "", city: "", state: "", postal_code: "", country: "US", tax_id_last4: "" });
+      setForm({ legal_name: "", date_of_birth: "", address_line1: "", city: "", state: "", postal_code: "", tax_id_last4: "" });
       setFile(null);
-      qc.invalidateQueries({ queryKey: ["kyc"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Submission failed");
     } finally {
@@ -75,7 +77,7 @@ function Verify() {
         Verification is required before you can place bids. Your information is encrypted and reviewed by our compliance team.
       </p>
 
-      {isVerified && (
+      {status === "verified" && (
         <div className="mt-6 flex items-center gap-3 rounded-xl border border-success/30 bg-success-soft p-4 text-success">
           <CheckCircle2 className="size-5" />
           <div>
@@ -85,17 +87,32 @@ function Verify() {
         </div>
       )}
 
-      {!isVerified && pending && (
-        <div className="mt-6 flex items-center gap-3 rounded-xl border border-hairline bg-surface p-4">
-          <Clock className="size-5 text-gold" />
+      {status === "rejected" && (
+        <div className="mt-6 flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-destructive">
+          <XCircle className="size-5" />
           <div>
-            <div className="font-600 text-navy">Under review</div>
-            <div className="text-xs text-ink-muted">Submitted {new Date(pending.created_at).toLocaleString()}. Most reviews complete within 1 business day.</div>
+            <div className="font-600">Verification was rejected</div>
+            <div className="text-xs opacity-80">
+              {kyc?.rejection_reason || "Please resubmit with a clearer government-issued ID."} You can resubmit below.
+            </div>
           </div>
         </div>
       )}
 
-      {!isVerified && !pending && (
+      {pending && (
+        <div className="mt-6 flex items-center gap-3 rounded-xl border border-hairline bg-surface p-4">
+          <Clock className="size-5 text-gold" />
+          <div>
+            <div className="font-600 text-navy">Under review</div>
+            <div className="text-xs text-ink-muted">
+              {kyc?.submitted_at ? `Submitted ${new Date(kyc.submitted_at).toLocaleString()}. ` : ""}
+              Most reviews complete within 1 business day.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!pending && status !== "verified" && (
         <form onSubmit={submit} className="mt-6 grid gap-3 rounded-xl border border-hairline bg-surface p-5 sm:grid-cols-2">
           <label className="text-sm sm:col-span-2">Legal name
             <input required value={form.legal_name} onChange={(e) => set("legal_name", e.target.value)} className="input mt-1" />
@@ -109,20 +126,14 @@ function Verify() {
           <label className="text-sm sm:col-span-2">Street address
             <input required value={form.address_line1} onChange={(e) => set("address_line1", e.target.value)} className="input mt-1" />
           </label>
-          <label className="text-sm sm:col-span-2">Apt / suite (optional)
-            <input value={form.address_line2} onChange={(e) => set("address_line2", e.target.value)} className="input mt-1" />
-          </label>
           <label className="text-sm">City
             <input required value={form.city} onChange={(e) => set("city", e.target.value)} className="input mt-1" />
-          </label>
-          <label className="text-sm">State
-            <input required maxLength={2} value={form.state} onChange={(e) => set("state", e.target.value.toUpperCase())} className="input mt-1 uppercase" />
           </label>
           <label className="text-sm">Postal code
             <input required value={form.postal_code} onChange={(e) => set("postal_code", e.target.value)} className="input mt-1" />
           </label>
-          <label className="text-sm">Country
-            <input required value={form.country} onChange={(e) => set("country", e.target.value)} className="input mt-1" />
+          <label className="text-sm">State
+            <input required maxLength={2} value={form.state} onChange={(e) => set("state", e.target.value.toUpperCase())} className="input mt-1 uppercase" />
           </label>
           <label className="text-sm sm:col-span-2">Government-issued ID (driver's license, passport)
             <div className="mt-1 flex items-center gap-3 rounded-md border border-dashed border-hairline bg-surface-alt p-3">
@@ -139,101 +150,49 @@ function Verify() {
         </form>
       )}
 
-      {submissions.length > 0 && (
-        <div className="mt-8">
-          <h2 className="font-display text-lg font-600 text-navy">Submission history</h2>
-          {isLoading ? (
-            <p className="mt-3 rounded-xl border border-hairline bg-surface p-8 text-center text-sm text-ink-muted">
-              Loading…
-            </p>
-          ) : (
-            <>
-              {/* Mobile cards */}
-              <div className="mt-3 space-y-3 sm:hidden">
-                {submissions.map((s) => (
-                  <div
-                    key={s.id}
-                    className="rounded-xl border border-hairline bg-surface p-4"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="font-600 text-navy">{s.legal_name}</div>
-                        <div className="text-xs text-ink-muted">
-                          {new Date(s.created_at).toLocaleString()}
-                        </div>
-                      </div>
-                      <SubmissionStatus status={s.status} />
-                    </div>
-                    <div className="mt-2 text-xs text-ink-muted">
-                      {s.admin_notes ?? "—"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Desktop table */}
-              <div className="mt-3 hidden sm:block">
-                <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="border-b border-hairline bg-surface-alt text-left text-xs uppercase tracking-wider text-ink-muted">
-                        <tr>
-                          <th className="px-4 py-2">Date</th>
-                          <th className="px-4 py-2">Name</th>
-                          <th className="px-4 py-2">Status</th>
-                          <th className="px-4 py-2">Notes</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {submissions.map((s) => (
-                          <tr
-                            key={s.id}
-                            className="border-b border-hairline/50 last:border-0"
-                          >
-                            <td className="px-4 py-2 text-xs">
-                              {new Date(s.created_at).toLocaleString()}
-                            </td>
-                            <td className="px-4 py-2">{s.legal_name}</td>
-                            <td className="px-4 py-2">
-                              <SubmissionStatus status={s.status} />
-                            </td>
-                            <td className="px-4 py-2 text-xs text-ink-muted">
-                              {s.admin_notes ?? "—"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+      <div className="mt-6 rounded-xl border border-dashed border-hairline bg-surface p-4 text-sm text-ink-muted">
+        <div className="font-600 text-navy">What do we require?</div>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+          <li>A government-issued photo ID (driver's license, state ID, or passport)</li>
+          <li>Legal name, date of birth, and the last 4 digits of your SSN/EIN</li>
+          <li>A U.S. mailing address</li>
+          <li>Fully funded account to bid — certificates are issued to your verified profile</li>
+        </ul>
+      </div>
+
+      {kyc && (
+        <div className="mt-4 text-xs text-ink-muted">
+          Current status: <StatusPill status={status} kyc={kyc} />
         </div>
       )}
+      {isLoading && <p className="mt-4 text-xs text-ink-muted">Loading status…</p>}
 
       <style>{`.input{height:36px;border-radius:6px;border:1px solid var(--hairline);background:var(--surface);padding:0 10px;font-size:14px;width:100%;display:block}`}</style>
     </div>
   );
 }
 
-function SubmissionStatus({ status }: { status: string }) {
-  if (status === "approved")
-    return (
-      <span className="inline-flex items-center gap-1 text-success">
-        <CheckCircle2 className="size-3.5" /> Approved
+function StatusPill({ status, kyc }: { status: string; kyc: KycStatus }) {
+  const s = STATUS[status] ?? { label: status, cls: "text-ink-muted" };
+  return (
+    <span className={`inline-flex items-center gap-1 font-600 ${s.cls}`}>
+      {s.label}
+      <span className="font-normal text-ink-muted">
+        {kyc?.reviewed_at ? ` · reviewed ${new Date(kyc.reviewed_at).toLocaleDateString()}` : ""}
       </span>
-    );
-  if (status === "pending")
-    return (
-      <span className="inline-flex items-center gap-1 text-gold">
-        <Clock className="size-3.5" /> Pending
-      </span>
-    );
-  if (status === "rejected")
-    return (
-      <span className="inline-flex items-center gap-1 text-destructive">
-        <XCircle className="size-3.5" /> Rejected
-      </span>
-    );
-  return <span className="capitalize text-ink-muted">{status}</span>;
+    </span>
+  );
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const comma = result.indexOf(",");
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
 }

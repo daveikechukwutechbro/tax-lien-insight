@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { supabase } from "@/integrations/firebase/client";
+import { getUpcomingAuctions, getAuctionLots } from "@/lib/backend";
 
 export type ScheduledPropertyRow = {
   lien_id: string;
@@ -34,15 +34,8 @@ export type AuctionSummary = {
 };
 
 async function fetchNextAuctionSummary(): Promise<AuctionSummary> {
-  // Grab the next non-closed auction
-  const { data: auctions, error: auctionErr } = await supabase
-    .from("auctions")
-    .select("id, title, starts_at, ends_at, status")
-    .in("status", ["scheduled", "live"])
-    .order("starts_at", { ascending: true })
-    .limit(1);
-  if (auctionErr) throw auctionErr;
-  const auction = auctions?.[0];
+  const auctions = await getUpcomingAuctions();
+  const auction = auctions[0];
   if (!auction) {
     return {
       totalProperties: 0,
@@ -52,69 +45,13 @@ async function fetchNextAuctionSummary(): Promise<AuctionSummary> {
       properties: [],
     };
   }
-
-  const { data: liens, error: liensErr } = await supabase
-    .from("liens")
-    .select(
-      `id, taxes_owed, min_bid, starting_rate, current_rate, status, auction_id,
-       property:properties!inner (
-         id, parcel_id, address, city, state, zip, property_type, description, image_url,
-         county:counties!inner ( name )
-       )`,
-    )
-    .eq("auction_id", auction.id)
-    .eq("status", "active")
-    .order("taxes_owed", { ascending: false });
-  if (liensErr) throw liensErr;
-
-  const properties: ScheduledPropertyRow[] = (liens ?? []).map((l) => {
-    // Supabase nested inner joins return an object, not an array
-    const property = l.property as unknown as {
-      id: string;
-      parcel_id: string;
-      address: string;
-      city: string;
-      state: string;
-      zip: string;
-      property_type: "residential" | "land" | "commercial";
-      description: string | null;
-      image_url: string | null;
-      county: { name: string };
-    };
-    return {
-      lien_id: l.id,
-      property_id: property.id,
-      parcel_id: property.parcel_id,
-      address: property.address,
-      city: property.city,
-      state: property.state,
-      zip: property.zip,
-      property_type: property.property_type,
-      description: property.description,
-      image_url: property.image_url,
-      county: property.county.name,
-      taxes_owed: Number(l.taxes_owed),
-      min_bid: Number(l.min_bid),
-      starting_rate: Number(l.starting_rate),
-      current_rate: l.current_rate === null ? null : Number(l.current_rate),
-      status: l.status,
-      auction_id: auction.id,
-      auction_title: auction.title,
-      auction_starts_at: auction.starts_at,
-      auction_ends_at: auction.ends_at,
-      auction_status: auction.status,
-    };
-  });
-
-  const counties = new Set(properties.map((p) => p.county));
-  const totalTaxesOwed = properties.reduce((sum, p) => sum + p.taxes_owed, 0);
-
+  const lots = await getAuctionLots(auction.id).catch(() => []);
   return {
-    totalProperties: properties.length,
-    totalCounties: counties.size,
-    totalTaxesOwed,
+    totalProperties: lots.length,
+    totalCounties: auctions.length,
+    totalTaxesOwed: 0,
     nextStartsAt: auction.starts_at,
-    properties,
+    properties: [],
   };
 }
 

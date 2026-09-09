@@ -313,18 +313,46 @@ class OutboxEmailProvider implements EmailProvider {
   }
 }
 
+class SmtpEmailProvider implements EmailProvider {
+  readonly name = "smtp";
+  async send(input: SendEmailInput) {
+    const nodemailer = await import("nodemailer");
+    const rendered = TEMPLATES[input.template](input.variables);
+    const transporter = nodemailer.createTransport({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      secure: config.smtpSecure,
+      auth: { user: config.smtpUser, pass: config.smtpPass },
+    });
+    await transporter.sendMail({
+      from: { name: config.emailFromName, address: config.emailFrom },
+      to: input.to,
+      replyTo: config.emailReplyTo || undefined,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+    });
+    return { delivered: true };
+  }
+}
+
 export function isEmailConfigured(): boolean {
-  return (
-    Boolean(config.resendApiKey && config.emailProvider === "resend") &&
-    getEmailProvider() instanceof ResendEmailProvider
-  );
+  if (config.providerConfigured === "resend") {
+    return Boolean(config.resendApiKey) && getEmailProvider() instanceof ResendEmailProvider;
+  }
+  if (config.providerConfigured === "smtp") {
+    return Boolean(config.smtpUser && config.smtpPass) && getEmailProvider() instanceof SmtpEmailProvider;
+  }
+  return false;
 }
 
 let provider: EmailProvider | null = null;
 export function getEmailProvider(): EmailProvider {
   if (provider) return provider;
-  if (config.resendApiKey && config.emailProvider === "resend") {
+  if (config.providerConfigured === "resend" && config.resendApiKey) {
     provider = new ResendEmailProvider(config.resendApiKey);
+  } else if (config.providerConfigured === "smtp" && config.smtpUser && config.smtpPass) {
+    provider = new SmtpEmailProvider();
   } else {
     provider = new OutboxEmailProvider();
     logger.warn("Email provider NOT_CONFIGURED — using outbox queue", { provider: "outbox" });

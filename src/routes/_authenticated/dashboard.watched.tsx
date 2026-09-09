@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "@/hooks/use-session";
 import { watchlistQuery } from "@/lib/queries/dashboard";
-import { supabase } from "@/integrations/firebase/client";
+import { removeWatchlistItem } from "@/lib/backend";
 import { Bookmark, CalendarDays, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,10 +18,13 @@ function WatchedPage() {
   const qc = useQueryClient();
 
   async function remove(id: string) {
-    const { error } = await supabase.from("watchlist").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["dashboard", "watchlist"] });
-    toast.success("Removed from watchlist");
+    try {
+      await removeWatchlistItem(id);
+      qc.invalidateQueries({ queryKey: ["dashboard", "watchlist"] });
+      toast.success("Removed from watchlist");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not remove");
+    }
   }
 
   return (

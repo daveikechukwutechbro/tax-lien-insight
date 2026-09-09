@@ -151,9 +151,11 @@ export async function getCurrentUser(userId: string) {
   const user = rows[0];
   if (!user) throw new NotFoundError("User not found");
   const profile = await getPool().query(
-    `SELECT kyc_status FROM profiles WHERE user_id = $1`,
+    `SELECT kyc_status, phone, address_line, city, state, postal_code, country, avatar_data
+     FROM profiles WHERE user_id = $1`,
     [userId],
   );
+  const p = profile.rows[0];
   const roles = await getUserRoles(userId);
   return {
     id: user.id,
@@ -162,7 +164,18 @@ export async function getCurrentUser(userId: string) {
     status: user.status,
     emailVerified: user.email_verified,
     emailVerifiedAt: user.email_verified_at ?? null,
-    kycStatus: profile.rows[0]?.kyc_status ?? "not_started",
+    kycStatus: p?.kyc_status ?? "not_started",
+    phone: p?.phone ?? null,
+    address: p
+      ? {
+          addressLine: p.address_line ?? null,
+          city: p.city ?? null,
+          state: p.state ?? null,
+          postalCode: p.postal_code ?? null,
+          country: p.country ?? null,
+        }
+      : null,
+    avatar: p?.avatar_data ?? null,
     roles,
     createdAt: user.created_at,
     lastLoginAt: user.last_login_at,

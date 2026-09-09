@@ -7,8 +7,7 @@ import {
   Lock, ArrowRight, Wallet, Send, BadgeCheck, PiggyBank, Copy,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { supabase } from "@/integrations/firebase/client";
-import { profileQuery } from "@/lib/queries/dashboard";
+import { getFunds, getDeposits, createUsdcDeposit, sendMessage } from "@/lib/backend";
 import {
   NETWORKS, NETWORK_DISPLAY, QUICK_AMOUNTS, USDC_ADDRESSES, type NetworkKey,
 } from "@/lib/funding";
@@ -31,15 +30,24 @@ const fmtUSDC = (n: number) =>
 function FundsPage() {
   const { user } = useSession();
   const qc = useQueryClient();
-  const { data: profile } = useQuery(profileQuery(user?.id));
+  const { data: funds } = useQuery({
+    queryKey: ["funds", user?.id],
+    enabled: !!user?.id,
+    queryFn: getFunds,
+  });
   const { data: rows = [] } = useQuery({
-    queryKey: ["fund-requests", user?.id],
+    queryKey: ["deposits", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data, error } = await supabase.from("fund_requests")
-        .select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const deposits = await getDeposits();
+      return deposits.map((d) => ({
+        id: d.id,
+        kind: "deposit",
+        amount: d.expected_amount ?? 0,
+        method: `USDC — ${d.network_code}`,
+        status: d.status,
+        created_at: d.created_at,
+      }));
     },
   });
 
@@ -55,29 +63,29 @@ function FundsPage() {
   async function generate() {
     if (!(amt > 0)) return toast.error("Enter a valid amount");
     setBusy(true);
-    const { data, error } = await supabase.from("fund_requests").insert({
-      user_id: user!.id,
-      kind: "deposit",
-      amount: amt,
-      method: `USDC — ${NETWORK_DISPLAY[network]}`,
-      notes: `Network: ${NETWORK_DISPLAY[network]}; est. fee ${fee} USDC`,
-    }).select("id").single();
-    setBusy(false);
-    if (error || !data) return toast.error(error?.message ?? "Could not create deposit");
-    setDeposit({ address: USDC_ADDRESSES[network], id: data.id });
-    toast.success("Deposit created — send USDC to the address below.");
-    qc.invalidateQueries({ queryKey: ["fund-requests"] });
+    try {
+      const res = await createUsdcDeposit({
+        networkCode: network,
+        tokenSymbol: "USDC",
+        expectedAmountCents: Math.round(amt * 100),
+      });
+      setDeposit({ address: USDC_ADDRESSES[network], id: res.id });
+      toast.success("Deposit created — send USDC to the address below.");
+      qc.invalidateQueries({ queryKey: ["deposits"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not create deposit");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function notifyMe(methodLabel: string) {
-    const { error } = await supabase.from("messages").insert({
-      user_id: user!.id,
-      from_admin: false,
-      subject: `Notify me: ${methodLabel}`,
-      body: `Please notify me when ${methodLabel} funding becomes available.`,
-    });
-    if (error) return toast.error(error.message);
-    toast.success(`We'll notify you when ${methodLabel} is available.`);
+    try {
+      await sendMessage({ subject: `Notify me: ${methodLabel}`, body: `Please notify me when ${methodLabel} funding becomes available.` });
+      toast.success(`We'll notify you when ${methodLabel} is available.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send");
+    }
   }
 
   const [wAmount, setWAmount] = useState("");
@@ -86,18 +94,21 @@ function FundsPage() {
     e.preventDefault();
     const w = Number(wAmount);
     if (!(w > 0)) return toast.error("Enter a valid amount");
-    if (w > Number(profile?.account_balance ?? 0))
-      return toast.error("Amount exceeds your balance");
+    if (w > Number(funds?.available ?? 0)) return toast.error("Amount exceeds your balance");
     setBusy(true);
-    const { error } = await supabase.from("fund_requests").insert({
-      user_id: user!.id, kind: "withdrawal", amount: w,
-      method: "USDC payout", reference: wRef || null,
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Withdrawal request submitted for review.");
-    setWAmount(""); setWRef("");
-    qc.invalidateQueries({ queryKey: ["fund-requests"] });
+    try {
+      await sendMessage({
+        subject: "Withdrawal request",
+        body: `Please process a USDC payout of $${w.toFixed(2)} to ${wRef || "(wallet address not provided)"}.`,
+      });
+      toast.success("Withdrawal request submitted for review.");
+      setWAmount(""); setWRef("");
+      qc.invalidateQueries({ queryKey: ["messages"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not submit request");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -112,7 +123,7 @@ function FundsPage() {
           successful confirmation.
         </p>
         <div className="mt-4 text-xs uppercase tracking-wider text-ink-muted">
-          Available balance <span className="ml-2 font-display text-base normal-case tracking-normal text-navy">{fmt(Number(profile?.account_balance ?? 0))}</span>
+          Available balance <span className="ml-2 font-display text-base normal-case tracking-normal text-navy">{fmt(funds?.available ?? 0)}</span>
         </div>
       </section>
 

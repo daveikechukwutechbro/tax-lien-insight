@@ -1,10 +1,21 @@
+// Real backend queries for the dashboard (rewired from the demo mock).
+// All data comes from the deployed Worker via the same-origin /api/v1 proxy.
+
 import { queryOptions } from "@tanstack/react-query";
 import { getMe } from "@/lib/backend-auth";
+import {
+  getMyBids,
+  getWatchlist,
+  getDashboardSummary,
+  type DashboardSummary,
+  type UserBid,
+  type WatchedProperty as ApiWatchedProperty,
+} from "@/lib/backend";
 
 export type DashboardBid = {
   bid_id: string;
   interest_rate: number;
-  status: "winning" | "outbid" | "won" | "lost" | "invalid";
+  status: string;
   placed_at: string;
   lien: {
     id: string;
@@ -17,54 +28,72 @@ export type DashboardBid = {
       city: string;
       state: string;
       zip: string;
-      parcel_id: string;
-      image_url: string | null;
+      parcel_id?: string | null;
+      image_url?: string | null;
     };
-    auction: { starts_at: string; status: string } | null;
+    auction: { starts_at: string | null; status?: string } | null;
   };
 };
+
+function mapBid(b: UserBid): DashboardBid {
+  return {
+    bid_id: b.bid_id,
+    interest_rate: b.rate,
+    status: b.status,
+    placed_at: b.placed_at,
+    lien: {
+      id: b.lienId ?? b.bid_id,
+      taxes_owed: (b.amount || 0) / 100,
+      current_rate: null,
+      starting_rate: b.rate,
+      property: b.property
+        ? {
+            id: b.property.id ?? b.bid_id,
+            address: b.property.address ?? "Property",
+            city: b.property.city ?? "",
+            state: b.property.state ?? "",
+            zip: b.property.postal_code ?? "",
+            parcel_id: null,
+            image_url: null,
+          }
+        : {
+            id: b.bid_id,
+            address: "Property",
+            city: "",
+            state: "",
+            zip: "",
+            parcel_id: null,
+            image_url: null,
+          },
+      auction: null,
+    },
+  };
+}
 
 export function myBidsQuery(userId: string | undefined) {
   return queryOptions({
     queryKey: ["dashboard", "bids", userId],
     enabled: !!userId,
     queryFn: async (): Promise<DashboardBid[]> => {
-      if (!userId) return [];
-      const { data, error } = await supabase
-        .from("bids")
-        .select(
-          `id, interest_rate, status, placed_at,
-           lien:liens!inner(id, taxes_owed, current_rate, starting_rate,
-             property:properties!inner(id, address, city, state, zip, parcel_id, image_url),
-             auction:auctions(starts_at, status))`,
-        )
-        .eq("user_id", userId)
-        .order("placed_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []).map((b) => ({
-        bid_id: b.id,
-        interest_rate: Number(b.interest_rate),
-        status: b.status,
-        placed_at: b.placed_at,
-        lien: b.lien as unknown as DashboardBid["lien"],
-      }));
+      const bids = await getMyBids();
+      return bids.map(mapBid);
     },
   });
 }
 
 export type WatchedProperty = {
   id: string;
-  property_id: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  parcel_id: string;
-  image_url: string | null;
-  taxes_owed: number | null;
-  current_rate: number | null;
-  starting_rate: number | null;
-  auction_starts_at: string | null;
+  property_id?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  parcel_id?: string | null;
+  image_url?: string | null;
+  taxes_owed?: number | null;
+  current_rate?: number | null;
+  starting_rate?: number | null;
+  auction_starts_at?: string | null;
 };
 
 export function watchlistQuery(userId: string | undefined) {
@@ -72,69 +101,59 @@ export function watchlistQuery(userId: string | undefined) {
     queryKey: ["dashboard", "watchlist", userId],
     enabled: !!userId,
     queryFn: async (): Promise<WatchedProperty[]> => {
-      if (!userId) return [];
-      const { data, error } = await supabase
-        .from("watchlist")
-        .select(
-          `id, property_id,
-           property:properties!inner(
-             id, address, city, state, zip, parcel_id, image_url,
-             liens(taxes_owed, current_rate, starting_rate, auction:auctions(starts_at))
-           )`,
-        )
-        .eq("user_id", userId);
-      if (error) throw error;
-      return (data ?? []).map((w) => {
-        const p = w.property as unknown as {
-          id: string;
-          address: string;
-          city: string;
-          state: string;
-          zip: string;
-          parcel_id: string;
-          image_url: string | null;
-          liens: {
-            taxes_owed: number;
-            current_rate: number | null;
-            starting_rate: number;
-            auction: { starts_at: string } | null;
-          }[];
-        };
-        const lien = p.liens?.[0];
-        return {
-          id: w.id,
-          property_id: p.id,
-          address: p.address,
-          city: p.city,
-          state: p.state,
-          zip: p.zip,
-          parcel_id: p.parcel_id,
-          image_url: p.image_url,
-          taxes_owed: lien ? Number(lien.taxes_owed) : null,
-          current_rate: lien?.current_rate === null || lien?.current_rate === undefined
-            ? null
-            : Number(lien.current_rate),
-          starting_rate: lien ? Number(lien.starting_rate) : null,
-          auction_starts_at: lien?.auction?.starts_at ?? null,
-        };
-      });
+      const rows = await getWatchlist();
+      return rows.map((w: ApiWatchedProperty) => ({
+        id: w.id,
+        property_id: w.property_id ?? undefined,
+        address: w.address ?? undefined,
+        city: w.city ?? undefined,
+        state: w.state ?? undefined,
+        zip: w.postal_code ?? undefined,
+        parcel_id: undefined,
+        image_url: null,
+        taxes_owed: null,
+        current_rate: w.current_rate ?? null,
+        starting_rate: w.starting_rate ?? null,
+        auction_starts_at: w.auction_starts_at ?? undefined,
+      }));
     },
   });
 }
+
+export type ProfileInfo = {
+  full_name: string | null;
+  phone: string | null;
+  email: string | null;
+  address_line?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  avatar?: string | null;
+  verified: boolean;
+  kyc_status: string;
+};
 
 export function profileQuery(userId: string | undefined) {
   return queryOptions({
     queryKey: ["profile", userId],
     enabled: !!userId,
-    queryFn: async () => {
-      if (!userId) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, account_balance, verified")
-        .eq("id", userId)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
+    queryFn: async (): Promise<ProfileInfo | null> => {
+      const me = await getMe();
+      if (!me) return null;
+      return {
+        full_name: me.fullName,
+        phone: me.phone,
+        email: me.email,
+        address_line: me.address?.addressLine ?? null,
+        city: me.address?.city ?? null,
+        state: me.address?.state ?? null,
+        postal_code: me.address?.postalCode ?? null,
+        country: me.address?.country ?? null,
+        avatar: me.avatar,
+        verified: me.kycStatus === "verified",
+        kyc_status: me.kycStatus,
+      };
     },
   });
 }
@@ -152,28 +171,17 @@ export function isAdminQuery(userId: string | undefined) {
   });
 }
 
-// Authoritative account/dashboard metrics straight from the backend (issue #16/#17).
-export type DashboardSummary = {
-  bids: { count: number; active: number; winning: number; outbid: number; lost: number };
-  awards: { count: number; principal_value: number };
-  funds: { available: number; held: number; pending: number };
-  payments: { pending: number; paid: number };
-  redemptions: { active: number; completed: number; realized_interest: number };
-  certificates: { pending: number };
-};
-
 export function dashboardSummaryQuery(userId: string | undefined) {
   return queryOptions({
     queryKey: ["dashboard-summary", userId],
     enabled: !!userId,
     queryFn: async (): Promise<DashboardSummary | null> => {
       if (!userId) return null;
-      const { data, error } = await supabase.rpc("get_user_dashboard_summary", {
-        _user_id: userId,
-      });
-      if (error) throw error;
-      return (data as unknown as DashboardSummary | null) ?? null;
+      return getDashboardSummary();
     },
     staleTime: 30_000,
   });
 }
+
+// Small named alias so older imports that used DashboardSummary keep working.
+export type { DashboardSummary };

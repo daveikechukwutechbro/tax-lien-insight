@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/firebase/client";
+import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/hooks/use-session";
-import { toast } from "sonner";
+import { getNotifications } from "@/lib/backend";
 
 export const Route = createFileRoute("/_authenticated/dashboard/notifications")({
   component: Notifications,
@@ -10,31 +9,13 @@ export const Route = createFileRoute("/_authenticated/dashboard/notifications")(
 
 function Notifications() {
   const { user } = useSession();
-  const qc = useQueryClient();
   const { data: rows = [] } = useQuery({
     queryKey: ["notifications", user?.id],
     enabled: !!user?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase.from("notifications")
-        .select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(100);
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: getNotifications,
   });
 
-  async function markAll() {
-    const ids = rows.filter(r => !r.read_at).map(r => r.id);
-    if (!ids.length) return;
-    const { error } = await supabase.from("notifications").update({ read_at: new Date().toISOString() }).in("id", ids);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["notifications"] });
-  }
-  async function markOne(id: string) {
-    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
-    qc.invalidateQueries({ queryKey: ["notifications"] });
-  }
-
-  const unread = rows.filter(r => !r.read_at).length;
+  const unread = rows.filter((r) => !r.read_at).length;
   return (
     <div>
       <div className="flex items-end justify-between">
@@ -42,7 +23,6 @@ function Notifications() {
           <h1 className="font-display text-3xl font-600 text-navy">Notifications</h1>
           <p className="mt-1 text-sm text-ink-muted">{unread} unread</p>
         </div>
-        {unread > 0 && <button onClick={markAll} className="rounded-md border border-hairline bg-surface px-3 py-1.5 text-xs font-600 text-navy hover:bg-surface-alt">Mark all read</button>}
       </div>
       <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">
         {rows.length === 0 ? <p className="p-8 text-center text-sm text-ink-muted">No notifications yet.</p> :
@@ -56,7 +36,6 @@ function Notifications() {
                   <div className="mt-1 flex items-center gap-3 text-xs text-ink-muted">
                     <span>{new Date(n.created_at).toLocaleString()}</span>
                     {n.link && <Link to={n.link} className="text-navy underline">View</Link>}
-                    {!n.read_at && <button onClick={() => markOne(n.id)} className="text-navy underline">Mark read</button>}
                   </div>
                 </div>
               </li>

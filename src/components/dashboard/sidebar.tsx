@@ -91,8 +91,10 @@ export function DashboardSidebar() {
               <Settings className="size-4" /> Edit Profile
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem className="flex items-center gap-2">
-            <Image className="size-4" /> Upload Photo
+          <DropdownMenuItem asChild>
+            <Link to="/dashboard/profile" className="flex items-center gap-2">
+              <Image className="size-4" /> Upload Photo
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
