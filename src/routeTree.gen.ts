@@ -16,6 +16,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as ResetRouteImport } from './routes/reset'
+import { Route as RatesRouteImport } from './routes/rates'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as GlossaryRouteImport } from './routes/glossary'
@@ -91,6 +92,11 @@ const ResourcesRoute = ResourcesRouteImport.update({
 const ResetRoute = ResetRouteImport.update({
   id: '/reset',
   path: '/reset',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatesRoute = RatesRouteImport.update({
+  id: '/rates',
+  path: '/rates',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
@@ -323,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/glossary': typeof GlossaryRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/rates': typeof RatesRoute
   '/reset': typeof ResetRoute
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
@@ -371,6 +378,7 @@ export interface FileRoutesByTo {
   '/glossary': typeof GlossaryRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/rates': typeof RatesRoute
   '/reset': typeof ResetRoute
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
@@ -421,6 +429,7 @@ export interface FileRoutesById {
   '/glossary': typeof GlossaryRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/rates': typeof RatesRoute
   '/reset': typeof ResetRoute
   '/resources': typeof ResourcesRoute
   '/search': typeof SearchRoute
@@ -472,6 +481,7 @@ export interface FileRouteTypes {
     | '/glossary'
     | '/help'
     | '/how-it-works'
+    | '/rates'
     | '/reset'
     | '/resources'
     | '/search'
@@ -520,6 +530,7 @@ export interface FileRouteTypes {
     | '/glossary'
     | '/help'
     | '/how-it-works'
+    | '/rates'
     | '/reset'
     | '/resources'
     | '/search'
@@ -569,6 +580,7 @@ export interface FileRouteTypes {
     | '/glossary'
     | '/help'
     | '/how-it-works'
+    | '/rates'
     | '/reset'
     | '/resources'
     | '/search'
@@ -620,6 +632,7 @@ export interface RootRouteChildren {
   GlossaryRoute: typeof GlossaryRoute
   HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  RatesRoute: typeof RatesRoute
   ResetRoute: typeof ResetRoute
   ResourcesRoute: typeof ResourcesRoute
   SearchRoute: typeof SearchRoute
@@ -679,6 +692,13 @@ declare module '@tanstack/react-router' {
       path: '/reset'
       fullPath: '/reset'
       preLoaderRoute: typeof ResetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rates': {
+      id: '/rates'
+      path: '/rates'
+      fullPath: '/rates'
+      preLoaderRoute: typeof RatesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-it-works': {
@@ -1093,6 +1113,7 @@ const rootRouteChildren: RootRouteChildren = {
   GlossaryRoute: GlossaryRoute,
   HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
+  RatesRoute: RatesRoute,
   ResetRoute: ResetRoute,
   ResourcesRoute: ResourcesRoute,
   SearchRoute: SearchRoute,
