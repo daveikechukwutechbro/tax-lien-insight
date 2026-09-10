@@ -204,6 +204,11 @@ export async function getNotifications(): Promise<Notification[]> {
   }));
 }
 
+export async function getUnreadNotificationsCount(): Promise<number> {
+  const res = await request<{ count: number }>("/api/v1/my/notifications/unread-count");
+  return res?.count ?? 0;
+}
+
 export type SavedSearch = {
   id: string;
   name: string;

@@ -470,6 +470,10 @@ export function createApp(): Hono {
     const ctx = requireUser(c);
     return c.json(json(await getSummary(ctx.userId)));
   });
+  app.get("/api/v1/my/notifications/unread-count", async (c) => {
+    const ctx = requireUser(c);
+    return c.json(json({ count: await countUnreadNotifications(ctx.userId) }));
+  });
   app.get("/api/v1/my/notifications", async (c) => {
     const ctx = requireUser(c);
     const page = Number(c.req.query("page") ?? 1) || 1;

@@ -200,7 +200,7 @@ function StatsRow({
   totalTaxesOwed: number;
   auctionDate: Date | null;
 }) {
-  const money = totalTaxesOwed.toLocaleString("en-US", {
+  const money = (totalTaxesOwed / 100).toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
   });
@@ -341,13 +341,13 @@ function SelectPill({ label }: { label: string }) {
 
 function PropertyTable({ properties }: { properties: ScheduledPropertyRow[] }) {
   const fmt = (n: number) =>
-    n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+    (n / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
   if (properties.length === 0) {
     return (
       <section className="mt-8 rounded-xl border border-hairline bg-surface p-10 text-center">
         <p className="text-sm text-ink-muted">
-          No properties scheduled yet. Check back soon.
+          No properties for auction yet. Check back soon.
         </p>
       </section>
     );
@@ -356,7 +356,7 @@ function PropertyTable({ properties }: { properties: ScheduledPropertyRow[] }) {
   return (
     <section className="mt-8">
       <h2 className="mb-3 font-display text-lg font-600 text-navy">
-        Scheduled Properties ({properties.length})
+        Liens for Auction ({properties.length})
       </h2>
       {/* Mobile cards */}
       <div className="space-y-3 sm:hidden">

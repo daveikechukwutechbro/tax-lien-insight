@@ -8,6 +8,7 @@ import {
   getWatchlist,
   getActivity,
   getDashboardSummary,
+  getUnreadNotificationsCount,
   type DashboardSummary,
   type UserBid,
   type WatchedProperty as ApiWatchedProperty,
@@ -190,6 +191,15 @@ export function activityQuery(userId: string | undefined) {
     queryKey: ["activity", userId],
     enabled: !!userId,
     queryFn: async (): Promise<ActivityItem[]> => getActivity(30),
+    refetchInterval: 15_000,
+  });
+}
+
+export function unreadNotificationsQuery(userId: string | undefined) {
+  return queryOptions({
+    queryKey: ["notifications", "unread", userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<number> => getUnreadNotificationsCount(),
     refetchInterval: 15_000,
   });
 }

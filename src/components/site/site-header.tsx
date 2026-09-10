@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Bell, ChevronDown, Landmark, Menu } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { useQuery } from "@tanstack/react-query";
-import { isAdminQuery } from "@/lib/queries/dashboard";
+import { isAdminQuery, unreadNotificationsQuery } from "@/lib/queries/dashboard";
 import { ProfileMenu } from "@/components/site/profile-menu";
 import { Sheet, SheetTrigger, SheetContent, SheetOverlay, SheetClose } from "@/components/ui/sheet";
 
@@ -22,6 +22,7 @@ const nav: NavItem[] = [
 export function SiteHeader() {
   const { user, loading } = useSession();
   const { data: isAdmin } = useQuery(isAdminQuery(user?.id));
+  const { data: unread } = useQuery(unreadNotificationsQuery(user?.id));
 
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
@@ -111,13 +112,18 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-5">
           {loading ? null : user ? (
             <>
-              <button
-                type="button"
+              <Link
+                to="/dashboard/notifications"
                 aria-label="Notifications"
-                className="relative hidden items-center gap-2 text-sm text-ink transition-colors hover:text-navy sm:flex"
+                className="relative hidden items-center gap-2 rounded-md p-1.5 text-ink transition-colors hover:text-navy sm:flex"
               >
                 <Bell className="size-5" strokeWidth={1.75} />
-              </button>
+                {typeof unread === "number" && unread > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 grid min-w-[18px] place-items-center rounded-full bg-destructive px-1 text-[10px] font-700 leading-[18px] text-white">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                )}
+              </Link>
               <ProfileMenu
                 trigger={
                   <button className="flex items-center gap-2 text-sm text-ink hover:text-navy sm:flex">
