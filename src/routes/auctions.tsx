@@ -57,7 +57,7 @@ function AuctionsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-display text-lg font-600 text-navy">{a.title}</div>
-                      <div className="text-sm text-ink-muted">{a.county.name}, {a.county.state}</div>
+                      <div className="text-sm text-ink-muted">{a.county ? `${a.county.name}, ${a.county.state}` : "Nationwide sale"}</div>
                     </div>
                     <StatusPill status={a.status} />
                   </div>
@@ -91,5 +91,5 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function StatusPill({ status }: { status: string }) {
   const cls = status === "live" ? "bg-success-soft text-success" : status === "closed" ? "bg-ink-muted/10 text-ink-muted" : "bg-gold/20 text-navy";
-  return <span className={`rounded px-2 py-0.5 text-xs font-500 capitalize ${cls}`}>{status}</span>;
+  return <span className={`rounded px-2 py-0.5 text-xs font-500 capitalize ${cls}`}>{status.replaceAll("_", " ")}</span>;
 }

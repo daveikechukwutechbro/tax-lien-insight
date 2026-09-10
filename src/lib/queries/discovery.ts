@@ -1,45 +1,15 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/firebase/client";
+import { getAuctions, getAuctionDetail, type AuctionApi } from "@/lib/backend";
 
-export type AuctionListRow = {
-  id: string;
-  title: string;
-  starts_at: string;
-  ends_at: string;
-  status: "draft" | "scheduled" | "live" | "closed" | "canceled";
-  county: { id: string; name: string; state: string };
-  lien_count: number;
-  total_taxes_owed: number;
+export type AuctionListRow = AuctionApi & {
+  status: string;
+  county: { id: string; name: string; state: string } | null;
 };
 
 export const auctionsListQuery = queryOptions({
   queryKey: ["auctions", "list"],
-  queryFn: async (): Promise<AuctionListRow[]> => {
-    const { data, error } = await supabase
-      .from("auctions")
-      .select(
-        `id, title, starts_at, ends_at, status,
-         county:counties!inner(id, name, state),
-         liens(taxes_owed, status)`,
-      )
-      .in("status", ["scheduled", "live", "closed"])
-      .order("starts_at", { ascending: true });
-    if (error) throw error;
-    return (data ?? []).map((a) => {
-      const liens = (a.liens ?? []) as { taxes_owed: number; status: string }[];
-      const active = liens.filter((l) => l.status === "active");
-      return {
-        id: a.id,
-        title: a.title,
-        starts_at: a.starts_at,
-        ends_at: a.ends_at,
-        status: a.status,
-        county: a.county as unknown as AuctionListRow["county"],
-        lien_count: active.length,
-        total_taxes_owed: active.reduce((s, l) => s + Number(l.taxes_owed), 0),
-      };
-    });
-  },
+  queryFn: async (): Promise<AuctionListRow[]> => getAuctions(),
   staleTime: 30_000,
   retry: 2,
   retryDelay: 500,
@@ -50,8 +20,8 @@ export type AuctionDetail = {
   title: string;
   starts_at: string;
   ends_at: string;
-  status: "draft" | "scheduled" | "live" | "closed" | "canceled";
-  county: { id: string; name: string; state: string };
+  status: string;
+  county: { id: string; name: string; state: string } | null;
   liens: {
     id: string;
     taxes_owed: number;
@@ -61,12 +31,12 @@ export type AuctionDetail = {
     status: string;
     property: {
       id: string;
-      parcel_id: string;
+      parcel_id: string | null;
       address: string;
       city: string;
       state: string;
       zip: string;
-      property_type: string;
+      property_type: string | null;
       image_url: string | null;
     };
   }[];
@@ -76,29 +46,35 @@ export function auctionDetailQuery(id: string) {
   return queryOptions({
     queryKey: ["auctions", "detail", id],
     queryFn: async (): Promise<AuctionDetail> => {
-      const { data, error } = await supabase
-        .from("auctions")
-        .select(
-          `id, title, starts_at, ends_at, status,
-           county:counties!inner(id, name, state),
-           liens(id, taxes_owed, min_bid, starting_rate, current_rate, status,
-             property:properties!inner(id, parcel_id, address, city, state, zip, property_type, image_url))`,
-        )
-        .eq("id", id)
-        .maybeSingle();
-      if (error) throw error;
-      if (!data) throw new Error("Auction not found");
+      const { auction, lots } = await getAuctionDetail(id);
       return {
-        ...data,
-        county: data.county as unknown as AuctionDetail["county"],
-        liens: ((data.liens ?? []) as unknown as AuctionDetail["liens"]).map((l) => ({
-          ...l,
-          taxes_owed: Number(l.taxes_owed),
-          min_bid: Number(l.min_bid),
-          starting_rate: Number(l.starting_rate),
-          current_rate: l.current_rate === null ? null : Number(l.current_rate),
-        })),
-      } as unknown as AuctionDetail;
+        id: auction.id,
+        title: auction.title,
+        starts_at: auction.starts_at ?? "",
+        ends_at: auction.ends_at ?? "",
+        status: auction.status,
+        county: auction.county,
+        liens: lots
+          .filter((l) => !["cancelled", "withdrawn", "archived"].includes(l.status))
+          .map((l) => ({
+            id: l.id,
+            taxes_owed: l.taxes_owed,
+            min_bid: l.taxes_owed,
+            starting_rate: l.starting_rate,
+            current_rate: l.current_rate,
+            status: l.status,
+            property: {
+              id: l.property_id ?? l.id,
+              parcel_id: l.parcel_id,
+              address: l.address ?? "Unnamed property",
+              city: l.city ?? "",
+              state: l.state ?? "",
+              zip: l.postal_code ?? "",
+              property_type: l.property_type,
+              image_url: null,
+            },
+          })),
+      };
     },
   });
 }

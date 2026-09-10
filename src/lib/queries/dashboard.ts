@@ -6,10 +6,12 @@ import { getMe } from "@/lib/backend-auth";
 import {
   getMyBids,
   getWatchlist,
+  getActivity,
   getDashboardSummary,
   type DashboardSummary,
   type UserBid,
   type WatchedProperty as ApiWatchedProperty,
+  type ActivityItem,
 } from "@/lib/backend";
 
 export type DashboardBid = {
@@ -180,6 +182,15 @@ export function dashboardSummaryQuery(userId: string | undefined) {
       return getDashboardSummary();
     },
     staleTime: 30_000,
+  });
+}
+
+export function activityQuery(userId: string | undefined) {
+  return queryOptions({
+    queryKey: ["activity", userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<ActivityItem[]> => getActivity(30),
+    refetchInterval: 15_000,
   });
 }
 

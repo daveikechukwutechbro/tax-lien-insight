@@ -1,14 +1,14 @@
 import { queryOptions } from "@tanstack/react-query";
-import { supabase } from "@/integrations/firebase/client";
+import { getAuction, getAuctions, getAuctionDetail, getLot, getProperty, type AuctionApi, type AuctionLot } from "@/lib/backend";
 
 export type PropertyDetail = {
   id: string;
-  parcel_id: string;
+  parcel_id: string | null;
   address: string;
   city: string;
   state: string;
   zip: string;
-  property_type: "residential" | "land" | "commercial";
+  property_type: string | null;
   description: string | null;
   image_url: string | null;
   gallery_urls: string[];
@@ -30,82 +30,97 @@ export type PropertyDetail = {
     min_bid: number;
     starting_rate: number;
     current_rate: number | null;
-    tax_year: number;
+    tax_year: number | null;
     redemption_period_months: number;
-    status: "active" | "redeemed" | "canceled" | "expired";
+    status: string;
     auction: {
       id: string;
       title: string;
       starts_at: string;
       ends_at: string;
-      status: "draft" | "scheduled" | "live" | "closed" | "canceled";
+      status: string;
     } | null;
   } | null;
   documents: { id: string; kind: string; name: string; url: string }[];
 };
 
-export function propertyDetailQuery(propertyId: string) {
+function makeLien(lot: AuctionLot, auction: AuctionApi | null): PropertyDetail["lien"] {
+  return {
+    id: lot.id,
+    taxes_owed: lot.taxes_owed,
+    min_bid: lot.taxes_owed,
+    starting_rate: lot.starting_rate,
+    current_rate: lot.current_rate,
+    tax_year: lot.tax_year,
+    redemption_period_months: lot.redemption_period_months,
+    status: "active",
+    auction: auction
+      ? {
+          id: auction.id,
+          title: auction.title,
+          starts_at: auction.starts_at ?? "",
+          ends_at: auction.ends_at ?? "",
+          status: auction.status,
+        }
+      : null,
+  };
+}
+
+export function propertyDetailQuery(
+  propertyId: string,
+  opts?: { lotId?: string; auctionId?: string },
+) {
   return queryOptions({
-    queryKey: ["property", propertyId],
+    queryKey: ["property", propertyId, opts?.lotId ?? "", opts?.auctionId ?? ""],
     queryFn: async (): Promise<PropertyDetail> => {
-      const { data: p, error } = await supabase
-        .from("properties")
-        .select(
-          `id, parcel_id, address, city, state, zip, property_type, description, image_url, gallery_urls,
-           year_built, living_area_sqft, lot_size_acres, bedrooms, bathrooms, use_type,
-           assessed_value, land_value, improvement_value, owner_name, owner_mailing_address,
-           county:counties!inner(name, state),
-           liens(id, taxes_owed, min_bid, starting_rate, current_rate, tax_year, redemption_period_months, status,
-                 auction:auctions(id, title, starts_at, ends_at, status))`,
-        )
-        .eq("id", propertyId)
-        .maybeSingle();
-      if (error) throw error;
-      if (!p) throw new Error("Property not found");
+      const p = await getProperty(propertyId);
 
-      const { data: docs } = await supabase
-        .from("documents")
-        .select("id, kind, name, url")
-        .eq("property_id", propertyId);
-
-      const activeLien = (p.liens as unknown as PropertyDetail["lien"][])?.find(
-        (l) => l?.status === "active",
-      ) ?? (p.liens as unknown as PropertyDetail["lien"][])?.[0] ?? null;
+      let lien: PropertyDetail["lien"] = null;
+      if (opts?.lotId) {
+        const lot = await getLot(opts.lotId);
+        const auction = opts?.auctionId ? await getAuction(opts.auctionId) : null;
+        lien = makeLien(lot, auction);
+      } else {
+        const auctions = await getAuctions();
+        for (const a of auctions) {
+          try {
+            const { auction, lots } = await getAuctionDetail(a.id);
+            const lot = lots.find((l) => l.property_id === propertyId);
+            if (lot) {
+              lien = makeLien(lot, auction);
+              break;
+            }
+          } catch {
+            // try the next auction
+          }
+        }
+      }
 
       return {
         id: p.id,
-        parcel_id: p.parcel_id,
+        parcel_id: p.parcelId,
         address: p.address,
-        city: p.city,
-        state: p.state,
-        zip: p.zip,
-        property_type: p.property_type,
-        description: p.description,
-        image_url: p.image_url,
-        gallery_urls: p.gallery_urls ?? [],
-        year_built: p.year_built,
-        living_area_sqft: p.living_area_sqft,
-        lot_size_acres: p.lot_size_acres === null ? null : Number(p.lot_size_acres),
-        bedrooms: p.bedrooms,
-        bathrooms: p.bathrooms === null ? null : Number(p.bathrooms),
-        use_type: p.use_type,
-        assessed_value: p.assessed_value === null ? null : Number(p.assessed_value),
-        land_value: p.land_value === null ? null : Number(p.land_value),
-        improvement_value: p.improvement_value === null ? null : Number(p.improvement_value),
-        owner_name: p.owner_name,
-        owner_mailing_address: p.owner_mailing_address,
-        county: p.county as unknown as { name: string; state: string },
-        lien: activeLien
-          ? {
-              ...activeLien,
-              taxes_owed: Number(activeLien.taxes_owed),
-              min_bid: Number(activeLien.min_bid),
-              starting_rate: Number(activeLien.starting_rate),
-              current_rate:
-                activeLien.current_rate === null ? null : Number(activeLien.current_rate),
-            }
-          : null,
-        documents: docs ?? [],
+        city: p.city ?? "",
+        state: p.state ?? "",
+        zip: p.postalCode ?? "",
+        property_type: p.propertyType,
+        description: null,
+        image_url: null,
+        gallery_urls: [],
+        year_built: null,
+        living_area_sqft: null,
+        lot_size_acres: null,
+        bedrooms: null,
+        bathrooms: null,
+        use_type: p.propertyType,
+        assessed_value: p.assessedValue,
+        land_value: p.landValue ?? null,
+        improvement_value: p.improvementValue ?? null,
+        owner_name: null,
+        owner_mailing_address: null,
+        county: p.countyName ? { name: p.countyName, state: p.countyState ?? p.state ?? "" } : { name: "", state: p.state ?? "" },
+        lien,
+        documents: [],
       };
     },
   });

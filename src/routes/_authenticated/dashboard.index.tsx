@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { Wallet, CreditCard, Trophy, Gavel, ArrowRight, CalendarDays, Lock, Receipt, Award, BadgeCheck } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { myBidsQuery, watchlistQuery, profileQuery, dashboardSummaryQuery } from "@/lib/queries/dashboard";
+import { myBidsQuery, watchlistQuery, profileQuery, dashboardSummaryQuery, activityQuery } from "@/lib/queries/dashboard";
 import { scheduledAuctionQuery } from "@/lib/queries/auctions";
+import { ActivityRow } from "@/components/dashboard/activity-feed";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   component: DashboardOverview,
@@ -18,6 +19,7 @@ function DashboardOverview() {
   const { data: watched = [] } = useQuery(watchlistQuery(user?.id));
   const { data: profile } = useQuery(profileQuery(user?.id));
   const { data: summary } = useQuery(dashboardSummaryQuery(user?.id));
+  const { data: activity = [] } = useQuery(activityQuery(user?.id));
 
   const activeBids = bids.filter((b) => b.status === "winning" || b.status === "outbid");
   const sf = (v: number | undefined) => fmt(v ?? 0);
@@ -70,16 +72,13 @@ function DashboardOverview() {
           ) : <div className="text-sm text-ink-muted">No upcoming auctions.</div>}
         </Panel>
 
-        <Panel title="My Recent Activity" cta={{ label: "View All Activity", href: "/dashboard/bids" }}>
-          {bids.length === 0 ? (
+        <Panel title="My Recent Activity" cta={{ label: "View All Activity", href: "/dashboard/activity" }}>
+          {activity.length === 0 ? (
             <div className="text-sm text-ink-muted">No activity yet. Start by watching a property.</div>
           ) : (
             <ul className="space-y-3">
-              {bids.slice(0, 5).map((b) => (
-                <li key={b.bid_id} className="flex justify-between border-b border-hairline pb-2 text-sm last:border-0">
-                  <span>You placed a bid on <span className="font-600 text-navy">{b.lien.property.address}</span></span>
-                  <span className="text-xs text-ink-muted">{new Date(b.placed_at).toLocaleDateString()}</span>
-                </li>
+              {activity.slice(0, 5).map((a) => (
+                <ActivityRow key={a.id} item={a} />
               ))}
             </ul>
           )}

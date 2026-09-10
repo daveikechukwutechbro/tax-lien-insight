@@ -1,21 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import {
   LayoutDashboard, Gavel, Bookmark, Trophy, XCircle, CalendarClock,
-  Receipt, CreditCard, Wallet, UserRound, Bell, Search, FileText, MessageSquare, LogOut, ShieldCheck, BadgeCheck, ChevronDown, User, Settings, Image,
+  Receipt, CreditCard, Wallet, UserRound, Bell, Search, FileText, MessageSquare, LogOut, ShieldCheck, BadgeCheck, ChevronDown, Activity,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { logout, emitAuthChange } from "@/lib/backend-auth";
 import { isAdminQuery, profileQuery } from "@/lib/queries/dashboard";
 import { useRouter } from "@tanstack/react-router";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
+import { ProfileMenu } from "@/components/site/profile-menu";
 
 type Item = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 const items: Item[] = [
@@ -31,6 +24,7 @@ const items: Item[] = [
   { to: "/dashboard/profile", label: "Profile Settings", icon: UserRound },
   { to: "/dashboard/verify", label: "Identity Verification", icon: BadgeCheck },
   { to: "/dashboard/notifications", label: "Notifications", icon: Bell },
+  { to: "/dashboard/activity", label: "My Activity", icon: Activity },
   { to: "/dashboard/searches", label: "Saved Searches", icon: Search },
   { to: "/dashboard/documents", label: "Documents", icon: FileText },
   { to: "/dashboard/messages", label: "Messages", icon: MessageSquare },
@@ -56,9 +50,9 @@ export function DashboardSidebar() {
 
   return (
     <aside className="w-full shrink-0 lg:w-[240px]">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <div className="rounded-xl border border-hairline bg-surface p-4">
+      <ProfileMenu
+        trigger={
+          <div className="cursor-pointer rounded-xl border border-hairline bg-surface p-4">
             <div className="flex items-center gap-3">
               <span className="grid size-12 place-items-center rounded-full bg-navy text-sm font-600 text-gold">
                 {initials}
@@ -75,33 +69,8 @@ export function DashboardSidebar() {
               </div>
             </div>
           </div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64">
-          <DropdownMenuLabel className="px-2 py-1 text-xs font-medium text-ink-muted">
-            {displayName}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link to="/dashboard/profile" className="flex items-center gap-2">
-              <User className="size-4" /> View Profile
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to="/dashboard/profile" className="flex items-center gap-2">
-              <Settings className="size-4" /> Edit Profile
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to="/dashboard/profile" className="flex items-center gap-2">
-              <Image className="size-4" /> Upload Photo
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
-            <LogOut className="size-4" /> Sign out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        }
+      />
 
       <nav className="mt-3 rounded-xl border border-hairline bg-surface p-2 text-sm">
         {items.map(({ to, label, icon: Icon, exact }) => (

@@ -58,6 +58,7 @@ import { Route as AuthenticatedDashboardHistoryRouteImport } from './routes/_aut
 import { Route as AuthenticatedDashboardFundsRouteImport } from './routes/_authenticated/dashboard.funds'
 import { Route as AuthenticatedDashboardDocumentsRouteImport } from './routes/_authenticated/dashboard.documents'
 import { Route as AuthenticatedDashboardBidsRouteImport } from './routes/_authenticated/dashboard.bids'
+import { Route as AuthenticatedDashboardActivityRouteImport } from './routes/_authenticated/dashboard.activity'
 
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
@@ -318,6 +319,12 @@ const AuthenticatedDashboardBidsRoute =
     path: '/bids',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardActivityRoute =
+  AuthenticatedDashboardActivityRouteImport.update({
+    id: '/activity',
+    path: '/activity',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -353,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/properties/$id': typeof PropertiesIdRoute
   '/states/$state': typeof StatesStateRoute
   '/admin/': typeof AdminIndexRoute
+  '/dashboard/activity': typeof AuthenticatedDashboardActivityRoute
   '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
@@ -401,6 +409,7 @@ export interface FileRoutesByTo {
   '/properties/$id': typeof PropertiesIdRoute
   '/states/$state': typeof StatesStateRoute
   '/admin': typeof AdminIndexRoute
+  '/dashboard/activity': typeof AuthenticatedDashboardActivityRoute
   '/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
@@ -453,6 +462,7 @@ export interface FileRoutesById {
   '/properties/$id': typeof PropertiesIdRoute
   '/states/$state': typeof StatesStateRoute
   '/admin/': typeof AdminIndexRoute
+  '/_authenticated/dashboard/activity': typeof AuthenticatedDashboardActivityRoute
   '/_authenticated/dashboard/bids': typeof AuthenticatedDashboardBidsRoute
   '/_authenticated/dashboard/documents': typeof AuthenticatedDashboardDocumentsRoute
   '/_authenticated/dashboard/funds': typeof AuthenticatedDashboardFundsRoute
@@ -505,6 +515,7 @@ export interface FileRouteTypes {
     | '/properties/$id'
     | '/states/$state'
     | '/admin/'
+    | '/dashboard/activity'
     | '/dashboard/bids'
     | '/dashboard/documents'
     | '/dashboard/funds'
@@ -553,6 +564,7 @@ export interface FileRouteTypes {
     | '/properties/$id'
     | '/states/$state'
     | '/admin'
+    | '/dashboard/activity'
     | '/dashboard/bids'
     | '/dashboard/documents'
     | '/dashboard/funds'
@@ -604,6 +616,7 @@ export interface FileRouteTypes {
     | '/properties/$id'
     | '/states/$state'
     | '/admin/'
+    | '/_authenticated/dashboard/activity'
     | '/_authenticated/dashboard/bids'
     | '/_authenticated/dashboard/documents'
     | '/_authenticated/dashboard/funds'
@@ -988,10 +1001,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardBidsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/activity': {
+      id: '/_authenticated/dashboard/activity'
+      path: '/activity'
+      fullPath: '/dashboard/activity'
+      preLoaderRoute: typeof AuthenticatedDashboardActivityRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
   }
 }
 
 interface AuthenticatedDashboardRouteChildren {
+  AuthenticatedDashboardActivityRoute: typeof AuthenticatedDashboardActivityRoute
   AuthenticatedDashboardBidsRoute: typeof AuthenticatedDashboardBidsRoute
   AuthenticatedDashboardDocumentsRoute: typeof AuthenticatedDashboardDocumentsRoute
   AuthenticatedDashboardFundsRoute: typeof AuthenticatedDashboardFundsRoute
@@ -1011,6 +1032,7 @@ interface AuthenticatedDashboardRouteChildren {
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
+    AuthenticatedDashboardActivityRoute: AuthenticatedDashboardActivityRoute,
     AuthenticatedDashboardBidsRoute: AuthenticatedDashboardBidsRoute,
     AuthenticatedDashboardDocumentsRoute: AuthenticatedDashboardDocumentsRoute,
     AuthenticatedDashboardFundsRoute: AuthenticatedDashboardFundsRoute,

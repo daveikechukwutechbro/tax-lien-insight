@@ -10,7 +10,7 @@ export const Route = createFileRoute("/auctions/$id")({
     return {
       meta: [
         { title: d ? `${d.title} — Auction Ledger` : "Auction" },
-        { name: "description", content: d ? `${d.liens.length} liens in ${d.county.name}, ${d.county.state}.` : "Auction details" },
+        { name: "description", content: d ? `${d.liens.length} liens in ${d.county?.name ?? "this auction"}, ${d.county?.state ?? ""}.` : "Auction details" },
       ],
     };
   },
@@ -49,7 +49,7 @@ function AuctionDetailPage() {
       <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div>
           <h1 className="font-display text-3xl font-600 text-navy sm:text-4xl">{a.title}</h1>
-          <p className="mt-1 text-ink-muted">{a.county.name}, {a.county.state}</p>
+          <p className="mt-1 text-ink-muted">{a.county ? `${a.county.name}, ${a.county.state}` : "Nationwide sale"}</p>
 
           <div className="mt-6">
             <h2 className="font-display text-xl font-600 text-navy">Properties in this auction ({a.liens.length})</h2>
@@ -62,8 +62,8 @@ function AuctionDetailPage() {
                     <li key={l.id} className="flex items-center gap-4 p-4">
                       {l.property.image_url && <img src={l.property.image_url} alt="" className="size-16 rounded-md object-cover" />}
                       <div className="min-w-0 flex-1">
-                        <Link to="/properties/$id" params={{ id: l.property.id }} className="font-600 text-navy hover:underline">{l.property.address}</Link>
-                        <div className="text-xs text-ink-muted">{l.property.city}, {l.property.state} {l.property.zip} · Parcel {l.property.parcel_id}</div>
+                        <Link to="/properties/$id" params={{ id: l.property.id }} search={{ lot: l.id, auction: a.id }} className="font-600 text-navy hover:underline">{l.property.address}</Link>
+                        <div className="text-xs text-ink-muted">{l.property.city}, {l.property.state} {l.property.zip} · Parcel {l.property.parcel_id ?? "—"}</div>
                       </div>
                       <div className="text-sm text-right"><div className="text-xs text-ink-muted">Taxes</div><div className="font-600">{fmt$(l.taxes_owed)}</div></div>
                       <div className="text-sm text-right"><div className="text-xs text-ink-muted">Rate</div><div className="font-600">{(l.current_rate ?? l.starting_rate).toFixed(2)}%</div></div>

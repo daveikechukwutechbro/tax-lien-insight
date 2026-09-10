@@ -112,6 +112,8 @@ type RawBid = {
 
 export type WatchedProperty = {
   id: string;
+  auction_id?: string | null;
+  lot_id?: string | null;
   property_id?: string | null;
   address?: string | null;
   city?: string | null;
@@ -333,15 +335,19 @@ export type UpcomingAuction = {
   status: string;
 };
 export async function getUpcomingAuctions(): Promise<UpcomingAuction[]> {
-  const rows = await request<
-    { id: string; title: string; state: string | null; starts_at: string | null; status: string }[]
-  >("/api/v1/auctions");
-  const upcoming = (rows ?? []).filter((a) =>
+  const rows = await getAuctions();
+  const upcoming = rows.filter((a) =>
     ["scheduled", "registration_open", "registration_closed", "live"].includes(a.status),
   );
-  return upcoming.sort(
-    (a, b) => new Date(a.starts_at ?? 0).getTime() - new Date(b.starts_at ?? 0).getTime(),
-  );
+  return upcoming
+    .map((a) => ({
+      id: a.id,
+      title: a.title,
+      state: a.county?.state ?? null,
+      starts_at: a.starts_at,
+      status: a.status,
+    }))
+    .sort((a, b) => new Date(a.starts_at ?? 0).getTime() - new Date(b.starts_at ?? 0).getTime());
 }
 
 export async function registerForAuction(auctionId: string): Promise<void> {
@@ -351,15 +357,243 @@ export async function registerForAuction(auctionId: string): Promise<void> {
 export type AuctionLot = {
   id: string;
   property_id: string | null;
+  parcel_id: string | null;
   status: string;
-  starting_rate: number | string;
-  current_rate: number | string | null;
+  starting_rate: number;
+  current_rate: number | null;
+  minimum_rate: number;
+  taxes_owed: number;
+  tax_year: number | null;
+  redemption_period_months: number;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  property_type: string | null;
+  assessed_value: number | null;
 };
 export async function getAuctionLots(auctionId: string): Promise<AuctionLot[]> {
-  const rows = await request<AuctionLot[]>(`/api/v1/auctions/${auctionId}/lots`);
+  const rows = await request<
+    (Partial<AuctionLot> & {
+      id: string;
+      property_id: string | null;
+      status: string;
+      starting_rate: number | string | null;
+      current_rate: number | string | null;
+    })[]
+  >(`/api/v1/auctions/${auctionId}/lots`);
   return rows.map((l) => ({
-    ...l,
+    id: l.id,
+    property_id: l.property_id ?? null,
+    parcel_id: l.parcel_id ?? null,
+    status: l.status,
     starting_rate: Number(l.starting_rate) || 0,
     current_rate: l.current_rate != null ? Number(l.current_rate) : null,
+    minimum_rate: Number(l.minimum_rate) || 0,
+    taxes_owed: Number(l.taxes_owed) || 0,
+    tax_year: l.tax_year ?? null,
+    redemption_period_months: l.redemption_period_months != null ? Number(l.redemption_period_months) : 12,
+    address: l.address ?? null,
+    city: l.city ?? null,
+    state: l.state ?? null,
+    postal_code: l.postal_code ?? null,
+    property_type: l.property_type ?? null,
+    assessed_value: l.assessed_value != null ? Number(l.assessed_value) : null,
   }));
+}
+
+// ---- Public auction calendar (county + lien stats) ----
+
+export type AuctionCounty = { id: string; name: string; state: string };
+export type AuctionApi = {
+  id: string;
+  title: string;
+  status: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  county: AuctionCounty | null;
+  lien_count: number;
+  total_taxes_owed: number;
+};
+
+type RawAuction = {
+  id: string;
+  title: string;
+  status: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  county: AuctionCounty | null;
+  lienCount: number | string;
+  totalTaxesOwed: number | string;
+};
+
+function mapAuction(r: RawAuction): AuctionApi {
+  return {
+    id: r.id,
+    title: r.title,
+    status: r.status,
+    starts_at: r.startsAt,
+    ends_at: r.endsAt,
+    county: r.county,
+    lien_count: Number(r.lienCount) || 0,
+    total_taxes_owed: Number(r.totalTaxesOwed) || 0,
+  };
+}
+
+export async function getAuctions(): Promise<AuctionApi[]> {
+  const rows = await request<RawAuction[]>("/api/v1/auctions");
+  return (rows ?? []).map(mapAuction);
+}
+
+export async function getAuction(id: string): Promise<AuctionApi> {
+  return mapAuction(await request<RawAuction>(`/api/v1/auctions/${id}`));
+}
+
+export async function getAuctionDetail(id: string): Promise<{ auction: AuctionApi; lots: AuctionLot[] }> {
+  const [auction, lots] = await Promise.all([getAuction(id), getAuctionLots(id)]);
+  return { auction, lots };
+}
+
+// ---- Properties & lots ----
+
+export type RawProperty = {
+  id: string;
+  jurisdictionId?: string | null;
+  parcelId: string | null;
+  address: string;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  propertyType: string | null;
+  assessedValue: number | null;
+  landValue?: number | null;
+  improvementValue?: number | null;
+  countyName: string | null;
+  countyState: string | null;
+  status: string;
+  lotId?: string | null;
+  lotStatus?: string | null;
+  startingRate?: number | null;
+  currentRate?: number | null;
+  taxesOwed?: number | null;
+  auctionId?: string | null;
+  auctionStatus?: string | null;
+  auctionStartsAt?: string | null;
+};
+export async function getProperty(id: string): Promise<RawProperty> {
+  return request<RawProperty>(`/api/v1/properties/${id}`);
+}
+
+export async function getProperties(filters: {
+  search?: string;
+  type?: string;
+  jurisdictionId?: string;
+  state?: string;
+  city?: string;
+  pageSize?: number;
+} = {}): Promise<RawProperty[]> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(filters)) {
+    if (v != null && v !== "") qs.set(k, String(v));
+  }
+  const data = await request<RawProperty[]>(
+    `/api/v1/properties${qs.toString() ? `?${qs.toString()}` : ""}`,
+  );
+  return data ?? [];
+}
+
+export type County = { id: string; name: string; stateId: string | null; stateCode: string | null; jurisdictionType: string };
+export async function getCounties(): Promise<County[]> {
+  const rows = await request<Array<Record<string, unknown>>>(`/api/v1/jurisdictions`);
+  return (rows ?? [])
+    .filter((r) => r.jurisdiction_type === "county")
+    .map((r) => ({
+      id: r.id as string,
+      name: (r.name as string) ?? "",
+      stateId: (r.state_id as string) ?? null,
+      stateCode: (r.state_code as string) ?? null,
+      jurisdictionType: (r.jurisdiction_type as string) ?? "county",
+    }))
+    .sort((a, b) => `${a.stateCode ?? ""} ${a.name}`.localeCompare(`${b.stateCode ?? ""} ${b.name}`));
+}
+
+export type RawLot = {
+  id: string;
+  auction_id: string;
+  property_id: string | null;
+  parcel_id: string | null;
+  lot_number: string | null;
+  status: string;
+  starting_rate: number | string | null;
+  current_rate: number | string | null;
+  minimum_rate: number | string | null;
+  taxes_owed: number | string | null;
+  tax_year: number | null;
+  redemption_period_months: number | null;
+};
+export async function getLot(id: string): Promise<RawLot> {
+  const row = await request<RawLot>(`/api/v1/auction-lots/${id}`);
+  return {
+    ...row,
+    starting_rate: Number(row.starting_rate) || 0,
+    current_rate: row.current_rate != null ? Number(row.current_rate) : null,
+    minimum_rate: Number(row.minimum_rate) || 0,
+    taxes_owed: Number(row.taxes_owed) || 0,
+    redemption_period_months: row.redemption_period_months != null ? Number(row.redemption_period_months) : 12,
+  };
+}
+
+export async function getLotEligibility(lotId: string): Promise<{ eligible: boolean; reasons: string[] }> {
+  return request<{ eligible: boolean; reasons: string[] }>(`/api/v1/auction-lots/${lotId}/eligibility`);
+}
+
+export async function placeBidApi(input: {
+  lotId: string;
+  rate: number;
+  amount: number;
+  idempotencyKey?: string;
+}): Promise<{ bidId: string }> {
+  const res = await request<{ bidId?: string; id?: string }>(`/api/v1/auction-lots/${input.lotId}/bids`, {
+    method: "POST",
+    body: JSON.stringify({
+      rate: input.rate,
+      amount: input.amount / 100,
+      idempotencyKey: input.idempotencyKey,
+    }),
+  });
+  return { bidId: res.bidId ?? res.id ?? "" };
+}
+
+// ---- Watchlist (write) ----
+
+export async function addWatchItem(input: { lotId?: string; auctionId?: string }): Promise<string | null> {
+  const res = await request<{ id: string | null }>("/api/v1/watchlist", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return res.id ?? null;
+}
+
+// ---- Activity feed ----
+
+export type ActivityItem = {
+  id: string;
+  kind: string;
+  title: string;
+  body: string | null;
+  link: string | null;
+  at: string;
+};
+export async function getActivity(limit = 30): Promise<ActivityItem[]> {
+  return request<ActivityItem[]>(`/api/v1/me/activity?limit=${limit}`);
+}
+
+// ---- Notifications (write) ----
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await request<{ read: boolean }>(`/api/v1/my/notifications/${id}/read`, { method: "PATCH" });
+}
+export async function markAllNotificationsRead(): Promise<number> {
+  const res = await request<{ marked: number }>("/api/v1/my/notifications/read-all", { method: "POST" });
+  return res.marked ?? 0;
 }

@@ -8,6 +8,10 @@ export type DomainEventType =
   | "KYC_SUBMITTED"
   | "KYC_APPROVED"
   | "KYC_REJECTED"
+  | "PROPERTY_WATCHED"
+  | "PROPERTY_UNWATCHED"
+  | "USDC_DEPOSIT_CREATED"
+  | "AUCTION_REGISTRATION_SUBMITTED"
   | "AUCTION_REGISTRATION_APPROVED"
   | "BID_PLACED"
   | "BID_OUTBID"
@@ -35,6 +39,23 @@ const SPECS: Record<DomainEventType, EventSpec> = {
   KYC_SUBMITTED: { title: "KYC submitted", body: () => "We received your KYC submission." },
   KYC_APPROVED: { title: "KYC approved", body: () => "Your identity is verified." },
   KYC_REJECTED: { title: "KYC rejected", body: (d) => `Reason: ${String(d.reason ?? "n/a")}` },
+  PROPERTY_WATCHED: {
+    title: "Property watched",
+    body: (d) => `You just watched ${String(d.propertyAddress ?? "a property")}. We'll alert you on bid activity.`,
+  },
+  PROPERTY_UNWATCHED: {
+    title: "Removed from watchlist",
+    body: (d) => `You stopped watching ${String(d.propertyAddress ?? "a property")}.`,
+  },
+  USDC_DEPOSIT_CREATED: {
+    title: "Deposit pending",
+    body: (d) =>
+      `Your USDC deposit${d.amountCents != null ? ` of ${formatAmountCents(Number(d.amountCents))}` : ""} is pending on ${String(d.networkCode ?? "the network")}.`,
+  },
+  AUCTION_REGISTRATION_SUBMITTED: {
+    title: "Registration submitted",
+    body: (d) => `Your registration for ${String(d.auctionTitle ?? "this auction")} is pending approval.`,
+  },
   AUCTION_REGISTRATION_APPROVED: { title: "Registration approved", body: (d) => `Auction ${d.auctionId} approved.` },
   BID_PLACED: { title: "Bid placed", body: (d) => `Bid on lot ${d.lotId} placed.` },
   BID_OUTBID: {
@@ -86,8 +107,48 @@ export async function dispatchEvent(
 
 export async function listNotifications(userId: string, page = 1, pageSize = 20) {
   const { rows } = await getPool().query(
-    `SELECT id, type, title, read, created_at FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+    `SELECT id, type, title, body, read, read_at, created_at, payload
+     FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
     [userId, pageSize, (page - 1) * pageSize],
   );
-  return rows;
+  return rows.map((r) => ({
+    id: r.id,
+    type: r.type,
+    title: r.title,
+    body: r.body,
+    read: r.read,
+    read_at: r.read === true && r.read_at ? new Date(r.read_at as string).toISOString() : null,
+    created_at: new Date(r.created_at as string).toISOString(),
+    link: (r.payload as Record<string, unknown> | null)?.["link"] ?? null,
+  }));
+}
+
+export async function countUnreadNotifications(userId: string): Promise<number> {
+  const { rows } = await getPool().query(
+    `SELECT count(*)::int AS c FROM notifications WHERE user_id = $1 AND read = false`,
+    [userId],
+  );
+  return rows[0]?.c ?? 0;
+}
+
+export async function markNotificationRead(userId: string, notificationId: string): Promise<boolean> {
+  const { rowCount } = await getPool().query(
+    `UPDATE notifications SET read = true, read_at = COALESCE(read_at, now())
+     WHERE id = $1 AND user_id = $2`,
+    [notificationId, userId],
+  );
+  return (rowCount ?? 0) > 0;
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<number> {
+  const { rowCount } = await getPool().query(
+    `UPDATE notifications SET read = true, read_at = COALESCE(read_at, now())
+     WHERE user_id = $1 AND read = false`,
+    [userId],
+  );
+  return rowCount ?? 0;
+}
+
+function formatAmountCents(cents: number): string {
+  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }

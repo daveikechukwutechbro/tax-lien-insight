@@ -1,28 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import {
-  Bell,
-  ChevronDown,
-  Landmark,
-  LogOut,
-  Menu,
-  User,
-  Settings,
-  Image,
-  ShieldCheck,
-} from "lucide-react";
+import { Bell, ChevronDown, Landmark, Menu } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { logout, emitAuthChange } from "@/lib/backend-auth";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { isAdminQuery } from "@/lib/queries/dashboard";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
+import { ProfileMenu } from "@/components/site/profile-menu";
 import { Sheet, SheetTrigger, SheetContent, SheetOverlay, SheetClose } from "@/components/ui/sheet";
 
 type NavItem = { to: string; label: string; adminOnly?: boolean };
@@ -40,17 +21,7 @@ const nav: NavItem[] = [
 
 export function SiteHeader() {
   const { user, loading } = useSession();
-  const queryClient = useQueryClient();
-  const router = useRouter();
   const { data: isAdmin } = useQuery(isAdminQuery(user?.id));
-
-  async function signOut() {
-    await queryClient.cancelQueries();
-    await logout();
-    emitAuthChange();
-    queryClient.removeQueries();
-    router.navigate({ to: "/", replace: true });
-  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
@@ -147,8 +118,8 @@ export function SiteHeader() {
               >
                 <Bell className="size-5" strokeWidth={1.75} />
               </button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+              <ProfileMenu
+                trigger={
                   <button className="flex items-center gap-2 text-sm text-ink hover:text-navy sm:flex">
                     <span className="grid size-8 place-items-center rounded-full bg-navy text-xs font-600 text-gold">
                       {(user.email ?? "?").slice(0, 1).toUpperCase()}
@@ -156,43 +127,8 @@ export function SiteHeader() {
                     <span className="hidden md:inline">{user.email?.split("@")[0]}</span>
                     <ChevronDown className="size-4" />
                   </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="px-2 py-1 text-xs font-medium text-ink-muted">
-                    Account
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard/profile" className="flex items-center gap-2">
-                      <User className="size-4" /> Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard/profile" className="flex items-center gap-2">
-                      <Settings className="size-4" /> Edit Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="flex items-center gap-2">
-                        <ShieldCheck className="size-4" /> Admin panel
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard/profile" className="flex items-center gap-2">
-                      <Image className="size-4" /> Upload Photo
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={signOut}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <LogOut className="size-4" /> Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                }
+              />
             </>
           ) : (
             <>

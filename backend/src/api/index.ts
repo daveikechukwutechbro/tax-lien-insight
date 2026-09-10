@@ -40,6 +40,8 @@ import {
 import {
   listAuctions,
   getAuction,
+  listPublicAuctions,
+  getPublicAuction,
   createAuction,
   publishAuction,
   openRegistration,
@@ -75,7 +77,14 @@ import {
   listRedemptions,
 } from "../redemptions/redemptions.service.js";
 import { submitKyc, reviewKyc, listKyc } from "../kyc/kyc.service.js";
-import { listNotifications, dispatchEvent } from "../notifications/notifications.service.js";
+import {
+  listNotifications,
+  dispatchEvent,
+  countUnreadNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from "../notifications/notifications.service.js";
+import { getUserActivity } from "../activity/activity.service.js";
 import { getDocumentUrl } from "../documents/documents.service.js";
 import { storeDocument } from "../providers/storage/index.js";
 import { createHash } from "node:crypto";
@@ -311,7 +320,7 @@ export function createApp(): Hono {
   app.get("/api/v1/states", async (c) => c.json(json(await listStates())));
   app.get("/api/v1/jurisdictions", async (c) => {
     const stateId = c.req.query("stateId");
-    c.json(json(await listJurisdictions(stateId)));
+    return c.json(json(await listJurisdictions(stateId)));
   });
   app.get("/api/v1/jurisdictions/:id/rules", async (c) => {
     const rules = await getJurisdictionRules(c.req.param("id"));
@@ -325,6 +334,7 @@ export function createApp(): Hono {
       city: c.req.query("city") ?? undefined,
       type: c.req.query("type") ?? undefined,
       search: c.req.query("search") ?? undefined,
+      jurisdictionId: c.req.query("jurisdictionId") ?? undefined,
     });
     return c.json(json(items.items, { total: items.total }));
   });
@@ -350,17 +360,24 @@ export function createApp(): Hono {
 
   // ---- Auctions ----
   app.get("/api/v1/auctions", async (c) => {
-    const items = await listAuctions({
-      state: (c.req.query("state") as any) ?? undefined,
-      jurisdictionId: c.req.query("jurisdictionId") ?? undefined,
-    });
-    return c.json(json(items.items, { total: items.total }));
+    const items = await listPublicAuctions();
+    return c.json(json(items, { total: items.length }));
   });
-  app.get("/api/v1/auctions/:id", async (c) => c.json(json(await getAuction(c.req.param("id")))));
+  app.get("/api/v1/auctions/:id", async (c) => c.json(json(await getPublicAuction(c.req.param("id")))));
   app.get("/api/v1/auctions/:id/lots", async (c) => c.json(json(await listLots(c.req.param("id")))));
   app.post("/api/v1/auctions/:id/register", async (c) => {
     const ctx = requireUser(c);
     const res = await registerForAuction(c.req.param("id"), ctx);
+    try {
+      const auction = await getAuction(c.req.param("id"));
+      await dispatchEvent(
+        res.status === "approved" ? "AUCTION_REGISTRATION_APPROVED" : "AUCTION_REGISTRATION_SUBMITTED",
+        { auctionId: c.req.param("id"), auctionTitle: auction.title, link: `/auctions/${c.req.param("id")}` },
+        { userId: ctx.userId },
+      );
+    } catch (err) {
+      logger.warn("Notification dispatch failed for auction registration", { error: (err as Error).message });
+    }
     return c.json(json(res), 201);
   });
   app.get("/api/v1/auctions/:id/eligibility", async (c) => {
@@ -423,6 +440,23 @@ export function createApp(): Hono {
       amount: Math.round(Number(body.amount) * 100),
       idempotencyKey: body.idempotencyKey,
     });
+    try {
+      const { rows } = await getPool().query(
+        `SELECT p.id AS property_id FROM auction_lots al LEFT JOIN properties p ON p.id = al.property_id WHERE al.id = $1`,
+        [c.req.param("id")],
+      );
+      const propertyId = rows[0]?.property_id;
+      await dispatchEvent(
+        "BID_PLACED",
+        {
+          lotId: c.req.param("id"),
+          link: propertyId ? `/properties/${propertyId}?lot=${c.req.param("id")}` : `/auction-lots/${c.req.param("id")}`,
+        },
+        { userId: ctx.userId },
+      );
+    } catch (err) {
+      logger.warn("Notification dispatch failed for bid", { error: (err as Error).message });
+    }
     return c.json(json(res), 201);
   });
   app.get("/api/v1/auction-lots/:id/bids", async (c) => c.json(json(await listBidsForLot(c.req.param("id")))));
@@ -438,7 +472,26 @@ export function createApp(): Hono {
   });
   app.get("/api/v1/my/notifications", async (c) => {
     const ctx = requireUser(c);
-    return c.json(json(await listNotifications(ctx.userId)));
+    const page = Number(c.req.query("page") ?? 1) || 1;
+    const pageSize = Number(c.req.query("pageSize") ?? 20) || 20;
+    const rows = await listNotifications(ctx.userId, page, pageSize);
+    const unread = await countUnreadNotifications(ctx.userId);
+    return c.json(json(rows, { total: Math.max(unread, rows.length), unread }));
+  });
+  app.patch("/api/v1/my/notifications/:id/read", async (c) => {
+    const ctx = requireUser(c);
+    const marked = await markNotificationRead(ctx.userId, c.req.param("id"));
+    return c.json(json({ id: c.req.param("id"), read: marked }));
+  });
+  app.post("/api/v1/my/notifications/read-all", async (c) => {
+    const ctx = requireUser(c);
+    const marked = await markAllNotificationsRead(ctx.userId);
+    return c.json(json({ marked }));
+  });
+  app.get("/api/v1/me/activity", async (c) => {
+    const ctx = requireUser(c);
+    const limit = Number(c.req.query("limit") ?? 30) || 30;
+    return c.json(json(await getUserActivity(ctx.userId, limit)));
   });
   app.get("/api/v1/my/certificates", async (c) => {
     const ctx = requireUser(c);
@@ -492,6 +545,43 @@ export function createApp(): Hono {
   });
 
   // ---- Watchlist ----
+  async function notifyWatchChange(
+    userId: string,
+    lotId: string | null,
+    auctionId: string | null,
+    type: "PROPERTY_WATCHED" | "PROPERTY_UNWATCHED",
+  ) {
+    try {
+      let propertyId: string | null = null;
+      let address: string | null = null;
+      if (lotId) {
+        const { rows } = await getPool().query(
+          `SELECT p.id, p.address FROM auction_lots al LEFT JOIN properties p ON p.id = al.property_id WHERE al.id = $1`,
+          [lotId],
+        );
+        propertyId = rows[0]?.id ?? null;
+        address = rows[0]?.address ?? null;
+      }
+      let auctionTitle: string | null = null;
+      if (auctionId) {
+        const { rows } = await getPool().query(`SELECT title FROM auctions WHERE id = $1`, [auctionId]);
+        auctionTitle = rows[0]?.title ?? null;
+      }
+      const label = address ?? auctionTitle ?? "a property";
+      await dispatchEvent(
+        type,
+        {
+          propertyId,
+          propertyAddress: address ?? label,
+          link: propertyId && lotId ? `/properties/${propertyId}?lot=${lotId}` : auctionId ? `/auctions/${auctionId}` : "/dashboard/watched",
+        },
+        { userId },
+      );
+    } catch (err) {
+      logger.warn(`Notification dispatch failed for ${type}`, { error: (err as Error).message });
+    }
+  }
+
   app.post("/api/v1/watchlist", async (c) => {
     const ctx = requireUser(c);
     const body = await c.req.json().catch(() => ({}));
@@ -506,6 +596,7 @@ export function createApp(): Hono {
       [ctx.userId, body.auctionId ?? null, body.lotId ?? null],
     );
     if (inserted.rows[0]) {
+      await notifyWatchChange(ctx.userId, body.lotId ?? null, body.auctionId ?? null, "PROPERTY_WATCHED");
       return c.json(json({ id: inserted.rows[0].id }), 201);
     }
     const existing = await getPool().query(
@@ -516,7 +607,14 @@ export function createApp(): Hono {
   });
   app.delete("/api/v1/watchlist/:id", async (c) => {
     const ctx = requireUser(c);
+    const { rows } = await getPool().query(
+      `SELECT lot_id, auction_id FROM watchlist WHERE id=$1 AND user_id=$2`,
+      [c.req.param("id"), ctx.userId],
+    );
     await getPool().query(`DELETE FROM watchlist WHERE id=$1 AND user_id=$2`, [c.req.param("id"), ctx.userId]);
+    if (rows[0]) {
+      await notifyWatchChange(ctx.userId, rows[0].lot_id ?? null, rows[0].auction_id ?? null, "PROPERTY_UNWATCHED");
+    }
     return c.json(json({ deleted: true }));
   });
 
@@ -659,6 +757,15 @@ export function createApp(): Hono {
     const ctx = requireUser(c);
     const body = await c.req.json().catch(() => ({}));
     const kycId = await submitKyc(ctx.userId, Array.isArray(body.documents) ? body.documents : []);
+    try {
+      await dispatchEvent(
+        "KYC_SUBMITTED",
+        { kycId, link: "/dashboard/verify" },
+        { userId: ctx.userId },
+      );
+    } catch (err) {
+      logger.warn("Notification dispatch failed for KYC", { error: (err as Error).message });
+    }
     return c.json(json({ id: kycId }), 201);
   });
   app.get("/api/v1/kyc/status", async (c) => {
@@ -680,6 +787,20 @@ export function createApp(): Hono {
       transactionHash: body.transactionHash,
       idempotencyKey: body.idempotencyKey,
     });
+    try {
+      await dispatchEvent(
+        "USDC_DEPOSIT_CREATED",
+        {
+          depositId: res.depositId ?? null,
+          amountCents: body.expectedAmountCents != null ? Math.round(Number(body.expectedAmountCents)) : null,
+          networkCode: network,
+          link: "/dashboard/funds",
+        },
+        { userId: ctx.userId },
+      );
+    } catch (err) {
+      logger.warn("Notification dispatch failed for deposit", { error: (err as Error).message });
+    }
     return c.json(json(res), 201);
   });
   app.get("/api/v1/my/usdc/deposits", async (c) => {

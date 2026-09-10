@@ -53,6 +53,68 @@ export async function listAuctions(filters: {
   return { items: rows.map(mapAuction), total };
 }
 
+export interface PublicCounty {
+  id: string;
+  name: string;
+  state: string;
+}
+
+export interface PublicAuction {
+  id: string;
+  title: string;
+  status: AuctionState;
+  startsAt: string | null;
+  endsAt: string | null;
+  county: PublicCounty | null;
+  lienCount: number;
+  totalTaxesOwed: number;
+}
+
+const PUBLIC_AUCTION_SQL = `
+  SELECT a.id, a.title, a.status, a.starts_at, a.ends_at,
+         j.id AS j_id, j.name AS j_name, s.code AS j_state,
+         COUNT(al.id) FILTER (WHERE al.status NOT IN ('cancelled','withdrawn','archived'))::int AS lien_count,
+         COALESCE(SUM(al.taxes_owed) FILTER (WHERE al.status NOT IN ('cancelled','withdrawn','archived')), 0)::bigint AS total_taxes
+  FROM auctions a
+  LEFT JOIN jurisdictions j ON j.id = a.jurisdiction_id
+  LEFT JOIN states s ON s.id = j.state_id
+  LEFT JOIN auction_lots al ON al.auction_id = a.id
+`;
+
+function mapPublicAuction(r: Record<string, unknown>): PublicAuction {
+  return {
+    id: r.id as string,
+    title: r.title as string,
+    status: r.status as AuctionState,
+    startsAt: r.starts_at ? new Date(r.starts_at as string).toISOString() : null,
+    endsAt: r.ends_at ? new Date(r.ends_at as string).toISOString() : null,
+    county: r.j_id ? { id: r.j_id as string, name: r.j_name as string, state: r.j_state as string } : null,
+    lienCount: Number(r.lien_count) || 0,
+    totalTaxesOwed: Number(r.total_taxes) || 0,
+  };
+}
+
+export async function listPublicAuctions(): Promise<PublicAuction[]> {
+  const { rows } = await getPool().query(
+    `${PUBLIC_AUCTION_SQL}
+     WHERE a.status NOT IN ('draft','archived','cancelled')
+     GROUP BY a.id, j.id, s.code
+     ORDER BY a.starts_at ASC NULLS LAST, a.created_at DESC`,
+  );
+  return rows.map(mapPublicAuction);
+}
+
+export async function getPublicAuction(id: string): Promise<PublicAuction> {
+  const { rows } = await getPool().query(
+    `${PUBLIC_AUCTION_SQL}
+     WHERE a.id = $1
+     GROUP BY a.id, j.id, s.code`,
+    [id],
+  );
+  if (!rows[0]) throw new NotFoundError("Auction not found");
+  return mapPublicAuction(rows[0]);
+}
+
 export async function getAuction(id: string): Promise<AuctionRecord> {
   const { rows } = await getPool().query(
     `SELECT id, title, jurisdiction_id, status, starts_at, ends_at, published FROM auctions WHERE id = $1`,
@@ -215,8 +277,14 @@ export async function createLot(
 
 export async function listLots(auctionId: string) {
   const { rows } = await getPool().query(
-    `SELECT id, auction_id, property_id, parcel_id, lot_number, status, starting_rate, current_rate, minimum_rate
-     FROM auction_lots WHERE auction_id = $1 ORDER BY lot_number NULLS LAST, created_at`,
+    `SELECT al.id, al.auction_id, al.property_id, al.parcel_id, al.lot_number,
+            al.status, al.starting_rate, al.current_rate, al.minimum_rate,
+            al.taxes_owed, al.tax_year, al.redemption_period_months,
+            p.address, p.city, p.state, p.postal_code, p.property_type, p.assessed_value
+     FROM auction_lots al
+     LEFT JOIN properties p ON p.id = al.property_id
+     WHERE al.auction_id = $1
+     ORDER BY al.lot_number NULLS LAST, al.created_at`,
     [auctionId],
   );
   return rows;

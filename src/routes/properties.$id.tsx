@@ -2,13 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { propertyDetailQuery, type PropertyDetail as PD } from "@/lib/queries/property-detail";
 import { useSession } from "@/hooks/use-session";
-import { supabase } from "@/integrations/firebase/client";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Bookmark, BookmarkCheck, FileText, MapPin } from "lucide-react";
+import { addWatchItem, placeBidApi, getLotEligibility, removeWatchlistItem } from "@/lib/backend";
+import { watchlistQuery, profileQuery, dashboardSummaryQuery } from "@/lib/queries/dashboard";
+
+export type PropertySearch = { lot?: string; auction?: string };
 
 export const Route = createFileRoute("/properties/$id")({
+  validateSearch: (s): PropertySearch => ({
+    lot: typeof s.lot === "string" ? s.lot : undefined,
+    auction: typeof s.auction === "string" ? s.auction : undefined,
+  }),
   head: ({ params }) => ({
     meta: [
       { title: `Property Details — Auction Ledger` },
@@ -25,28 +32,32 @@ const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", curren
 
 function PropertyDetail() {
   const { id } = Route.useParams();
-  const { data, isLoading, error } = useQuery(propertyDetailQuery(id));
+  const { lot, auction } = Route.useSearch();
+  const { data, isLoading, error } = useQuery(propertyDetailQuery(id, { lotId: lot, auctionId: auction }));
   const { user } = useSession();
   const qc = useQueryClient();
-  const [watching, setWatching] = useState<string | null>(null);
+  const { data: watched = [] } = useQuery(watchlistQuery(user?.id));
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("watchlist").select("id").eq("user_id", user.id).eq("property_id", id).maybeSingle()
-      .then(({ data: w }) => setWatching(w?.id ?? null));
-  }, [user, id]);
+  const lien = data?.lien ?? null;
+  const watching = watched?.find((w) => w.lot_id === lien?.id || w.property_id === data?.id) ?? null;
 
   async function toggleWatch() {
     if (!user) return toast.error("Sign in to save properties");
-    if (watching) {
-      await supabase.from("watchlist").delete().eq("id", watching);
-      setWatching(null); toast.success("Removed from watchlist");
-    } else {
-      const { data: row, error } = await supabase.from("watchlist").insert({ user_id: user.id, property_id: id }).select("id").single();
-      if (error) return toast.error(error.message);
-      setWatching(row.id); toast.success("Added to watchlist");
+    try {
+      if (watching) {
+        await removeWatchlistItem(watching.id);
+        toast.success("Removed from watchlist");
+      } else {
+        if (!lien?.id) return toast.error("Watch is available once the property is in an auction");
+        await addWatchItem({ lotId: lien.id });
+        toast.success("Added to watchlist");
+      }
+      qc.invalidateQueries({ queryKey: ["dashboard", "watchlist"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["activity"] });
+    } catch (err) {
+      toast.error((err as Error).message ?? "Could not update watchlist");
     }
-    qc.invalidateQueries({ queryKey: ["dashboard", "watchlist"] });
   }
 
   if (isLoading) return <div className="container-tight py-16 text-ink-muted">Loading…</div>;
@@ -76,12 +87,12 @@ function PropertyDetail() {
             </div>
 
             <div className="mt-4 rounded-xl border border-hairline bg-surface p-5">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-ink-muted"><MapPin className="size-4" /> {p.county.name}, {p.county.state}</div>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-ink-muted"><MapPin className="size-4" /> {p.county.name || "County"}, {p.county.state}</div>
               <h1 className="mt-1 font-display text-3xl font-600 text-navy">{p.address}</h1>
-              <div className="text-sm text-ink-muted">{p.city}, {p.state} {p.zip} · Parcel {p.parcel_id}</div>
+              <div className="text-sm text-ink-muted">{p.city}, {p.state} {p.zip} · Parcel {p.parcel_id ?? "—"}</div>
               {p.description && <p className="mt-4 text-sm leading-6 text-ink">{p.description}</p>}
               <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-hairline pt-4 text-sm sm:grid-cols-4">
-                <Field label="Type" value={<span className="capitalize">{p.property_type}</span>} />
+                <Field label="Type" value={<span className="capitalize">{p.property_type ?? "—"}</span>} />
                 <Field label="Year Built" value={p.year_built ?? "—"} />
                 <Field label="Living Area" value={p.living_area_sqft ? `${p.living_area_sqft.toLocaleString()} sq ft` : "—"} />
                 <Field label="Lot Size" value={p.lot_size_acres ? `${p.lot_size_acres} ac` : "—"} />
@@ -136,25 +147,19 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
   const [submitting, setSubmitting] = useState(false);
   const [remaining, setRemaining] = useState(0);
   const [errorCode, setErrorCode] = useState<string | null>(null);
-  const { data: profile } = useQuery({
-    queryKey: ["profile-verify", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => (await supabase.from("profiles").select("verified, account_balance").eq("id", user!.id).maybeSingle()).data,
-  });
+  const { data: profile } = useQuery(profileQuery(user?.id));
+  const { data: summary } = useQuery(dashboardSummaryQuery(user?.id));
   const isVerified = !!profile?.verified;
 
   const { data: eligibility } = useQuery<{ eligible: boolean; reasons: string[] } | null>({
     queryKey: ["bid-eligibility", user?.id, lien?.id],
     enabled: !!user?.id && !!lien?.id,
-    queryFn: async () => {
-      const { data } = await supabase.rpc("get_bid_eligibility", { _user_id: user!.id, _lien_id: lien!.id });
-      return (data as unknown as { eligible: boolean; reasons: string[] } | null) ?? null;
-    },
+    queryFn: async () => (lien?.id ? getLotEligibility(lien.id) : null),
     staleTime: 15_000,
   });
 
   useEffect(() => {
-    if (!hydrated || !auction) return;
+    if (!hydrated || !auction?.starts_at) return;
     const tick = () => setRemaining(Math.max(0, new Date(auction.starts_at).getTime() - Date.now()));
     tick();
     const t = setInterval(tick, 1000);
@@ -168,23 +173,26 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
     setSubmitting(true);
     setErrorCode(null);
     const requestId = `${user.id}:${lien.id}:${Date.now()}`;
-    const { data, error } = await supabase.rpc("place_bid_secure", {
-      _lien_id: lien.id,
-      _interest_rate: Number(rate),
-      _request_id: requestId,
-    });
-    setSubmitting(false);
-    if (error) {
-      const code = (data as { code?: string } | null)?.code ?? null;
-      setErrorCode(code);
-      const msg = (data as { message?: string } | null)?.message ?? error.message;
-      return toast.error(code ? `${code}: ${msg}` : msg);
+    try {
+      await placeBidApi({
+        lotId: lien.id,
+        rate: Number(rate),
+        amount: lien.taxes_owed,
+        idempotencyKey: requestId,
+      });
+      setRate("");
+      qc.invalidateQueries({ queryKey: ["property"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "bids"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["activity"] });
+      toast.success("Bid placed");
+    } catch (err) {
+      const e = err as { code?: string; message?: string };
+      setErrorCode(e.code ?? null);
+      toast.error(e.message ?? "Bid rejected");
+    } finally {
+      setSubmitting(false);
     }
-    setRate("");
-    qc.invalidateQueries({ queryKey: ["property", property.id] });
-    qc.invalidateQueries({ queryKey: ["dashboard", "bids"] });
-    qc.invalidateQueries({ queryKey: ["profile-verify", user.id] });
-    toast.success("Bid placed");
   }
 
   const days = Math.floor(remaining / 86_400_000);
@@ -192,12 +200,14 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
   const minutes = Math.floor((remaining / 60_000) % 60);
   const isLive = auction?.status === "live";
   const eligReasons: string[] = eligibility?.reasons ?? [];
+  const insufficientFunds = !!lien && (summary?.funds.available ?? 0) < lien.taxes_owed;
+  if (insufficientFunds && !eligReasons.includes("INSUFFICIENT_FUNDS")) eligReasons.push("INSUFFICIENT_FUNDS");
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
       <div className="rounded-xl border border-hairline bg-surface p-5">
         <div className="text-xs uppercase tracking-wider text-ink-muted">{isLive ? "Live Auction" : "Auction Starts In"}</div>
-        {auction ? (
+        {auction?.starts_at ? (
           <>
             {!isLive && hydrated && (
               <div className="mt-2 grid grid-cols-3 gap-2 text-center">
@@ -214,7 +224,7 @@ function BidPanel({ property, watching, onToggleWatch }: { property: PD; watchin
             <Row label="Minimum Bid" value={fmt(lien.min_bid)} />
             <Row label="Starting Rate" value={`${lien.starting_rate.toFixed(2)}%`} />
             <Row label="Current Rate" value={lien.current_rate !== null ? `${lien.current_rate.toFixed(2)}%` : "—"} />
-            <Row label="Tax Year" value={lien.tax_year} />
+            <Row label="Tax Year" value={lien.tax_year ?? "—"} />
             <Row label="Redemption" value={`${lien.redemption_period_months} mo`} />
           </dl>
         )}

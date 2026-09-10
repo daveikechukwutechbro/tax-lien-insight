@@ -35,10 +35,13 @@ export async function listStates() {
 
 export async function listJurisdictions(stateId?: string) {
   const params = stateId ? [stateId] : [];
-  const where = stateId ? `WHERE state_id = $1` : "";
+  const where = stateId ? `WHERE j.state_id = $1` : "";
   const { rows } = await getPool().query(
-    `SELECT id, parent_id, jurisdiction_type, official_code, name, state_id, status
-     FROM jurisdictions ${where} ORDER BY name`,
+    `SELECT j.id, j.parent_id, j.jurisdiction_type, j.official_code, j.name, j.state_id, j.status,
+            s.code AS state_code
+     FROM jurisdictions j
+     LEFT JOIN states s ON s.id = j.state_id
+     ${where} ORDER BY j.name`,
     params,
   );
   return rows;
