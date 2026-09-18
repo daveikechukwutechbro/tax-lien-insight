@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getAuction, getAuctions, getAuctionDetail, getLot, getProperty } from "@/lib/backend";
+import { getAuction, getAuctions, getAuctionDetail, getLot, getProperty, type AuctionApi } from "@/lib/backend";
 
 export type PropertyDetail = {
   id: string;
@@ -44,15 +44,25 @@ export type PropertyDetail = {
   documents: { id: string; kind: string; name: string; url: string }[];
 };
 
-function makeLien(lot: AuctionLot, auction: AuctionApi | null): PropertyDetail["lien"] {
+type LienLot = {
+  id: string;
+  taxes_owed: number | string | null;
+  starting_rate: number | string | null;
+  current_rate?: number | string | null;
+  tax_year?: number | null;
+  redemption_period_months?: number | null;
+};
+
+function makeLien(lot: LienLot, auction: AuctionApi | null): PropertyDetail["lien"] {
+  const taxes = Number(lot.taxes_owed) || 0;
   return {
     id: lot.id,
-    taxes_owed: lot.taxes_owed,
-    min_bid: lot.taxes_owed,
-    starting_rate: lot.starting_rate,
-    current_rate: lot.current_rate,
-    tax_year: lot.tax_year,
-    redemption_period_months: lot.redemption_period_months,
+    taxes_owed: taxes,
+    min_bid: taxes,
+    starting_rate: Number(lot.starting_rate) || 0,
+    current_rate: lot.current_rate != null ? Number(lot.current_rate) : null,
+    tax_year: lot.tax_year ?? null,
+    redemption_period_months: lot.redemption_period_months ?? 12,
     status: "active",
     auction: auction
       ? {
@@ -103,7 +113,7 @@ async function buildDetailFromLot(
       city: lot.city ?? "",
       state: lot.state ?? "",
       zip: lot.postal_code ?? "",
-      property_type: lot.property_type,
+      property_type: lot.property_type ?? null,
       description: null,
       image_url: null,
       gallery_urls: [],
@@ -112,8 +122,8 @@ async function buildDetailFromLot(
       lot_size_acres: null,
       bedrooms: null,
       bathrooms: null,
-      use_type: lot.property_type,
-      assessed_value: lot.assessed_value,
+      use_type: lot.property_type ?? null,
+      assessed_value: lot.assessed_value != null ? Number(lot.assessed_value) : null,
       land_value: null,
       improvement_value: null,
       owner_name: null,

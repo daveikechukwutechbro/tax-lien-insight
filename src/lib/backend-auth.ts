@@ -61,7 +61,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
       envelope.error?.code ?? "API_ERROR",
       envelope.error?.message ?? "Request failed",
       res.status,
-      envelope.error?.details,
+      (envelope.error as { details?: Record<string, unknown> })?.details,
     );
   }
   if (!envelope || !envelope.success) {

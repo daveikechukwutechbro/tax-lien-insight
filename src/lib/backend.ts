@@ -85,11 +85,11 @@ export async function getMyBids(): Promise<UserBid[]> {
     property:
       b.address != null
         ? {
-            id: b.property_id,
+            id: b.property_id ?? undefined,
             address: b.address,
-            city: b.city,
-            state: b.state,
-            postal_code: b.postal_code,
+            city: b.city ?? undefined,
+            state: b.state ?? undefined,
+            postal_code: b.postal_code ?? undefined,
           }
         : null,
   }));
@@ -535,6 +535,12 @@ export type RawLot = {
   taxes_owed: number | string | null;
   tax_year: number | null;
   redemption_period_months: number | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  property_type?: string | null;
+  assessed_value?: number | string | null;
 };
 export async function getLot(id: string): Promise<RawLot> {
   const row = await request<RawLot>(`/api/v1/auction-lots/${id}`);
