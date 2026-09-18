@@ -2,8 +2,11 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import { statesListQuery } from "@/lib/queries/discovery";
+import { PageSkeleton } from "@/components/site/page-skeleton";
 
 export const Route = createFileRoute("/states")({
+  pendingMs: 0,
+  pendingComponent: () => <PageSkeleton />,
   head: () => ({
     meta: [
       { title: "Browse by State — Auction Ledger" },

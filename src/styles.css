@@ -160,6 +160,19 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --navy: oklch(0.88 0.04 262);
+  --navy-deep: oklch(0.65 0.06 262);
+  --navy-soft: oklch(0.78 0.05 262);
+  --gold: oklch(0.82 0.15 82);
+  --gold-soft: oklch(0.32 0.08 82);
+  --ink: oklch(0.95 0.01 260);
+  --ink-muted: oklch(0.6 0.02 258);
+  --surface: oklch(0.18 0.025 260);
+  --surface-alt: oklch(0.22 0.025 260);
+  --hairline: oklch(0.35 0.02 260);
+  --success: oklch(0.72 0.14 165);
+  --success-soft: oklch(0.22 0.04 165);
+  --warning: oklch(0.78 0.12 55);
 }
 
 @layer base {

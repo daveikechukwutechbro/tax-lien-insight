@@ -1,8 +1,11 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { stateDetailQuery } from "@/lib/queries/discovery";
+import { PageSkeleton } from "@/components/site/page-skeleton";
 
 export const Route = createFileRoute("/states/$state")({
+  pendingMs: 0,
+  pendingComponent: () => <PageSkeleton />,
   head: ({ params }) => ({
     meta: [
       { title: `${params.state} Tax Lien Counties — Auction Ledger` },

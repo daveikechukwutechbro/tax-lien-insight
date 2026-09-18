@@ -3,8 +3,12 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useEffect, useState } from "react";
 import { auctionDetailQuery } from "@/lib/queries/discovery";
+import { PageSkeleton } from "@/components/site/page-skeleton";
+import { SmartBackButton } from "@/components/site/smart-back";
 
 export const Route = createFileRoute("/auctions/$id")({
+  pendingMs: 0,
+  pendingComponent: () => <PageSkeleton rows={4} />,
   head: ({ loaderData }) => {
     const d = loaderData as { title: string; liens: unknown[]; county: { name: string; state: string } } | undefined;
     return {
@@ -22,11 +26,19 @@ export const Route = createFileRoute("/auctions/$id")({
       <div className="container-tight py-20 text-center">
         <h1 className="font-display text-2xl text-navy">Couldn't load auction</h1>
         <p className="mt-2 text-sm text-ink-muted">{error.message}</p>
-        <button className="mt-4 rounded bg-navy px-4 py-2 text-sm text-white" onClick={() => { router.invalidate(); reset(); }}>Retry</button>
+        <div className="mt-4 flex justify-center gap-2">
+          <button className="rounded bg-navy px-4 py-2 text-sm text-white" onClick={() => { router.invalidate(); reset(); }}>Retry</button>
+          <SmartBackButton to="/auctions" className="rounded border border-hairline bg-surface px-4 py-2 text-sm text-navy hover:border-navy" />
+        </div>
       </div>
     );
   },
-  notFoundComponent: () => <div className="container-tight py-20">Auction not found.</div>,
+  notFoundComponent: () => (
+    <div className="container-tight py-20 text-center">
+      <h1 className="font-display text-2xl text-navy">Auction not found.</h1>
+      <SmartBackButton to="/auctions" className="mt-4 inline-flex text-sm text-navy underline underline-offset-4" label="← Back to auctions" />
+    </div>
+  ),
 });
 
 const fmt$ = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -37,7 +49,7 @@ function AuctionDetailPage() {
   const hydrated = useHydrated();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
-  if (!a) return <div className="container-tight py-20">Auction not found.</div>;
+  if (!a) return <div className="container-tight py-20"><h1 className="font-display text-2xl text-navy">Auction not found.</h1><SmartBackButton to="/auctions" className="mt-4 inline-flex text-sm text-navy underline underline-offset-4" label="← Back to auctions" /></div>;
   const starts = new Date(a.starts_at).getTime();
   const ends = new Date(a.ends_at).getTime();
   const isLive = now >= starts && now < ends;

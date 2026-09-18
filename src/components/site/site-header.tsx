@@ -2,8 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { Bell, ChevronDown, Landmark, Menu } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { useQuery } from "@tanstack/react-query";
-import { isAdminQuery, unreadNotificationsQuery } from "@/lib/queries/dashboard";
+import { isAdminQuery, profileQuery, unreadNotificationsQuery } from "@/lib/queries/dashboard";
 import { ProfileMenu } from "@/components/site/profile-menu";
+import { ThemeToggle } from "@/components/site/theme-toggle";
 import { Sheet, SheetTrigger, SheetContent, SheetOverlay, SheetClose } from "@/components/ui/sheet";
 
 type NavItem = { to: string; label: string; adminOnly?: boolean };
@@ -23,6 +24,7 @@ export function SiteHeader() {
   const { user, loading } = useSession();
   const { data: isAdmin } = useQuery(isAdminQuery(user?.id));
   const { data: unread } = useQuery(unreadNotificationsQuery(user?.id));
+  const { data: profile } = useQuery(profileQuery(user?.id));
 
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
@@ -110,6 +112,7 @@ export function SiteHeader() {
         </div>
 
         <div className="ml-auto flex items-center gap-5">
+          <ThemeToggle />
           {loading ? null : user ? (
             <>
               <Link
@@ -127,9 +130,13 @@ export function SiteHeader() {
               <ProfileMenu
                 trigger={
                   <button className="flex items-center gap-2 text-sm text-ink hover:text-navy sm:flex">
-                    <span className="grid size-8 place-items-center rounded-full bg-navy text-xs font-600 text-gold">
-                      {(user.email ?? "?").slice(0, 1).toUpperCase()}
-                    </span>
+                    {profile?.avatar ? (
+                      <img src={profile.avatar} alt="" className="size-8 rounded-full object-cover" />
+                    ) : (
+                      <span className="grid size-8 place-items-center rounded-full bg-navy text-xs font-600 text-gold">
+                        {(user.email ?? "?").slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
                     <span className="hidden md:inline">{user.email?.split("@")[0]}</span>
                     <ChevronDown className="size-4" />
                   </button>

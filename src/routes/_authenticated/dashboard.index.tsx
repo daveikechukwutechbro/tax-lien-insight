@@ -5,8 +5,11 @@ import { useSession } from "@/hooks/use-session";
 import { myBidsQuery, watchlistQuery, profileQuery, dashboardSummaryQuery, activityQuery } from "@/lib/queries/dashboard";
 import { scheduledAuctionQuery } from "@/lib/queries/auctions";
 import { ActivityRow } from "@/components/dashboard/activity-feed";
+import { PageSkeleton } from "@/components/site/page-skeleton";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
+  pendingMs: 0,
+  pendingComponent: () => <PageSkeleton rows={3} />,
   component: DashboardOverview,
 });
 

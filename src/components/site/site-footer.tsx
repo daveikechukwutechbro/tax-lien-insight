@@ -1,6 +1,21 @@
 import { Link } from "@tanstack/react-router";
+import { useSession } from "@/hooks/use-session";
 
 export function SiteFooter() {
+  const { user, loading } = useSession();
+  const signedIn = !loading && !!user;
+  const accountLinks = signedIn
+    ? [
+        { to: "/dashboard", label: "Dashboard" },
+        { to: "/dashboard/profile", label: "My Profile" },
+        { to: "/dashboard/watched", label: "Watched Properties" },
+        { to: "/support", label: "Contact support" },
+      ]
+    : [
+        { to: "/auth", label: "Log in" },
+        { to: "/auth", label: "Create account" },
+        { to: "/support", label: "Contact support" },
+      ];
   return (
     <footer className="mt-16 border-t border-hairline bg-navy-deep text-primary-foreground">
       <div className="container-tight grid gap-10 py-14 md:grid-cols-4">
@@ -29,14 +44,7 @@ export function SiteFooter() {
             { to: "/about", label: "About us" },
           ]}
         />
-        <FooterCol
-          title="Account"
-          links={[
-            { to: "/auth", label: "Log in" },
-            { to: "/auth", label: "Create account" },
-            { to: "/support", label: "Contact support" },
-          ]}
-        />
+        <FooterCol title="Account" links={accountLinks} />
       </div>
       <div className="border-t border-white/10">
         <div className="container-tight flex flex-col items-start justify-between gap-2 py-5 text-xs text-primary-foreground/60 md:flex-row md:items-center">

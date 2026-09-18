@@ -2,8 +2,11 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Gavel } from "lucide-react";
 import { auctionsListQuery } from "@/lib/queries/discovery";
+import { PageSkeleton } from "@/components/site/page-skeleton";
 
 export const Route = createFileRoute("/auctions")({
+  pendingMs: 0,
+  pendingComponent: () => <PageSkeleton />,
   head: () => ({
     meta: [
       { title: "Tax Lien Auctions Calendar — Auction Ledger" },

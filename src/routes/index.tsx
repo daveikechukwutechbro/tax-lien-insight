@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { scheduledAuctionQuery, type ScheduledPropertyRow } from "@/lib/queries/auctions";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { useSession } from "@/hooks/use-session";
+import { PageSkeleton } from "@/components/site/page-skeleton";
 import {
   CalendarDays,
   Clock,
@@ -18,9 +20,12 @@ import {
   ShieldCheck,
   ChevronDown,
   Info,
+  ArrowRight,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
+  pendingMs: 0,
+  pendingComponent: () => <PageSkeleton rows={6} />,
   loader: ({ context }) => context.queryClient.ensureQueryData(scheduledAuctionQuery),
   head: () => ({
     meta: [
@@ -523,27 +528,32 @@ function StatusPill({ status }: { status: ScheduledPropertyRow["auction_status"]
 }
 
 function RegisterBanner() {
+  const { user, loading } = useSession();
+  const signedIn = !loading && !!user;
   return (
     <section className="mt-8 flex flex-col items-start justify-between gap-4 rounded-xl border border-gold-soft bg-gold-soft/40 p-6 sm:flex-row sm:items-center">
       <div className="flex items-start gap-4">
         <div className="grid size-11 place-items-center rounded-lg bg-gold text-navy">
-          <ShieldCheck className="size-6" strokeWidth={1.75} />
+          {signedIn ? <Check className="size-6" strokeWidth={1.75} /> : <ShieldCheck className="size-6" strokeWidth={1.75} />}
         </div>
         <div>
           <div className="font-display text-lg font-600 text-navy">
-            Register now to participate in the auction.
+            {signedIn ? "You're all set to bid." : "Register now to participate in the auction."}
           </div>
           <p className="text-sm text-ink-muted">
-            Create an account, add funds, and be ready to bid when the auction goes live.
+            {signedIn
+              ? "Add funds to your ledger, review the properties below, and place your bids when the auction goes live."
+              : "Create an account, add funds, and be ready to bid when the auction goes live."}
           </p>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
         <Link
-          to="/auth"
-          className="inline-flex items-center rounded-md bg-navy px-5 py-2.5 text-sm font-600 text-primary-foreground hover:bg-navy-deep"
+          to={signedIn ? "/dashboard" : "/auth"}
+          className="inline-flex items-center gap-2 rounded-md bg-navy px-5 py-2.5 text-sm font-600 text-primary-foreground hover:bg-navy-deep"
         >
-          Create Account
+          {signedIn ? "Go to Dashboard" : "Create Account"}
+          <ArrowRight className="size-4" />
         </Link>
         <Link
           to="/how-it-works"

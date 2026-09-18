@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { propertyDetailQuery, type PropertyDetail as PD } from "@/lib/queries/property-detail";
 import { useSession } from "@/hooks/use-session";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Bookmark, BookmarkCheck, FileText, MapPin } from "lucide-react";
 import { addWatchItem, placeBidApi, getLotEligibility, removeWatchlistItem } from "@/lib/backend";
 import { watchlistQuery, profileQuery, dashboardSummaryQuery } from "@/lib/queries/dashboard";
+import { SmartBackButton } from "@/components/site/smart-back";
 
 export type PropertySearch = { lot?: string; auction?: string };
 
@@ -34,7 +35,9 @@ function PropertyDetail() {
   const { id } = Route.useParams();
   const { lot, auction } = Route.useSearch();
   const { data, isLoading, error } = useQuery(propertyDetailQuery(id, { lotId: lot, auctionId: auction }));
-  const { user } = useSession();
+  const { user, loading: sessionLoading } = useSession();
+  const hydrated = useHydrated();
+  const router = useRouter();
   const qc = useQueryClient();
   const { data: watched = [] } = useQuery(watchlistQuery(user?.id));
 
@@ -42,13 +45,22 @@ function PropertyDetail() {
   const watching = watched?.find((w) => w.lot_id === lien?.id || w.property_id === data?.id) ?? null;
 
   async function toggleWatch() {
-    if (!user) return toast.error("Sign in to save properties");
+    if (!hydrated) return;
+    if (!user) {
+      toast.error("Sign in to save properties", { description: "You'll return to this property after you log in." });
+      router.navigate({ to: "/auth", search: { redirect: `/properties/${id}`, mode: "login" } });
+      return;
+    }
+    if (!sessionLoading && !lien?.id) {
+      toast.error(data ? "This property has no scheduled auction yet — check back soon." : "Couldn't load the property's auction. Please try again.");
+      return;
+    }
     try {
       if (watching) {
         await removeWatchlistItem(watching.id);
         toast.success("Removed from watchlist");
       } else {
-        if (!lien?.id) return toast.error("Watch is available once the property is in an auction");
+        if (!lien?.id) return;
         await addWatchItem({ lotId: lien.id });
         toast.success("Added to watchlist");
       }
@@ -64,7 +76,7 @@ function PropertyDetail() {
   if (error || !data) return (
     <div className="container-tight py-16">
       <h1 className="font-display text-3xl text-navy">Property not found</h1>
-      <Link to="/" className="mt-4 inline-flex text-sm text-navy underline">← Back</Link>
+      <SmartBackButton to="/search" className="mt-4 inline-flex text-sm text-navy underline underline-offset-4" />
     </div>
   );
 
@@ -74,7 +86,11 @@ function PropertyDetail() {
   return (
     <div className="bg-background pb-16">
       <div className="container-tight pt-6">
-        <Link to="/" className="text-xs font-500 text-ink-muted hover:text-navy">← Back to auctions</Link>
+        <SmartBackButton
+          to={auction ? `/auctions/${auction}` : "/search"}
+          label={auction ? "← Back to auction" : "← Back to search"}
+          className="text-xs font-500 text-ink-muted hover:text-navy"
+        />
         <div className="mt-2 grid gap-6 lg:grid-cols-[1fr_360px]">
           <div>
             <div className="rounded-xl border border-hairline bg-surface p-4">

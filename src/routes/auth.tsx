@@ -8,6 +8,7 @@ import { register, login, AuthError, emitAuthChange } from "@/lib/backend-auth";
 
 const authSearch = z.object({
   mode: z.enum(["login", "signup"]).optional().default("login"),
+  redirect: z.string().optional(),
 });
 
 export const Route = createFileRoute("/auth")({
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { mode } = useSearch({ from: "/auth" });
+  const { mode, redirect } = useSearch({ from: "/auth" });
   const router = useRouter();
   const { user, loading } = useSession();
   const isSignup = mode === "signup";
@@ -34,9 +35,17 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
 
+  function continueOrDashboard() {
+    if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+      window.location.assign(redirect);
+    } else {
+      router.navigate({ to: "/dashboard", replace: true });
+    }
+  }
+
   useEffect(() => {
-    if (!loading && user) router.navigate({ to: "/dashboard", replace: true });
-  }, [user, loading, router]);
+    if (!loading && user) continueOrDashboard();
+  }, [user, loading]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,7 +65,7 @@ function AuthPage() {
       await login({ email, password });
       emitAuthChange();
       toast.success("Welcome back.");
-      router.navigate({ to: "/dashboard", replace: true });
+      continueOrDashboard();
     } catch (err) {
       const e = err instanceof AuthError ? err : err instanceof Error ? err : new Error(String(err));
       if (e instanceof AuthError && e.code === "ACCOUNT_LOCKED") {

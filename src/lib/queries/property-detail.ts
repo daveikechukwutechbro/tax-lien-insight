@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getAuction, getAuctions, getAuctionDetail, getLot, getProperty, type AuctionApi, type AuctionLot } from "@/lib/backend";
+import { getAuction, getLot, getProperty } from "@/lib/backend";
 
 export type PropertyDetail = {
   id: string;
@@ -89,26 +89,17 @@ async function buildDetail(
   opts?: { lotId?: string; auctionId?: string },
 ): Promise<PropertyDetail> {
   let lien: PropertyDetail["lien"] = null;
-  if (opts?.lotId) {
-    const lot = await getLot(opts.lotId);
-    const auction = opts?.auctionId ? await getAuction(opts.auctionId) : null;
-    lien = makeLien(lot, auction);
-  } else {
-    const auctions = await getAuctions().catch(() => [] as AuctionApi[]);
-    for (const a of auctions) {
-      try {
-        const { auction, lots } = await getAuctionDetail(a.id);
-        const lot = lots.find((l) => l.property_id === propertyId);
-        if (lot) {
-          lien = makeLien(lot, auction);
-          break;
-        }
-      } catch {
-        // try the next auction
-      }
+  const lotId = opts?.lotId ?? p.lotId ?? null;
+  const auctionId = opts?.auctionId ?? p.auctionId ?? null;
+  if (lotId) {
+    try {
+      const lot = await getLot(lotId);
+      const auction = auctionId ? await getAuction(auctionId).catch(() => null) : null;
+      lien = makeLien(lot, auction);
+    } catch {
+      lien = null;
     }
   }
-
   return {
     id: p.id,
     parcel_id: p.parcelId,
