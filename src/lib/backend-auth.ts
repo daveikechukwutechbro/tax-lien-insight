@@ -74,7 +74,10 @@ export async function getMe(): Promise<BackendUser | null> {
   try {
     return await request<BackendUser>("/api/v1/me");
   } catch (err) {
-    if (err instanceof AuthError && (err.status === 401 || err.status === 403)) return null;
+    if (err instanceof AuthError && (err.status === 401 || err.status === 403)) {
+      knownAuthenticated = false;
+      return null;
+    }
     throw err;
   }
 }
@@ -96,6 +99,7 @@ export async function login(input: { email: string; password: string }): Promise
 }
 
 export async function logout(): Promise<void> {
+  knownAuthenticated = false;
   await request<{ success: boolean }>("/api/v1/auth/logout", { method: "POST" }).catch(() => undefined);
 }
 
@@ -149,4 +153,12 @@ export function emitAuthChange(): void {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("taxlien-auth-change"));
   }
+}
+
+// Optimistic auth gate for the authenticated layout: once the backend has
+// verified the session, dashboard navigation skips the round-trip. Cleared on
+// logout() and whenever the backend answers 401.
+export let knownAuthenticated = false;
+export function markAuthenticated(value: boolean): void {
+  knownAuthenticated = value;
 }
