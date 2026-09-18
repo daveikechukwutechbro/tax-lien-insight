@@ -137,6 +137,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
 // Tiny auth-change bus so signing in/out anywhere refreshes session state.
 const listeners = new Set<() => void>();
 export function onAuthChange(fn: () => void): () => void {
+  if (typeof fn !== "function") return () => {};
   listeners.add(fn);
   return () => listeners.delete(fn);
 }
