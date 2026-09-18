@@ -224,9 +224,17 @@ export async function verifyEmail(opts: { token?: string; code?: string }): Prom
 
 export async function requestPasswordReset(email: string): Promise<{ requested: boolean; resetToken?: string }> {
   const normalized = normalizeEmail(email);
-  const { rows } = await getPool().query(`SELECT id, email FROM users WHERE email_normalized = $1`, [normalized]);
-  if (rows.length === 0) return { requested: true }; // do not leak existence
+  const { rows } = await getPool().query(
+    `SELECT id, email, status FROM users WHERE email_normalized = $1`,
+    [normalized],
+  );
+  if (rows.length === 0) {
+    throw new NotFoundError("No existing account found for this email. Please create an account first.");
+  }
   const user = rows[0];
+  if (user.status === "suspended" || user.status === "banned" || user.status === "closed") {
+    throw new NotFoundError("No active account found for this email. Please create an account first.");
+  }
   const token = generateToken();
   const expires = new Date(Date.now() + 60 * 60 * 1000);
   await getPool().query(

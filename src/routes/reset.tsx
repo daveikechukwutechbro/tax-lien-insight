@@ -49,7 +49,7 @@ function ResetPage() {
         toast.success("A reset link was generated.");
         setSent(true);
       } else {
-        toast.success("If that email exists, a reset link has been sent.");
+        toast.success("A password reset link has been sent to this email.");
         setSent(true);
       }
     } catch (err) {

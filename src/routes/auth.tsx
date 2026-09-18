@@ -28,7 +28,7 @@ function AuthPage() {
   const { mode } = useSearch({ from: "/auth" });
   const router = useRouter();
   const { user, loading } = useSession();
-  const [isSignup, setIsSignup] = useState(mode === "signup");
+  const isSignup = mode === "signup";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -137,7 +137,7 @@ function AuthPage() {
           {isSignup ? "Already registered?" : "New here?"}{" "}
           <button
             type="button"
-            onClick={() => setIsSignup((s) => !s)}
+            onClick={() => router.navigate({ to: "/auth", search: { mode: isSignup ? "login" : "signup" }, replace: true })}
             className="font-500 text-navy underline underline-offset-4"
           >
             {isSignup ? "Log in" : "Create an account"}

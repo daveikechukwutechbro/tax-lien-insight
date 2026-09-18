@@ -101,6 +101,7 @@ function VerifyPage() {
       } else {
         toast.success("A new verification code has been emailed to you.");
       }
+      setCode("");
       setStatus("idle");
       setErrorMsg("");
       setShowResendForm(false);
