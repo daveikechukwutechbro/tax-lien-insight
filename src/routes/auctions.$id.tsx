@@ -37,6 +37,7 @@ function AuctionDetailPage() {
   const hydrated = useHydrated();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  if (!a) return <div className="container-tight py-20">Auction not found.</div>;
   const starts = new Date(a.starts_at).getTime();
   const ends = new Date(a.ends_at).getTime();
   const isLive = now >= starts && now < ends;

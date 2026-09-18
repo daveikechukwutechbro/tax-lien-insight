@@ -53,6 +53,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
+    signal: init?.signal ?? AbortSignal.timeout(25_000),
   });
   const envelope = (await res.json().catch(() => null)) as ApiEnvelope<T> | null;
   if (envelope && envelope.success === false) {

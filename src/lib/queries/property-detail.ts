@@ -72,56 +72,67 @@ export function propertyDetailQuery(
 ) {
   return queryOptions({
     queryKey: ["property", propertyId, opts?.lotId ?? "", opts?.auctionId ?? ""],
-    queryFn: async (): Promise<PropertyDetail> => {
-      const p = await getProperty(propertyId);
-
-      let lien: PropertyDetail["lien"] = null;
-      if (opts?.lotId) {
-        const lot = await getLot(opts.lotId);
-        const auction = opts?.auctionId ? await getAuction(opts.auctionId) : null;
-        lien = makeLien(lot, auction);
-      } else {
-        const auctions = await getAuctions();
-        for (const a of auctions) {
-          try {
-            const { auction, lots } = await getAuctionDetail(a.id);
-            const lot = lots.find((l) => l.property_id === propertyId);
-            if (lot) {
-              lien = makeLien(lot, auction);
-              break;
-            }
-          } catch {
-            // try the next auction
-          }
-        }
+    queryFn: async (): Promise<PropertyDetail | null> => {
+      try {
+        const p = await getProperty(propertyId);
+        return await buildDetail(p, propertyId, opts);
+      } catch {
+        return null;
       }
-
-      return {
-        id: p.id,
-        parcel_id: p.parcelId,
-        address: p.address,
-        city: p.city ?? "",
-        state: p.state ?? "",
-        zip: p.postalCode ?? "",
-        property_type: p.propertyType,
-        description: null,
-        image_url: null,
-        gallery_urls: [],
-        year_built: null,
-        living_area_sqft: null,
-        lot_size_acres: null,
-        bedrooms: null,
-        bathrooms: null,
-        use_type: p.propertyType,
-        assessed_value: p.assessedValue,
-        land_value: p.landValue ?? null,
-        improvement_value: p.improvementValue ?? null,
-        owner_name: null,
-        owner_mailing_address: null,
-        county: p.countyName ? { name: p.countyName, state: p.countyState ?? p.state ?? "" } : { name: "", state: p.state ?? "" },
-        lien,
-        documents: [],
-      };
     },
   });
+}
+
+async function buildDetail(
+  p: Awaited<ReturnType<typeof getProperty>>,
+  propertyId: string,
+  opts?: { lotId?: string; auctionId?: string },
+): Promise<PropertyDetail> {
+  let lien: PropertyDetail["lien"] = null;
+  if (opts?.lotId) {
+    const lot = await getLot(opts.lotId);
+    const auction = opts?.auctionId ? await getAuction(opts.auctionId) : null;
+    lien = makeLien(lot, auction);
+  } else {
+    const auctions = await getAuctions().catch(() => [] as AuctionApi[]);
+    for (const a of auctions) {
+      try {
+        const { auction, lots } = await getAuctionDetail(a.id);
+        const lot = lots.find((l) => l.property_id === propertyId);
+        if (lot) {
+          lien = makeLien(lot, auction);
+          break;
+        }
+      } catch {
+        // try the next auction
+      }
+    }
+  }
+
+  return {
+    id: p.id,
+    parcel_id: p.parcelId,
+    address: p.address,
+    city: p.city ?? "",
+    state: p.state ?? "",
+    zip: p.postalCode ?? "",
+    property_type: p.propertyType,
+    description: null,
+    image_url: null,
+    gallery_urls: [],
+    year_built: null,
+    living_area_sqft: null,
+    lot_size_acres: null,
+    bedrooms: null,
+    bathrooms: null,
+    use_type: p.propertyType,
+    assessed_value: p.assessedValue,
+    land_value: p.landValue ?? null,
+    improvement_value: p.improvementValue ?? null,
+    owner_name: null,
+    owner_mailing_address: null,
+    county: p.countyName ? { name: p.countyName, state: p.countyState ?? p.state ?? "" } : { name: "", state: p.state ?? "" },
+    lien,
+    documents: [],
+  };
 }

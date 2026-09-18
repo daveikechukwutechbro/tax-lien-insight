@@ -82,12 +82,16 @@ async function fetchNextAuctionSummary(): Promise<AuctionSummary> {
 
   for (const a of upcoming) {
     if (a.county) counties.add(`${a.county.name}|${a.county.state}`);
-    const lots = await getAuctionLots(a.id).catch(() => [] as AuctionLot[]);
-    for (const l of lots) {
+  }
+  const lotSets = await Promise.all(
+    upcoming.map((a) => getAuctionLots(a.id).catch(() => [] as AuctionLot[])),
+  );
+  upcoming.forEach((a, idx) => {
+    for (const l of lotSets[idx]) {
       totalTaxesOwed += l.taxes_owed || 0;
       properties.push(toRow(l, a));
     }
-  }
+  });
 
   properties.sort((x, y) => new Date(x.auction_starts_at).getTime() - new Date(y.auction_starts_at).getTime());
 

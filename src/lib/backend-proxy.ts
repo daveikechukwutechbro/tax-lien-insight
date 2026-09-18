@@ -25,7 +25,19 @@ export async function proxyToBackend(request: Request): Promise<Response> {
     init.body = request.body as unknown as ReadableStream;
     init.duplex = "half";
   }
-  const upstream = await fetch(target.toString(), init);
+  // Fail fast instead of letting a slow/cold upstream hang the request and
+  // produce a non-JSON 5xx (which the client can't parse into an envelope).
+  init.signal = AbortSignal.timeout(9000);
+  let upstream: Response;
+  try {
+    upstream = await fetch(target.toString(), init);
+  } catch {
+    return jsonError(
+      504,
+      "UPSTREAM_TIMEOUT",
+      "The service is taking too long to respond. Please try again.",
+    );
+  }
   const responseHeaders = new Headers(upstream.headers);
   responseHeaders.delete("content-encoding");
   responseHeaders.delete("content-length");
@@ -37,4 +49,14 @@ export async function proxyToBackend(request: Request): Promise<Response> {
     statusText: upstream.statusText,
     headers: responseHeaders,
   });
+}
+
+function jsonError(status: number, code: string, message: string): Response {
+  return new Response(
+    JSON.stringify({ success: false, data: null, error: { code, message }, meta: {} }),
+    {
+      status,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    },
+  );
 }

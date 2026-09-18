@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/profile")({
 
 async function fileToAvatar(file: File): Promise<string> {
   const raw = await file.arrayBuffer();
-  const maxBytes = 400 * 1024;
+  const maxBytes = 160 * 1024;
   if (raw.byteLength > 2 * 1024 * 1024) throw new Error("Image must be under 2 MB");
   const mime = file.type === "image/png" ? "image/png" : "image/jpeg";
   if (raw.byteLength <= maxBytes) {
@@ -34,7 +34,7 @@ async function fileToAvatar(file: File): Promise<string> {
     canvas.width = Math.max(1, Math.round(img.width * scale));
     canvas.height = Math.max(1, Math.round(img.height * scale));
     canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL(mime, 0.85);
+    const dataUrl = canvas.toDataURL(mime, 0.75);
     if (dataUrl.length > maxBytes * 1.4) return fileToAvatar(new File([file], file.name, { type: mime }));
     return dataUrl;
   } finally {

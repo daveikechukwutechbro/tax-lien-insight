@@ -21,6 +21,7 @@ export const Route = createFileRoute("/states/$state")({
 function StateDetailPage() {
   const { state } = Route.useParams();
   const { data } = useSuspenseQuery(stateDetailQuery(state));
+  if (!data) return <div className="container-tight py-20">State not found.</div>;
   return (
     <div className="container-tight py-12">
       <Link to="/states" className="text-sm text-ink-muted hover:text-navy">← All states</Link>
