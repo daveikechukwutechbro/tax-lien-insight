@@ -141,7 +141,9 @@ export function onAuthChange(fn: () => void): () => void {
   return () => listeners.delete(fn);
 }
 export function emitAuthChange(): void {
-  listeners.forEach((fn) => fn());
+  listeners.forEach((fn) => {
+    if (typeof fn === "function") fn();
+  });
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("taxlien-auth-change"));
   }

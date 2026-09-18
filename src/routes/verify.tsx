@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { toast } from "sonner";
 import { MailCheck, CheckCircle2, XCircle, Clock, RotateCcw, KeyRound } from "lucide-react";
-import { verifyEmail, resendVerification, AuthError, onAuthChange } from "@/lib/backend-auth";
+import { verifyEmail, resendVerification, AuthError, emitAuthChange } from "@/lib/backend-auth";
 
 const verifySearch = z.object({
   token: z.string().optional().default(""),
@@ -45,7 +45,7 @@ function VerifyPage() {
     setStatus("checking");
     verifyEmail({ token: finalToken })
       .then(() => {
-        onAuthChange();
+        emitAuthChange();
         if (!cancelled) {
           setStatus("verified");
           toast.success("Your email has been verified. You can now log in.");
@@ -74,7 +74,7 @@ function VerifyPage() {
     setBusy(true);
     try {
       await verifyEmail({ code: value.trim() });
-      onAuthChange();
+      emitAuthChange();
       setStatus("verified");
       toast.success("Your email has been verified. You can now log in.");
     } catch (err) {
