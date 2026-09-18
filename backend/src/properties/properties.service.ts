@@ -97,10 +97,13 @@ export async function listProperties(filters: {
 
 export async function getProperty(id: string): Promise<PropertyRecord> {
   const { rows } = await getPool().query(
-    `SELECT p.*, j.name AS county_name, s.code AS county_state
+    `SELECT p.*, j.name AS county_name, s.code AS county_state,
+            lot.lot_id, lot.lot_status, lot.starting_rate, lot.current_rate, lot.taxes_owed,
+            lot.auction_id, lot.auction_status, lot.auction_starts_at
      FROM properties p
      LEFT JOIN jurisdictions j ON j.id = p.jurisdiction_id
      LEFT JOIN states s ON s.id = j.state_id
+     ${PROPERTY_JOINS}
      WHERE p.id = $1`,
     [id],
   );

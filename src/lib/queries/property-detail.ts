@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getAuction, getLot, getProperty } from "@/lib/backend";
+import { getAuction, getAuctions, getAuctionDetail, getLot, getProperty } from "@/lib/backend";
 
 export type PropertyDetail = {
   id: string;
@@ -98,6 +98,21 @@ async function buildDetail(
       lien = makeLien(lot, auction);
     } catch {
       lien = null;
+    }
+  }
+  if (!lien) {
+    const auctions = await getAuctions().catch(() => []);
+    for (const a of auctions) {
+      try {
+        const { auction, lots } = await getAuctionDetail(a.id);
+        const lot = lots.find((l) => l.property_id === propertyId);
+        if (lot) {
+          lien = makeLien(lot, auction);
+          break;
+        }
+      } catch {
+        // try the next auction
+      }
     }
   }
   return {
