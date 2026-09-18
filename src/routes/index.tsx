@@ -441,6 +441,7 @@ function PropertyTable({ properties }: { properties: ScheduledPropertyRow[] }) {
                     <Link
                       to="/properties/$id"
                       params={{ id: p.property_id }}
+                      search={{ lot: p.lien_id, auction: p.auction_id }}
                       className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-xs font-500 text-ink transition-colors hover:border-navy hover:text-navy"
                     >
                       <Eye className="size-3.5" /> View Details
