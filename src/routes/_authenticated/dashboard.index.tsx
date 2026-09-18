@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Wallet, CreditCard, Trophy, Gavel, ArrowRight, CalendarDays, Lock, Receipt, Award, BadgeCheck } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { myBidsQuery, watchlistQuery, profileQuery, dashboardSummaryQuery, activityQuery } from "@/lib/queries/dashboard";
@@ -17,7 +17,7 @@ const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", curren
 
 function DashboardOverview() {
   const { user } = useSession();
-  const { data: auction } = useSuspenseQuery(scheduledAuctionQuery);
+  const { data: auction } = useQuery(scheduledAuctionQuery);
   const { data: bids = [] } = useQuery(myBidsQuery(user?.id));
   const { data: watched = [] } = useQuery(watchlistQuery(user?.id));
   const { data: profile } = useQuery(profileQuery(user?.id));
@@ -52,7 +52,7 @@ function DashboardOverview() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Panel title="Upcoming Auctions" cta={{ label: "View All Auctions", href: "/" }}>
-          {auction.nextStartsAt ? (
+          {auction && auction.nextStartsAt ? (
             <div>
               <div className="flex items-start gap-3">
                 <div className="grid size-11 place-items-center rounded-lg bg-navy/5 text-navy">
@@ -106,7 +106,7 @@ function DashboardOverview() {
             <ul className="space-y-2 text-sm">
               {watched.slice(0, 5).map((w) => (
                 <li key={w.id}>
-                  <Link to="/properties/$id" params={{ id: w.property_id }} className="text-navy hover:underline">{w.address}</Link>
+                  <Link to="/properties/$id" params={{ id: w.property_id ?? "" }} className="text-navy hover:underline">{w.address}</Link>
                   <div className="text-xs text-ink-muted">{w.city}, {w.state}</div>
                 </li>
               ))}

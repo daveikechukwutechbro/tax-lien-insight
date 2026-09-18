@@ -42,7 +42,7 @@ function PropertyDetail() {
   const { data: watched = [] } = useQuery(watchlistQuery(user?.id));
 
   const lien = data?.lien ?? null;
-  const watching = watched?.find((w) => w.lot_id === lien?.id || w.property_id === data?.id) ?? null;
+  const watching = watched?.find((w) => w.id === lien?.id || w.property_id === data?.id) ?? null;
 
   async function toggleWatch() {
     if (!hydrated) return;

@@ -77,15 +77,20 @@ function MyBidsPage() {
   );
 }
 
+type BidStatus = "winning" | "outbid" | "won" | "lost" | "invalid";
+const STATUS_UI: Record<BidStatus, { bg: string; fg: string; label: string }> = {
+  winning: { bg: "bg-success-soft", fg: "text-success", label: "Highest Bid" },
+  outbid: { bg: "bg-destructive/10", fg: "text-destructive", label: "Outbid" },
+  won: { bg: "bg-success-soft", fg: "text-success", label: "Won" },
+  lost: { bg: "bg-muted", fg: "text-ink-muted", label: "Lost" },
+  invalid: { bg: "bg-muted", fg: "text-ink-muted", label: "Invalid" },
+};
+const statusOf = (s: string) =>
+  STATUS_UI[s as BidStatus] ?? { bg: "bg-muted", fg: "text-ink-muted", label: s };
+
 function BidRow({ bid }: { bid: DashboardBid }) {
   const p = bid.lien.property;
-  const status = {
-    winning: { bg: "bg-success-soft", fg: "text-success", label: "Highest Bid" },
-    outbid: { bg: "bg-destructive/10", fg: "text-destructive", label: "Outbid" },
-    won: { bg: "bg-success-soft", fg: "text-success", label: "Won" },
-    lost: { bg: "bg-muted", fg: "text-ink-muted", label: "Lost" },
-    invalid: { bg: "bg-muted", fg: "text-ink-muted", label: "Invalid" },
-  }[bid.status];
+  const status = statusOf(bid.status);
   return (
     <tr className="border-b border-hairline/60 last:border-0 hover:bg-surface-alt/60">
       <td className="px-5 py-3">
@@ -98,7 +103,7 @@ function BidRow({ bid }: { bid: DashboardBid }) {
         </div>
       </td>
       <td className="px-3 py-3 text-xs text-ink-muted">
-        {bid.lien.auction && new Date(bid.lien.auction.starts_at).toLocaleDateString()}
+        {bid.lien.auction && new Date(bid.lien.auction.starts_at ?? "").toLocaleDateString()}
       </td>
       <td className="px-3 py-3 text-right tabular-nums">{bid.interest_rate.toFixed(2)}%</td>
       <td className="px-3 py-3 text-right tabular-nums">
@@ -116,13 +121,7 @@ function BidRow({ bid }: { bid: DashboardBid }) {
 
 function BidCard({ bid }: { bid: DashboardBid }) {
   const p = bid.lien.property;
-  const status = {
-    winning: { bg: "bg-success-soft", fg: "text-success", label: "Highest Bid" },
-    outbid: { bg: "bg-destructive/10", fg: "text-destructive", label: "Outbid" },
-    won: { bg: "bg-success-soft", fg: "text-success", label: "Won" },
-    lost: { bg: "bg-muted", fg: "text-ink-muted", label: "Lost" },
-    invalid: { bg: "bg-muted", fg: "text-ink-muted", label: "Invalid" },
-  }[bid.status];
+  const status = statusOf(bid.status);
   return (
     <div className="rounded-xl border border-hairline bg-surface p-4">
       <div className="flex items-start gap-3">
@@ -146,7 +145,7 @@ function BidCard({ bid }: { bid: DashboardBid }) {
           <div className="text-xs text-ink-muted">Auction</div>
           <div className="font-500 text-navy">
             {bid.lien.auction
-              ? new Date(bid.lien.auction.starts_at).toLocaleDateString()
+              ? new Date(bid.lien.auction.starts_at ?? "").toLocaleDateString()
               : "—"}
           </div>
         </div>

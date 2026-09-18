@@ -46,18 +46,18 @@ function WatchedPage() {
              <li key={w.id} className="flex flex-wrap items-center gap-4 p-4">
                {w.image_url ? <img src={w.image_url} alt="" className="size-20 rounded-md object-cover" /> : <div className="size-20 rounded-md bg-surface-alt" />}
                <div className="min-w-0 flex-1">
-                 <Link to="/properties/$id" params={{ id: w.property_id }} className="font-600 text-navy hover:underline">{w.address}</Link>
+                 <Link to="/properties/$id" params={{ id: w.property_id ?? "" }} className="font-600 text-navy hover:underline">{w.address}</Link>
                  <div className="text-xs text-ink-muted">{w.city}, {w.state} {w.zip} · Parcel {w.parcel_id}</div>
                </div>
                <div className="text-sm">
                  <div className="text-xs text-ink-muted">Taxes Owed</div>
-                 <div className="font-600 text-navy">{w.taxes_owed !== null ? fmt(w.taxes_owed) : "—"}</div>
+                 <div className="font-600 text-navy">{w.taxes_owed != null ? fmt(w.taxes_owed) : "—"}</div>
                </div>
                <div className="text-sm">
                  <div className="text-xs text-ink-muted">Interest Rate</div>
-                 <div className="font-600 text-navy">{w.current_rate !== null ? `${w.current_rate.toFixed(2)}%` : w.starting_rate !== null ? `${w.starting_rate.toFixed(2)}%` : "—"}</div>
+                 <div className="font-600 text-navy">{w.current_rate != null ? `${w.current_rate.toFixed(2)}%` : w.starting_rate != null ? `${w.starting_rate.toFixed(2)}%` : "—"}</div>
                </div>
-               <Link to="/properties/$id" params={{ id: w.property_id }} className="rounded-md border border-hairline px-3 py-1.5 text-sm hover:border-navy hover:text-navy">View Details</Link>
+               <Link to="/properties/$id" params={{ id: w.property_id ?? "" }} className="rounded-md border border-hairline px-3 py-1.5 text-sm hover:border-navy hover:text-navy">View Details</Link>
                <button onClick={() => remove(w.id)} aria-label="Remove" className="text-ink-muted hover:text-destructive"><Trash2 className="size-4" /></button>
              </li>
            ))}

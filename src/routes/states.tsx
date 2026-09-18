@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import { statesListQuery } from "@/lib/queries/discovery";
+import { prefetchWithin } from "@/lib/queries/prefetch";
 import { PageSkeleton } from "@/components/site/page-skeleton";
 
 export const Route = createFileRoute("/states")({
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/states")({
     ],
     links: [{ rel: "canonical", href: "/states" }],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(statesListQuery),
+  loader: ({ context }) => prefetchWithin(() => context.queryClient.ensureQueryData(statesListQuery)),
   component: StatesPage,
   errorComponent: ({ error, reset }) => {
     const router = useRouter();
@@ -26,7 +27,8 @@ export const Route = createFileRoute("/states")({
 });
 
 function StatesPage() {
-  const { data } = useSuspenseQuery(statesListQuery);
+  const { data } = useQuery(statesListQuery);
+  if (!data) return <PageSkeleton />;
   return (
     <div className="container-tight py-12">
       <div className="flex items-center gap-3">

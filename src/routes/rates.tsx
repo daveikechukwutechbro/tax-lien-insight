@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Percent,
   Scale,
@@ -12,11 +12,11 @@ import {
 export const Route = createFileRoute("/rates")({
   head: () => ({
     meta: [
-      { title: "Interest Rates by State — Auction Ledger" },
+      { title: "Interest Rates by State â€” Auction Ledger" },
       {
         name: "description",
         content:
-          "The statutory tax lien interest rate, how it is set, and any minimum for every US state and DC — lien, hybrid, and deed jurisdictions.",
+          "The statutory tax lien interest rate, how it is set, and any minimum for every US state and DC â€” lien, hybrid, and deed jurisdictions.",
       },
       { property: "og:title", content: "Tax Lien Interest Rates by State" },
       {
@@ -42,65 +42,61 @@ type StateRate = {
   note?: string;
 };
 
-const DEED: StateRate = {
-  rate: "—",
-  how: "No investor interest",
-  min: "—",
-};
+const DEED = { model: "deed", rate: "â€”", how: "No investor interest", min: "â€”" } as const;
 
-const STATE_RATES: StateRate[] = [
-  { state: "Alaska", model: "deed", ...DEED },
+const STATE_RATES = [
+  { state: "Alaska", ...DEED },
   { state: "Alabama", model: "hybrid", rate: "12% max", how: "Bid down at auction", min: "No floor" },
-  { state: "Arkansas", model: "deed", ...DEED },
+  { state: "Arkansas", ...DEED },
   { state: "Arizona", model: "lien", rate: "16% max", how: "Bid down at auction", min: "No floor" },
-  { state: "California", model: "deed", ...DEED },
+  { state: "California", ...DEED },
   { state: "Colorado", model: "lien", rate: "14% max", how: "Fixed by statute", min: "None" },
-  { state: "Connecticut", model: "deed", ...DEED },
+  { state: "Connecticut", ...DEED },
   { state: "District of Columbia", model: "lien", rate: "18% max", how: "Fixed by statute", min: "None" },
-  { state: "Delaware", model: "deed", ...DEED },
+  { state: "Delaware", ...DEED },
   { state: "Florida", model: "hybrid", rate: "18% max", how: "Bid down at auction", min: "5%", note: "Also runs a tax deed path." },
-  { state: "Georgia", model: "deed", ...DEED },
-  { state: "Hawaii", model: "deed", ...DEED, note: "No investor tax-sale auction; delinquent liens stay with the county." },
+  { state: "Georgia", ...DEED },
+  { state: "Hawaii", ...DEED, note: "No investor tax-sale auction; delinquent liens stay with the county." },
   { state: "Iowa", model: "lien", rate: "24% max", how: "Fixed by statute", min: "None", note: "Highest ceiling in the country." },
-  { state: "Idaho", model: "deed", ...DEED },
+  { state: "Idaho", ...DEED },
   { state: "Illinois", model: "lien", rate: "9% max", how: "Bid down at auction", min: "No floor", note: "One- or three-year redemption by property type." },
   { state: "Indiana", model: "lien", rate: "15% max", how: "Flat penalty", min: "10%", note: "Penalty paid on redemption rather than compounding interest." },
-  { state: "Kansas", model: "deed", ...DEED },
+  { state: "Kansas", ...DEED },
   { state: "Kentucky", model: "lien", rate: "12% max", how: "Fixed by statute", min: "None" },
   { state: "Louisiana", model: "lien", rate: "12% max", how: "Bid down at auction", min: "8.4%", note: "Resets under Acts 2024 No. 774, effective Jan 1, 2026." },
-  { state: "Massachusetts", model: "deed", ...DEED },
+  { state: "Massachusetts", ...DEED },
   { state: "Maryland", model: "lien", rate: "20% max", how: "Set by county law", min: "6%", note: "Statute sets a default; counties may go higher." },
-  { state: "Maine", model: "deed", ...DEED },
-  { state: "Michigan", model: "deed", ...DEED },
-  { state: "Minnesota", model: "deed", ...DEED },
+  { state: "Maine", ...DEED },
+  { state: "Michigan", ...DEED },
+  { state: "Minnesota", ...DEED },
   { state: "Missouri", model: "lien", rate: "10% max", how: "Fixed by statute", min: "None" },
   { state: "Mississippi", model: "lien", rate: "18% max", how: "Fixed by statute", min: "None" },
   { state: "Montana", model: "lien", rate: "10% max", how: "Fixed by statute", min: "None" },
-  { state: "North Carolina", model: "deed", ...DEED },
-  { state: "North Dakota", model: "deed", ...DEED },
+  { state: "North Carolina", ...DEED },
+  { state: "North Dakota", ...DEED },
   { state: "Nebraska", model: "lien", rate: "14% max", how: "Fixed by statute", min: "None" },
-  { state: "New Hampshire", model: "deed", ...DEED },
+  { state: "New Hampshire", ...DEED },
   { state: "New Jersey", model: "lien", rate: "18% max", how: "Bid down at auction", min: "None" },
-  { state: "New Mexico", model: "deed", ...DEED },
-  { state: "Nevada", model: "deed", ...DEED },
-  { state: "New York", model: "deed", ...DEED },
+  { state: "New Mexico", ...DEED },
+  { state: "Nevada", ...DEED },
+  { state: "New York", ...DEED },
   { state: "Ohio", model: "hybrid", rate: "18% max", how: "Bid down at auction", min: "No floor", note: "Also runs a tax deed / foreclosure path." },
-  { state: "Oklahoma", model: "deed", ...DEED },
-  { state: "Oregon", model: "deed", ...DEED },
-  { state: "Pennsylvania", model: "deed", ...DEED },
-  { state: "Rhode Island", model: "deed", ...DEED },
-  { state: "South Carolina", model: "deed", ...DEED },
+  { state: "Oklahoma", ...DEED },
+  { state: "Oregon", ...DEED },
+  { state: "Pennsylvania", ...DEED },
+  { state: "Rhode Island", ...DEED },
+  { state: "South Carolina", ...DEED },
   { state: "South Dakota", model: "lien", rate: "10% max", how: "Bid down at auction", min: "None" },
-  { state: "Tennessee", model: "deed", ...DEED },
-  { state: "Texas", model: "deed", ...DEED },
-  { state: "Utah", model: "deed", ...DEED },
-  { state: "Virginia", model: "deed", ...DEED },
-  { state: "Vermont", model: "deed", ...DEED },
-  { state: "Washington", model: "deed", ...DEED },
-  { state: "Wisconsin", model: "deed", ...DEED },
+  { state: "Tennessee", ...DEED },
+  { state: "Texas", ...DEED },
+  { state: "Utah", ...DEED },
+  { state: "Virginia", ...DEED },
+  { state: "Vermont", ...DEED },
+  { state: "Washington", ...DEED },
+  { state: "Wisconsin", ...DEED },
   { state: "West Virginia", model: "lien", rate: "12% max", how: "Fixed by statute", min: "None", note: "Roughly 1% per month on redemption." },
   { state: "Wyoming", model: "lien", rate: "15% max", how: "Fixed by statute", min: "None" },
-].sort((a, b) => a.state.localeCompare(b.state));
+].sort((a, b) => a.state.localeCompare(b.state)) as StateRate[];
 
 const MODEL_LABEL: Record<RateModel, { label: string; badge: string }> = {
   lien: { label: "Lien", badge: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
@@ -122,7 +118,7 @@ function RatesPage() {
           <h1 className="mt-3 font-display text-4xl font-600">Interest rates by state</h1>
           <p className="mt-2 max-w-2xl text-primary-foreground/80">
             The statutory interest a tax lien certificate can earn, how that rate is set, and any
-            minimum — for every US state and DC. Rates are statutory ceilings and were checked
+            minimum â€” for every US state and DC. Rates are statutory ceilings and were checked
             against state law; confirm the current figure with the county before you bid.
           </p>
         </div>
@@ -131,7 +127,7 @@ function RatesPage() {
       <section className="container-tight py-10">
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard icon={<TrendingUp className="size-5" />} label="States that pay interest" value={`${lienStates.length} of 51`} />
-          <StatCard icon={<Percent className="size-5" />} label="Highest ceiling" value="Iowa — 24%" />
+          <StatCard icon={<Percent className="size-5" />} label="Highest ceiling" value="Iowa â€” 24%" />
           <StatCard icon={<Scale className="size-5" />} label="Most common method" value="Bid down at auction" />
         </div>
 
@@ -180,7 +176,7 @@ function RatesPage() {
               the owner repays you with interest, so the rate above is your return ceiling.{" "}
               <span className="font-600">Hybrid</span> states run both a lien sale and a separate
               deed path. <span className="font-600">Deed</span> states sell the property itself and
-              pay no investor interest — your return comes from acquiring the property, not from a
+              pay no investor interest â€” your return comes from acquiring the property, not from a
               statutory rate. In <span className="font-600">bid-down</span> states bidders compete
               by accepting a lower rate at the auction, so the effective yield is usually well below
               the ceiling. Where the mechanism is <span className="font-600">set by county law</span>,
@@ -191,8 +187,8 @@ function RatesPage() {
 
         <div className="mt-4 text-xs text-ink-muted">
           Sources: state statutes cited to official legislative sources (e.g., A.R.S. Title 42,
-          Fla. Stat. Ch. 197, Iowa Code §447.1, 35 ILCS 200/21-215, RSMo §140.340, Ohio Rev. Code Ch.
-          5721, D.C. Code §47-1348) and cross-checked Sep 2026. Rules and rates change — always
+          Fla. Stat. Ch. 197, Iowa Code Â§447.1, 35 ILCS 200/21-215, RSMo Â§140.340, Ohio Rev. Code Ch.
+          5721, D.C. Code Â§47-1348) and cross-checked Sep 2026. Rules and rates change â€” always
           verify with the county treasurer before bidding. Not financial advice.
         </div>
 
@@ -203,7 +199,7 @@ function RatesPage() {
         </div>
 
         <div className="mt-8">
-          <Link to="/" className="text-sm font-500 text-navy underline underline-offset-4">← Back home</Link>
+          <Link to="/" className="text-sm font-500 text-navy underline underline-offset-4">â† Back home</Link>
         </div>
       </section>
     </main>

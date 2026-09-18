@@ -39,7 +39,7 @@ function Payments() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-600 text-navy">{fmt(r.total)}</div>
+                    <div className="font-600 text-navy">{fmt(Number(r.total))}</div>
                     <span
                       className={`inline-flex rounded-full px-2 py-0.5 text-xs font-500 capitalize ${
                         r.status === "paid"
@@ -77,7 +77,7 @@ function Payments() {
                         <td className="px-4 py-2 text-xs">{new Date(r.created_at).toLocaleDateString()}</td>
                         <td className="px-4 py-2 font-mono text-xs">{r.id.slice(0, 8).toUpperCase()}</td>
                         <td className="px-4 py-2 text-xs">{r.description ?? "—"}</td>
-                        <td className="px-4 py-2 font-600">{fmt(r.total)}</td>
+                        <td className="px-4 py-2 font-600">{fmt(Number(r.total))}</td>
                         <td className="px-4 py-2 capitalize">{r.status}</td>
                       </tr>
                     ))}

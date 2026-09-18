@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { scheduledAuctionQuery, type ScheduledPropertyRow } from "@/lib/queries/auctions";
+import { prefetchWithin } from "@/lib/queries/prefetch";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useSession } from "@/hooks/use-session";
 import { PageSkeleton } from "@/components/site/page-skeleton";
@@ -26,7 +27,7 @@ import {
 export const Route = createFileRoute("/")({
   pendingMs: 0,
   pendingComponent: () => <PageSkeleton rows={6} />,
-  loader: ({ context }) => context.queryClient.ensureQueryData(scheduledAuctionQuery),
+  loader: ({ context }) => prefetchWithin(() => context.queryClient.ensureQueryData(scheduledAuctionQuery)),
   head: () => ({
     meta: [
       { title: "Upcoming Tax Lien Auction — Auction Ledger" },
@@ -60,7 +61,8 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { data } = useSuspenseQuery(scheduledAuctionQuery);
+  const { data } = useQuery(scheduledAuctionQuery);
+  if (!data) return <PageSkeleton rows={6} />;
   const auctionDate = data.nextStartsAt ? new Date(data.nextStartsAt) : null;
 
   return (

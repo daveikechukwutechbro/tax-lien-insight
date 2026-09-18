@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Gavel } from "lucide-react";
 import { auctionsListQuery } from "@/lib/queries/discovery";
+import { prefetchWithin } from "@/lib/queries/prefetch";
 import { PageSkeleton } from "@/components/site/page-skeleton";
 
 export const Route = createFileRoute("/auctions")({
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/auctions")({
     ],
     links: [{ rel: "canonical", href: "/auctions" }],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(auctionsListQuery),
+  loader: ({ context }) => prefetchWithin(() => context.queryClient.ensureQueryData(auctionsListQuery)),
   component: AuctionsPage,
   errorComponent: ({ error, reset }) => {
     const router = useRouter();
@@ -32,11 +33,12 @@ export const Route = createFileRoute("/auctions")({
   notFoundComponent: () => <div className="container-tight py-20">Not found.</div>,
 });
 
-const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "TBA");
 const fmt$ = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
 function AuctionsPage() {
-  const { data } = useSuspenseQuery(auctionsListQuery);
+  const { data } = useQuery(auctionsListQuery);
+  if (!data) return <PageSkeleton />;
   const grouped = { live: [] as typeof data, scheduled: [] as typeof data, closed: [] as typeof data };
   for (const a of data) grouped[a.status === "live" ? "live" : a.status === "closed" ? "closed" : "scheduled"].push(a);
 

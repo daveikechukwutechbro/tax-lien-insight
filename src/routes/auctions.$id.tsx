@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useEffect, useState } from "react";
 import { auctionDetailQuery } from "@/lib/queries/discovery";
+import { prefetchWithin } from "@/lib/queries/prefetch";
 import { PageSkeleton } from "@/components/site/page-skeleton";
 import { SmartBackButton } from "@/components/site/smart-back";
 
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/auctions/$id")({
       ],
     };
   },
-  loader: ({ context, params }) => context.queryClient.ensureQueryData(auctionDetailQuery(params.id)),
+  loader: ({ context, params }) => prefetchWithin(() => context.queryClient.ensureQueryData(auctionDetailQuery(params.id))),
   component: AuctionDetailPage,
   errorComponent: ({ error, reset }) => {
     const router = useRouter();
@@ -45,10 +46,11 @@ const fmt$ = (n: number) => n.toLocaleString("en-US", { style: "currency", curre
 
 function AuctionDetailPage() {
   const { id } = Route.useParams();
-  const { data: a } = useSuspenseQuery(auctionDetailQuery(id));
+  const { data: a } = useQuery(auctionDetailQuery(id));
   const hydrated = useHydrated();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  if (a === undefined) return <PageSkeleton rows={4} />;
   if (!a) return <div className="container-tight py-20"><h1 className="font-display text-2xl text-navy">Auction not found.</h1><SmartBackButton to="/auctions" className="mt-4 inline-flex text-sm text-navy underline underline-offset-4" label="← Back to auctions" /></div>;
   const starts = new Date(a.starts_at).getTime();
   const ends = new Date(a.ends_at).getTime();
