@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useEffect, useState } from "react";
 import { auctionDetailQuery } from "@/lib/queries/discovery";
-import { prefetchWithin } from "@/lib/queries/prefetch";
+import { loaderPrefetch } from "@/lib/queries/prefetch";
 import { PageSkeleton } from "@/components/site/page-skeleton";
 import { SmartBackButton } from "@/components/site/smart-back";
 
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/auctions/$id")({
       ],
     };
   },
-  loader: ({ context, params }) => prefetchWithin(() => context.queryClient.ensureQueryData(auctionDetailQuery(params.id))),
+  loader: ({ context, params }) => loaderPrefetch(() => context.queryClient.ensureQueryData(auctionDetailQuery(params.id)))(),
   component: AuctionDetailPage,
   errorComponent: ({ error, reset }) => {
     const router = useRouter();

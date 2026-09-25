@@ -19,6 +19,9 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
+    // Warm route data on hover/focus intent so client-side navigation into a
+    // page is instant (loaders only prefetch on the client, never server-side).
+    defaultPreload: "intent",
 
     // === Resilience ===
     // Never let a route-level error produce a blank screen or the generic

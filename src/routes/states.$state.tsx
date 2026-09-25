@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { stateDetailQuery } from "@/lib/queries/discovery";
-import { prefetchWithin } from "@/lib/queries/prefetch";
+import { loaderPrefetch } from "@/lib/queries/prefetch";
 import { PageSkeleton } from "@/components/site/page-skeleton";
 
 export const Route = createFileRoute("/states/$state")({
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/states/$state")({
       { name: "description", content: `Counties and tax lien auctions in ${params.state}.` },
     ],
   }),
-  loader: ({ context, params }) => prefetchWithin(() => context.queryClient.ensureQueryData(stateDetailQuery(params.state))),
+  loader: ({ context, params }) => loaderPrefetch(() => context.queryClient.ensureQueryData(stateDetailQuery(params.state)))(),
   component: StateDetailPage,
   errorComponent: ({ error, reset }) => {
     const router = useRouter();

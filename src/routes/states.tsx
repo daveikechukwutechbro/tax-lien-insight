@@ -2,7 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import { statesListQuery } from "@/lib/queries/discovery";
-import { prefetchWithin } from "@/lib/queries/prefetch";
+import { loaderPrefetch } from "@/lib/queries/prefetch";
 import { PageSkeleton } from "@/components/site/page-skeleton";
 
 export const Route = createFileRoute("/states")({
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/states")({
     ],
     links: [{ rel: "canonical", href: "/states" }],
   }),
-  loader: ({ context }) => prefetchWithin(() => context.queryClient.ensureQueryData(statesListQuery)),
+  loader: ({ context }) => loaderPrefetch(() => context.queryClient.ensureQueryData(statesListQuery))(),
   component: StatesPage,
   errorComponent: ({ error, reset }) => {
     const router = useRouter();

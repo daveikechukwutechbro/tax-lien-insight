@@ -2,7 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Gavel } from "lucide-react";
 import { auctionsListQuery } from "@/lib/queries/discovery";
-import { prefetchWithin } from "@/lib/queries/prefetch";
+import { loaderPrefetch } from "@/lib/queries/prefetch";
 import { PageSkeleton } from "@/components/site/page-skeleton";
 
 export const Route = createFileRoute("/auctions")({
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/auctions")({
     ],
     links: [{ rel: "canonical", href: "/auctions" }],
   }),
-  loader: ({ context }) => prefetchWithin(() => context.queryClient.ensureQueryData(auctionsListQuery)),
+  loader: ({ context }) => loaderPrefetch(() => context.queryClient.ensureQueryData(auctionsListQuery))(),
   component: AuctionsPage,
   errorComponent: ({ error, reset }) => {
     const router = useRouter();

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { scheduledAuctionQuery, type ScheduledPropertyRow } from "@/lib/queries/auctions";
-import { prefetchWithin } from "@/lib/queries/prefetch";
+import { loaderPrefetch } from "@/lib/queries/prefetch";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useSession } from "@/hooks/use-session";
 import { PageSkeleton } from "@/components/site/page-skeleton";
@@ -27,7 +27,7 @@ import {
 export const Route = createFileRoute("/")({
   pendingMs: 0,
   pendingComponent: () => <PageSkeleton rows={6} />,
-  loader: ({ context }) => prefetchWithin(() => context.queryClient.ensureQueryData(scheduledAuctionQuery)),
+  loader: ({ context }) => loaderPrefetch(() => context.queryClient.ensureQueryData(scheduledAuctionQuery))(),
   head: () => ({
     meta: [
       { title: "Upcoming Tax Lien Auction — Auction Ledger" },
