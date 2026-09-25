@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getAuctions, getAuctionLots, type AuctionApi, type AuctionLot } from "@/lib/backend";
+import { readLocal, writeLocal } from "@/lib/local-cache";
 
 export type ScheduledPropertyRow = {
   lien_id: string;
@@ -109,8 +110,15 @@ async function fetchNextAuctionSummary(): Promise<AuctionSummary> {
   };
 }
 
+const HOME_CACHE_KEY = "home.scheduled";
+
 export const scheduledAuctionQuery = queryOptions({
   queryKey: ["auctions", "next-scheduled"],
-  queryFn: fetchNextAuctionSummary,
+  placeholderData: (): AuctionSummary | undefined => readLocal<AuctionSummary>(HOME_CACHE_KEY),
+  queryFn: async (): Promise<AuctionSummary> => {
+    const data = await fetchNextAuctionSummary();
+    writeLocal(HOME_CACHE_KEY, data);
+    return data;
+  },
   staleTime: 30_000,
 });

@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/firebase/client";
 import { getAuctions, getAuctionDetail, type AuctionApi } from "@/lib/backend";
+import { readLocal, writeLocal } from "@/lib/local-cache";
 
 export type AuctionListRow = AuctionApi & {
   status: string;
@@ -11,7 +12,12 @@ export const auctionsListQuery = queryOptions({
   queryKey: ["auctions", "list"],
   // Never reject: a transient upstream blip should degrade to an empty list,
   // not crash the page during SSR.
-  queryFn: async (): Promise<AuctionListRow[]> => getAuctions().catch(() => []),
+  placeholderData: (): AuctionListRow[] | undefined => readLocal<AuctionListRow[]>("auctions.list"),
+  queryFn: async (): Promise<AuctionListRow[]> => {
+    const data = await getAuctions().catch(() => []);
+    writeLocal("auctions.list", data);
+    return data;
+  },
   staleTime: 30_000,
   retry: 2,
   retryDelay: 500,
@@ -45,12 +51,14 @@ export type AuctionDetail = {
 };
 
 export function auctionDetailQuery(id: string) {
+  const key = `auction.${id}`;
   return queryOptions({
     queryKey: ["auctions", "detail", id],
+    placeholderData: (): AuctionDetail | null | undefined => readLocal<AuctionDetail>(key) ?? null,
     queryFn: async (): Promise<AuctionDetail | null> => {
       try {
         const { auction, lots } = await getAuctionDetail(id);
-        return {
+        const detail = {
           id: auction.id,
           title: auction.title,
           starts_at: auction.starts_at ?? "",
@@ -77,7 +85,9 @@ export function auctionDetailQuery(id: string) {
                 image_url: null,
               },
             })),
-        };
+        } satisfies AuctionDetail;
+        writeLocal(key, detail);
+        return detail;
       } catch {
         return null;
       }
@@ -94,34 +104,41 @@ export type StateSummary = {
 
 export const statesListQuery = queryOptions({
   queryKey: ["states", "list"],
+  placeholderData: (): StateSummary[] | undefined => readLocal<StateSummary[]>("states.list"),
   queryFn: async (): Promise<StateSummary[]> => {
-    try {
-      const { data: counties, error } = await supabase
-        .from("counties")
-        .select("id, state, properties(id), auctions(id, status)");
-      if (error) throw error;
-      const map = new Map<string, StateSummary>();
-      for (const c of counties ?? []) {
-        const s = map.get(c.state) ?? {
-          state: c.state,
-          county_count: 0,
-          property_count: 0,
-          upcoming_auctions: 0,
-        };
-        s.county_count += 1;
-        s.property_count += ((c.properties ?? []) as unknown[]).length;
-        s.upcoming_auctions += ((c.auctions ?? []) as { status: string }[]).filter(
-          (a) => a.status === "scheduled" || a.status === "live",
-        ).length;
-        map.set(c.state, s);
-      }
-      return Array.from(map.values()).sort((a, b) => a.state.localeCompare(b.state));
-    } catch {
-      return [];
-    }
+    const data = await fetchStateSummaries();
+    writeLocal("states.list", data);
+    return data;
   },
   staleTime: 60_000,
 });
+
+async function fetchStateSummaries(): Promise<StateSummary[]> {
+  try {
+    const { data: counties, error } = await supabase
+      .from("counties")
+      .select("id, state, properties(id), auctions(id, status)");
+    if (error) throw error;
+    const map = new Map<string, StateSummary>();
+    for (const c of counties ?? []) {
+      const s = map.get(c.state) ?? {
+        state: c.state,
+        county_count: 0,
+        property_count: 0,
+        upcoming_auctions: 0,
+      };
+      s.county_count += 1;
+      s.property_count += ((c.properties ?? []) as unknown[]).length;
+      s.upcoming_auctions += ((c.auctions ?? []) as { status: string }[]).filter(
+        (a) => a.status === "scheduled" || a.status === "live",
+      ).length;
+      map.set(c.state, s);
+    }
+    return Array.from(map.values()).sort((a, b) => a.state.localeCompare(b.state));
+  } catch {
+    return [];
+  }
+}
 
 export type StateDetail = {
   state: string;
@@ -134,8 +151,10 @@ export type StateDetail = {
 };
 
 export function stateDetailQuery(state: string) {
+  const key = `state.${state}`;
   return queryOptions({
     queryKey: ["states", "detail", state],
+    placeholderData: (): StateDetail | null | undefined => readLocal<StateDetail>(key) ?? null,
     queryFn: async (): Promise<StateDetail | null> => {
       try {
         const { data, error } = await supabase
@@ -145,7 +164,7 @@ export function stateDetailQuery(state: string) {
           .order("name");
         if (error) throw error;
         if (!data || data.length === 0) return null;
-        return {
+        const detail: StateDetail = {
           state,
           counties: data.map((c) => {
             const auctions = ((c.auctions ?? []) as { id: string; starts_at: string; status: string }[])
@@ -159,6 +178,8 @@ export function stateDetailQuery(state: string) {
             };
           }),
         };
+        writeLocal(key, detail);
+        return detail;
       } catch {
         return null;
       }

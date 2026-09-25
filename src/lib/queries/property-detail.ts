@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getAuction, getAuctions, getAuctionDetail, getLot, getProperty, type AuctionApi } from "@/lib/backend";
+import { readLocal, writeLocal } from "@/lib/local-cache";
 
 export type PropertyDetail = {
   id: string;
@@ -80,8 +81,10 @@ export function propertyDetailQuery(
   propertyId: string,
   opts?: { lotId?: string; auctionId?: string },
 ) {
+  const cacheKey = `property.${propertyId}`;
   return queryOptions({
     queryKey: ["property", propertyId, opts?.lotId ?? "", opts?.auctionId ?? ""],
+    placeholderData: (): PropertyDetail | null | undefined => readLocal<PropertyDetail>(cacheKey) ?? null,
     queryFn: async (): Promise<PropertyDetail | null> => {
       let p: Awaited<ReturnType<typeof getProperty>> | null = null;
       try {
@@ -89,9 +92,11 @@ export function propertyDetailQuery(
       } catch {
         p = null;
       }
-      if (p) return buildDetail(p, propertyId, opts);
-      if (opts?.lotId) return buildDetailFromLot(propertyId, opts.lotId, opts.auctionId);
-      return null;
+      const detail = p ? await buildDetail(p, propertyId, opts) : opts?.lotId
+        ? await buildDetailFromLot(propertyId, opts.lotId, opts.auctionId)
+        : null;
+      if (detail) writeLocal(cacheKey, detail);
+      return detail;
     },
   });
 }
