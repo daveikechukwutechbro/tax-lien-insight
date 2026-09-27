@@ -18,6 +18,42 @@ function fnv1a(str: string): number {
 
 const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
+/** Deterministic PRNG so each certificate gets a stable, distinct wax blob. */
+function mulberry32(seed: number): () => number {
+  let s = seed | 0;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Organic, slightly lopsided wax-seal outline (hand-stamped, not perfect). */
+function sealBlobPath(seed: number, spikes = 22, base = 59, amp = 3.2): string {
+  const rand = mulberry32(seed);
+  const pts: { x: number; y: number }[] = [];
+  for (let i = 0; i < spikes; i++) {
+    const theta = (i / spikes) * Math.PI * 2;
+    const wobble = (rand() * 2 - 1) * amp;
+    const r = base + wobble + Math.sin(i * 3.7) * 1.4;
+    pts.push({ x: 60 + Math.cos(theta) * r, y: 60 + Math.sin(theta) * r });
+  }
+  const mids: { x: number; y: number }[] = [];
+  for (let i = 0; i < spikes; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % spikes];
+    mids.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  }
+  let d = `M ${mids[0].x.toFixed(2)} ${mids[0].y.toFixed(2)}`;
+  for (let i = 1; i <= spikes; i++) {
+    const p = pts[i % spikes];
+    const m = mids[i % spikes];
+    d += ` Q ${p.x.toFixed(2)} ${p.y.toFixed(2)} ${m.x.toFixed(2)} ${m.y.toFixed(2)}`;
+  }
+  return `${d} Z`;
+}
+
 export function makeCertificateId(bidId: string, placedAt: string): string {
   const year = new Date(placedAt).getFullYear() || new Date().getFullYear();
   const hash = fnv1a(`${bidId}:${placedAt}`);
@@ -82,6 +118,7 @@ export function buildCertificateHtml(args: {
   const p = bid.lien.property;
   const parcel = p.parcel_id || bid.parcel_id || null;
   const taxYear = bid.tax_year ?? null;
+  const blob = sealBlobPath(fnv1a(`${certificateId}:blob`));
 
   return `<!doctype html>
 <html lang="en">
@@ -107,8 +144,8 @@ export function buildCertificateHtml(args: {
   .table { width: 100%; border-collapse: collapse; margin-top: 14px; }
   .table th, .table td { border: 1px solid #cfd6e2; padding: 8px 10px; text-align: left; font-size: 12.5px; }
   .table th { background: #f2f4f8; letter-spacing: 0.06em; text-transform: uppercase; font-size: 10px; color: #44506b; width: 34%; }
-  .foot { margin-top: 22px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
-  .seal { width: 84px; height: 84px; transform: rotate(-7deg); opacity: 0.97; margin: 0 4px -14px; }
+  .foot { margin-top: 22px; position: relative; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+  .seal { position: absolute; left: 50%; bottom: -10px; width: 84px; height: 84px; transform: translateX(-50%) rotate(-6deg); opacity: 0.98; z-index: 1; }
   .seal svg { width: 100%; height: 100%; display: block; }
   .sig { font-size: 11px; color: #44506b; text-align: center; }
   .sigline { margin-top: 26px; border-top: 1px solid #16233c; padding-top: 4px; width: 150px; }
@@ -153,7 +190,7 @@ export function buildCertificateHtml(args: {
   <div class="foot">
     <div class="sig"><div class="sigline">AuctionLedger</div></div>
     <div class="seal" aria-hidden="true">
-      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="-6 -6 132 132" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="waxFace" cx="50%" cy="35%" r="80%">
             <stop offset="0%" stop-color="#d55850" />
@@ -166,9 +203,9 @@ export function buildCertificateHtml(args: {
             <stop offset="100%" stop-color="#b7942a" />
           </linearGradient>
         </defs>
-        <circle cx="60" cy="60" r="59" fill="url(#waxFace)" />
-        <circle cx="60" cy="60" r="57.5" fill="none" stroke="url(#waxGold)" stroke-width="3" />
-        <circle cx="60" cy="60" r="53" fill="none" stroke="url(#waxGold)" stroke-width="1" opacity="0.8" />
+        <path d="${blob}" fill="url(#waxFace)" />
+        <path d="${blob}" fill="none" stroke="url(#waxGold)" stroke-width="3" />
+        <circle cx="60" cy="60" r="52" fill="none" stroke="url(#waxGold)" stroke-width="1.2" opacity="0.8" />
         <path id="sealTop" d="M 21 60 A 39 39 0 0 1 99 60" fill="none" />
         <path id="sealBottom" d="M 21 60 A 39 39 0 1 0 99 60" fill="none" />
         <text font-family="Georgia, 'Times New Roman', serif" font-size="10" letter-spacing="2.6" fill="#f4d78a">
