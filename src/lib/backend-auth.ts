@@ -72,13 +72,68 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function getMe(): Promise<BackendUser | null> {
   try {
-    return await request<BackendUser>("/api/v1/me");
+    const me = await request<BackendUser>("/api/v1/me");
+    knownAuthenticated = true;
+    persistUser(me);
+    return me;
   } catch (err) {
     if (err instanceof AuthError && (err.status === 401 || err.status === 403)) {
       knownAuthenticated = false;
+      clearCachedUser();
       return null;
     }
     throw err;
+  }
+}
+
+// Session-user cache. The header renders from this instantly (no waiting on
+// the slow Worker round-trip), and only a real 401 from the backend clears it
+// — a transient timeout must never flash "Log in / Create Account" at a signed
+// in user.
+export const USER_CACHE_KEY = "al.session-user-v1";
+
+function persistUser(u: BackendUser): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(USER_CACHE_KEY, JSON.stringify({ u, t: Date.now() }));
+  } catch {
+    // private mode / quota — the in-memory return value still wins
+  }
+}
+
+function clearCachedUser(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(USER_CACHE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/** Persisted user, or null when none is stored. Hard-expired after 30 days. */
+export function readCachedUser(): BackendUser | null {
+  const entry = readCachedUserEntry();
+  return entry ? entry.u : null;
+}
+
+/** Age of the persisted user in ms, or null when nothing is stored. */
+export function cachedUserAgeMs(): number | null {
+  const entry = readCachedUserEntry();
+  return entry ? entry.ageMs : null;
+}
+
+function readCachedUserEntry(): { u: BackendUser; ageMs: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(USER_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { u?: BackendUser; t?: number };
+    if (!parsed?.u) return null;
+    const ageMs = Date.now() - (parsed.t ?? 0);
+    if (ageMs > 30 * 24 * 60 * 60_000) return null;
+    return { u: parsed.u, ageMs };
+  } catch {
+    return null;
   }
 }
 
@@ -100,6 +155,7 @@ export async function login(input: { email: string; password: string }): Promise
 
 export async function logout(): Promise<void> {
   knownAuthenticated = false;
+  clearCachedUser();
   await request<{ success: boolean }>("/api/v1/auth/logout", { method: "POST" }).catch(() => undefined);
 }
 
