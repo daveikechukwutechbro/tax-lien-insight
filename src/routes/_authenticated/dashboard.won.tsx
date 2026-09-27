@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Download } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { myBidsQuery } from "@/lib/queries/dashboard";
+import { myBidsQuery, profileQuery } from "@/lib/queries/dashboard";
+import { printLienCertificate } from "@/lib/lien-certificate";
 
 export const Route = createFileRoute("/_authenticated/dashboard/won")({
   component: WonPage,
@@ -11,9 +13,17 @@ const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", curren
 function WonPage() {
   const { user } = useSession();
   const { data: bids = [] } = useQuery(myBidsQuery(user?.id));
+  const { data: profile } = useQuery(profileQuery(user?.id));
   const won = bids.filter((b) => b.status === "won");
   const total = won.reduce((s, b) => s + b.lien.taxes_owed, 0);
   const avgRate = won.length ? won.reduce((s, b) => s + b.interest_rate, 0) / won.length : 0;
+
+  const issueCertificate = (b: (typeof won)[number]) =>
+    printLienCertificate({
+      bid: b,
+      holderName: profile?.full_name ?? user?.email?.split("@")[0] ?? "Auction Ledger",
+      holderEmail: user?.email ?? "",
+    });
 
   return (
     <div>
@@ -39,7 +49,17 @@ function WonPage() {
                 </div>
                 <div className="text-sm"><div className="text-xs text-ink-muted">Winning Bid</div><div className="font-600">{fmt(b.lien.taxes_owed)}</div></div>
                 <div className="text-sm"><div className="text-xs text-ink-muted">Interest Rate</div><div className="font-600">{b.interest_rate.toFixed(2)}%</div></div>
-                <span className="rounded bg-success-soft px-2 py-0.5 text-xs font-500 text-success">Active</span>
+                <div className="flex flex-col items-end gap-2">
+                  <span className="rounded bg-success-soft px-2 py-0.5 text-xs font-500 text-success">Active</span>
+                  <button
+                    type="button"
+                    onClick={() => issueCertificate(b)}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 py-1 text-xs font-500 text-navy transition-colors hover:bg-surface-alt"
+                  >
+                    <Download className="size-3.5" strokeWidth={1.75} />
+                    Certificate
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
