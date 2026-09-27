@@ -96,7 +96,7 @@ export function buildCertificateHtml(args: {
   .rule { border-bottom: 1px solid #c8a23a; margin: 10px 0 14px; }
   .topline { display: flex; justify-content: space-between; align-items: center; }
   .corner { position: relative; padding-right: 6px; }
-  .seal { position: absolute; top: -24px; right: -34px; width: 96px; height: 96px; transform: rotate(-8deg); opacity: 0.92; z-index: 1; }
+  .seal { position: absolute; top: -22px; right: -32px; width: 104px; height: 104px; transform: rotate(-7deg); opacity: 1; z-index: 1; }
   .seal svg { width: 100%; height: 100%; display: block; }
   .brand { display: flex; align-items: center; gap: 10px; }
   .brand-mark { display: grid; place-items: center; width: 30px; height: 30px; background: #16233c; color: #c8a23a; font-weight: 700; font-size: 15px; border-radius: 5px; }
@@ -129,17 +129,33 @@ export function buildCertificateHtml(args: {
     <div class="corner">
       <div class="seal" aria-hidden="true">
         <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="60" cy="60" r="59" fill="#f7efd8" />
-          <circle cx="60" cy="60" r="58" fill="none" stroke="#c8a23a" stroke-width="2" stroke-dasharray="3 2" />
-          <circle cx="60" cy="60" r="52" fill="none" stroke="#c8a23a" stroke-width="3" />
-          <circle cx="60" cy="60" r="34" fill="none" stroke="#c8a23a" stroke-width="1.5" />
-          <circle cx="60" cy="60" r="52" fill="none" stroke="none" id="sealArc" />
-          <path id="sealPath" d="M 60 8 a 52 52 0 0 1 0 104" fill="none" />
-          <text font-size="9.5" letter-spacing="2.5" fill="#16233c">
-            <textPath href="#sealPath" startOffset="30%">AUCTIONLEDGER • TAX LIEN AUCTIONS •</textPath>
+          <defs>
+            <linearGradient id="sealGold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#e0bd55" />
+              <stop offset="55%" stop-color="#c8a23a" />
+              <stop offset="100%" stop-color="#9c7a1e" />
+            </linearGradient>
+            <radialGradient id="sealPaper" cx="50%" cy="42%" r="65%">
+              <stop offset="0%" stop-color="#fdf8ea" />
+              <stop offset="100%" stop-color="#f3e7c8" />
+            </radialGradient>
+          </defs>
+          <circle cx="60" cy="60" r="59" fill="url(#sealPaper)" />
+          <circle cx="60" cy="60" r="57.5" fill="none" stroke="url(#sealGold)" stroke-width="3" />
+          <circle cx="60" cy="60" r="53" fill="none" stroke="url(#sealGold)" stroke-width="1" opacity="0.75" />
+          <path id="sealTop" d="M 21 60 A 39 39 0 0 1 99 60" fill="none" />
+          <path id="sealBottom" d="M 21 60 A 39 39 0 1 0 99 60" fill="none" />
+          <text font-family="Georgia, 'Times New Roman', serif" font-size="9.5" letter-spacing="2.6" fill="#16233c">
+            <textPath href="#sealTop" startOffset="50%" text-anchor="middle">AUCTIONLEDGER</textPath>
           </text>
-          <text x="60" y="63" text-anchor="middle" font-size="14" font-weight="700" letter-spacing="0.5" fill="#16233c">AuctionLedger</text>
-          <text x="60" y="79" text-anchor="middle" font-size="7.5" letter-spacing="1.5" fill="#c8a23a">CERTIFICATE</text>
+          <text font-family="Georgia, 'Times New Roman', serif" font-size="7.6" letter-spacing="1.7" fill="#16233c">
+            <textPath href="#sealBottom" startOffset="50%" text-anchor="middle">TAX LIEN AUCTIONS</textPath>
+          </text>
+          <circle cx="21" cy="60" r="1.7" fill="url(#sealGold)" />
+          <circle cx="99" cy="60" r="1.7" fill="url(#sealGold)" />
+          <rect x="43" y="43" width="34" height="34" rx="7" fill="#16233c" />
+          <rect x="43" y="43" width="34" height="34" rx="7" fill="none" stroke="url(#sealGold)" stroke-width="1.2" />
+          <text x="60" y="67" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="19" font-weight="700" fill="#e0bd55">AL</text>
         </svg>
       </div>
       <div class="certno"><strong>Certificate No. ${certificateId}</strong>Issued: ${issueDate}</div>
