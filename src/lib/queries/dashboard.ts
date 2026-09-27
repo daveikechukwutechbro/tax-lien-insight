@@ -20,6 +20,10 @@ export type DashboardBid = {
   interest_rate: number;
   status: string;
   placed_at: string;
+  parcel_id?: string | null;
+  legal_description?: string | null;
+  tax_year?: number | null;
+  redemption_period_months?: number | null;
   lien: {
     id: string;
     taxes_owed: number;
@@ -44,6 +48,10 @@ function mapBid(b: UserBid): DashboardBid {
     interest_rate: b.rate,
     status: b.status,
     placed_at: b.placed_at,
+    parcel_id: b.parcel_id ?? null,
+    legal_description: b.legal_description ?? null,
+    tax_year: b.tax_year ?? null,
+    redemption_period_months: b.redemption_period_months ?? null,
     lien: {
       id: b.lienId ?? b.bid_id,
       taxes_owed: (b.amount || 0) / 100,

@@ -256,7 +256,9 @@ export async function listBidsForLot(lotId: string) {
 export async function getUserBids(userId: string, page = 1, pageSize = 20) {
   const { rows } = await getPool().query(
     `SELECT b.id, b.lot_id, b.auction_id, b.status, b.rate, b.amount, b.created_at,
-            p.id AS property_id, p.address, p.city, p.state, p.postal_code
+            p.id AS property_id, p.address, p.city, p.state, p.postal_code,
+            al.tax_year, al.redemption_period_months,
+            p.parcel_id, p.legal_description
      FROM bids b
      LEFT JOIN auction_lots al ON al.id = b.lot_id
      LEFT JOIN properties p ON p.id = al.property_id

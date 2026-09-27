@@ -35,6 +35,10 @@ export interface CertificateBid {
   placed_at: string;
   interest_rate: number;
   auction_title?: string | null;
+  parcel_id?: string | null;
+  legal_description?: string | null;
+  tax_year?: number | null;
+  redemption_period_months?: number | null;
   lien: {
     id: string;
     taxes_owed: number;
@@ -49,6 +53,20 @@ export interface CertificateBid {
   };
 }
 
+function addMonths(date: Date, months: number): Date {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function weekdayLong(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export function buildCertificateHtml(args: {
   bid: CertificateBid;
   holderName: string;
@@ -56,17 +74,14 @@ export function buildCertificateHtml(args: {
 }): string {
   const { bid, holderName, holderEmail } = args;
   const certificateId = makeCertificateId(bid.bid_id, bid.placed_at);
-  const issueDate = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  const auctionDate = new Date(bid.placed_at).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const issueDate = weekdayLong(new Date());
+  const auctionDate = weekdayLong(new Date(bid.placed_at));
+  const redeemsBy = bid.redemption_period_months
+    ? weekdayLong(addMonths(new Date(bid.placed_at), bid.redemption_period_months))
+    : null;
   const p = bid.lien.property;
+  const parcel = p.parcel_id || bid.parcel_id || null;
+  const taxYear = bid.tax_year ?? null;
 
   return `<!doctype html>
 <html lang="en">
@@ -115,18 +130,23 @@ export function buildCertificateHtml(args: {
   <div class="sub">Tax Lien Sold at Public Auction</div>
   <div class="body">
     This certifies that <strong>${holderName || holderEmail}</strong> is the holder of the tax lien sold at
-    auction through AuctionLedger for the property described below. The holder is entitled to the principal
-    amount shown, together with interest accrued at the stated rate until redemption, in accordance with
+    auction through AuctionLedger for the property described below. The holder is entitled to the certificate
+    (face) amount shown, together with interest accrued at the stated rate until redemption, in accordance with
     the applicable state's statutory requirements.
   </div>
   <table class="table">
+    <tr><th>County / Jurisdiction</th><td>${p.city}, ${p.state}</td></tr>
     <tr><th>Property Address</th><td>${p.address}, ${p.city}, ${p.state} ${p.zip}</td></tr>
-    <tr><th>Parcel / Property ID</th><td>${p.parcel_id || p.id || "—"}</td></tr>
+    <tr><th>Parcel / Account No.</th><td>${parcel || "—"}</td></tr>
+    <tr><th>Legal Description</th><td>${bid.legal_description || "—"}</td></tr>
+    <tr><th>Tax Year(s)</th><td>${taxYear ?? "—"}</td></tr>
+    <tr><th>Certificate / Serial No.</th><td>${certificateId}</td></tr>
     <tr><th>Lien / Bid ID</th><td>${bid.lien.id || bid.bid_id}</td></tr>
-    <tr><th>Principal Amount (Winning Bid)</th><td>${fmt(bid.lien.taxes_owed)}</td></tr>
+    <tr><th>Certificate / Face Amount (Winning Bid)</th><td>${fmt(bid.lien.taxes_owed)}</td></tr>
     <tr><th>Annual Interest Rate</th><td>${(bid.interest_rate ?? 0).toFixed(2)}%</td></tr>
     <tr><th>Auction Name</th><td>${bid.auction_title || "AuctionLedger Tax Sale"}</td></tr>
-    <tr><th>Auction Closing Date</th><td>${auctionDate}</td></tr>
+    <tr><th>Date of Certificate Sale</th><td>${auctionDate}</td></tr>
+    ${redeemsBy ? `<tr><th>Redemption Deadline</th><td>${redeemsBy}</td></tr>` : ""}
   </table>
   <div class="foot">
     <div class="sig"><div class="sigline">AuctionLedger</div></div>

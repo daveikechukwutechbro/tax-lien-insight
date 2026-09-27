@@ -64,6 +64,10 @@ export type UserBid = {
   rate: number;
   amount: number;
   placed_at: string;
+  parcel_id?: string | null;
+  legal_description?: string | null;
+  tax_year?: number | null;
+  redemption_period_months?: number | null;
   property: {
     id?: string;
     address?: string;
@@ -82,6 +86,10 @@ export async function getMyBids(): Promise<UserBid[]> {
     rate: Number(b.rate) || 0,
     amount: Number(b.amount) || 0,
     placed_at: b.created_at,
+    parcel_id: b.parcel_id ?? null,
+    legal_description: b.legal_description ?? null,
+    tax_year: b.tax_year ?? null,
+    redemption_period_months: b.redemption_period_months ?? null,
     property:
       b.address != null
         ? {
@@ -108,6 +116,10 @@ type RawBid = {
   city?: string | null;
   state?: string | null;
   postal_code?: string | null;
+  parcel_id?: string | null;
+  legal_description?: string | null;
+  tax_year?: number | null;
+  redemption_period_months?: number | null;
 };
 
 export type WatchedProperty = {
