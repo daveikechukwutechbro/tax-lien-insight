@@ -148,7 +148,7 @@ export function buildCertificateHtml(args: {
   .seal { position: absolute; left: 50%; bottom: -13px; width: 92px; height: 92px; transform: translateX(-50%) rotate(-5deg); z-index: 1; }
   .seal svg { width: 100%; height: 100%; display: block; }
   .sig { font-size: 11px; color: #44506b; text-align: center; }
-  .sig-signature { width: 178px; }
+  .sig-signature { width: 214px; }
   .sig-signature svg { width: 100%; height: auto; display: block; }
   .sig-cap { margin-top: 6px; font-size: 9px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #44506b; }
   .legal { margin-top: 18px; font-size: 8.5px; color: #7a8296; line-height: 1.5; text-align: center; }
@@ -191,11 +191,70 @@ export function buildCertificateHtml(args: {
   </table>
   <div class="foot">
     <div class="sig sig-signature">
-      <svg viewBox="0 0 240 58" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 10 30 C 15 16, 23 11, 31 22" fill="none" stroke="#16233c" stroke-width="2" stroke-linecap="round" />
-        <text x="36" y="41" font-family="'Brush Script MT', 'Segoe Script', 'Lucida Handwriting', cursive" font-size="23" fill="#16233c">AuctionLedger</text>
-        <path d="M 200 27 C 216 20, 227 27, 228 40 C 229 48, 219 53, 211 46" fill="none" stroke="#16233c" stroke-width="2" stroke-linecap="round" />
-        <path d="M 30 53 C 62 47, 94 55, 132 50 C 162 46, 188 50, 206 48 L 226 52" fill="none" stroke="#16233c" stroke-width="1.4" stroke-linecap="round" />
+      <svg viewBox="0 0 320 70" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 4 44
+          C 8 32 9 20 10 15
+          C 7 10 4 13 6 17
+          C 8 24 11 33 11 40
+          C 12 28 14 20 17 17
+          C 20 25 21 33 21 40
+          C 22 43 24 41 24 39
+          C 26 30 30 28 31 31
+          C 32 27 36 27 36 31
+          C 36 35 36 38 36 40
+          C 37 37 38 37 39 38
+          C 41 32 44 30 46 31
+          C 47 34 46 37 44 39
+          C 47 40 49 39 49 37
+          C 50 33 51 31 52 30
+          C 53 28 54 29 54 30
+          C 54 34 55 36 55 38
+          C 56 36 57 36 57 37
+          C 58 33 59 30 60 30
+          C 60 34 61 37 61 40
+          C 62 37 63 37 64 38
+          C 65 33 66 29 68 29
+          C 71 28 73 31 72 34
+          C 71 37 69 38 68 37
+          C 69 33 70 33 71 34
+          C 71 36 73 36 74 37
+          C 76 29 79 28 80 31
+          C 81 28 83 28 84 31
+          C 85 35 86 38 86 40
+          C 87 37 88 37 89 38
+          C 90 28 91 18 92 14
+          C 95 11 98 14 96 18
+          C 94 28 93 36 93 41
+          C 99 45 106 44 108 41
+          C 110 39 112 40 111 37
+          C 113 32 115 29 117 30
+          C 120 29 121 32 120 34
+          C 119 37 117 38 117 39
+          C 118 39 119 38 119 40
+          C 121 31 123 20 124 13
+          C 126 11 127 14 125 17
+          C 123 27 123 34 124 39
+          C 125 36 127 36 128 37
+          C 129 31 131 28 133 29
+          C 135 28 136 31 135 34
+          C 134 40 135 48 136 56
+          C 137 60 139 60 139 56
+          C 139 49 139 44 138 40
+          C 140 39 141 39 142 40
+          C 144 34 146 31 148 32
+          C 150 31 151 34 150 36
+          C 149 38 147 39 147 40
+          C 148 39 149 39 150 40
+          C 154 33 156 30 158 30
+          C 159 29 160 30 159 32
+          C 158 35 157 36 157 38
+          C 159 39 161 38 162 40
+          C 163 36 165 32 168 33
+          C 170 34 169 38 167 40
+          C 165 42 163 41 161 40
+          C 158 38 156 36 155 34" fill="none" stroke="#16233c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="59.5" cy="25" r="1.5" fill="#16233c" />
+        <path d="M 12 58 L 300 58" fill="none" stroke="#16233c" stroke-width="1.2" opacity="0.8" />
       </svg>
       <div class="sig-cap">AuctionLedger</div>
     </div>
