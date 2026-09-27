@@ -192,12 +192,9 @@ export function buildCertificateHtml(args: {
   <div class="foot">
     <div class="sig sig-signature">
       <svg viewBox="0 0 200 76" xmlns="http://www.w3.org/2000/svg">
-        <g fill="none" stroke="#16233c" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M 42 60 C 45 36 46 22 49 16 C 53 9 62 11 61 18 C 70 32 78 46 83 59" stroke-width="3" />
-          <path d="M 50 40 C 66 36 78 38 88 40" stroke-width="2" />
-          <path d="M 90 62 C 88 46 86 30 85 24 C 85 15 93 11 96 18 C 94 34 95 48 95 62 C 112 58 130 60 148 62" stroke-width="3" />
-        </g>
-        <path d="M 24 71 L 176 71" fill="none" stroke="#16233c" stroke-width="1.2" opacity="0.8" />
+        <text x="100" y="54" text-anchor="middle" font-family="'Brush Script MT', 'Segoe Script', 'Lucida Handwriting', cursive" font-size="48" fill="#455166" opacity="0.9">A</text>
+        <text x="100" y="54" text-anchor="middle" font-family="'Brush Script MT', 'Segoe Script', 'Lucida Handwriting', cursive" font-size="48" fill="#16233c">L</text>
+        <path d="M 24 63 L 176 63" fill="none" stroke="#16233c" stroke-width="1.2" opacity="0.8" />
       </svg>
       <div class="sig-cap">AuctionLedger</div>
     </div>
