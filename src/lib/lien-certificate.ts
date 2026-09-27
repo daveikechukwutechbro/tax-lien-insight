@@ -148,7 +148,9 @@ export function buildCertificateHtml(args: {
   .seal { position: absolute; left: 50%; bottom: -13px; width: 92px; height: 92px; transform: translateX(-50%) rotate(-5deg); z-index: 1; }
   .seal svg { width: 100%; height: 100%; display: block; }
   .sig { font-size: 11px; color: #44506b; text-align: center; }
-  .sigline { margin-top: 26px; border-top: 1px solid #16233c; padding-top: 4px; width: 150px; }
+  .sig-signature { width: 178px; }
+  .sig-signature svg { width: 100%; height: auto; display: block; }
+  .sig-cap { margin-top: 6px; font-size: 9px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #44506b; }
   .legal { margin-top: 18px; font-size: 8.5px; color: #7a8296; line-height: 1.5; text-align: center; }
 </style>
 </head>
@@ -188,7 +190,15 @@ export function buildCertificateHtml(args: {
     ${redeemsBy ? `<tr><th>Redemption Deadline</th><td>${redeemsBy}</td></tr>` : ""}
   </table>
   <div class="foot">
-    <div class="sig"><div class="sigline">AuctionLedger</div></div>
+    <div class="sig sig-signature">
+      <svg viewBox="0 0 240 58" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 10 30 C 15 16, 23 11, 31 22" fill="none" stroke="#16233c" stroke-width="2" stroke-linecap="round" />
+        <text x="36" y="41" font-family="'Brush Script MT', 'Segoe Script', 'Lucida Handwriting', cursive" font-size="23" fill="#16233c">AuctionLedger</text>
+        <path d="M 200 27 C 216 20, 227 27, 228 40 C 229 48, 219 53, 211 46" fill="none" stroke="#16233c" stroke-width="2" stroke-linecap="round" />
+        <path d="M 30 53 C 62 47, 94 55, 132 50 C 162 46, 188 50, 206 48 L 226 52" fill="none" stroke="#16233c" stroke-width="1.4" stroke-linecap="round" />
+      </svg>
+      <div class="sig-cap">AuctionLedger</div>
+    </div>
     <div class="seal" aria-hidden="true">
       <svg viewBox="-8 -8 136 136" xmlns="http://www.w3.org/2000/svg">
         <defs>
