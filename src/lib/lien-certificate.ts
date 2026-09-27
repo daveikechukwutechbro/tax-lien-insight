@@ -195,7 +195,7 @@ export function buildCertificateHtml(args: {
         <path d="M 26 44 C 31 35 38 29 47 27" fill="none" stroke="#16233c" stroke-width="2" stroke-linecap="round" />
         <text x="160" y="62" text-anchor="middle" font-family="'Brush Script MT', 'Segoe Script', 'Lucida Handwriting', cursive" font-size="31" letter-spacing="-1.5" fill="#16233c">AuctionLedger</text>
         <path d="M 273 27 C 282 29 289 35 294 44" fill="none" stroke="#16233c" stroke-width="2" stroke-linecap="round" />
-        <path d="M 48 50 L 272 50" fill="none" stroke="#16233c" stroke-width="1.2" opacity="0.8" />
+        <path d="M 48 68 L 272 68" fill="none" stroke="#16233c" stroke-width="1.2" opacity="0.8" />
       </svg>
       <div class="sig-cap">AuctionLedger</div>
     </div>
