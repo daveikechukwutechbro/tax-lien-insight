@@ -126,7 +126,7 @@ export function buildCertificateHtml(args: {
     <div class="certno"><strong>Certificate No. ${certificateId}</strong>Issued: ${issueDate}</div>
   </div>
   <div class="rule"></div>
-  <h1>Certificate of Lien</h1>
+  <h1>Certificate of Purchase</h1>
   <div class="sub">Tax Lien Sold at Public Auction</div>
   <div class="body">
     This certifies that <strong>${holderName || holderEmail}</strong> is the holder of the tax lien sold at
