@@ -145,7 +145,7 @@ export function buildCertificateHtml(args: {
   .table th, .table td { border: 1px solid #cfd6e2; padding: 8px 10px; text-align: left; font-size: 12.5px; }
   .table th { background: #f2f4f8; letter-spacing: 0.06em; text-transform: uppercase; font-size: 10px; color: #44506b; width: 34%; }
   .foot { margin-top: 22px; position: relative; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
-  .seal { position: absolute; left: 50%; bottom: -10px; width: 84px; height: 84px; transform: translateX(-50%) rotate(-6deg); opacity: 0.98; z-index: 1; }
+  .seal { position: absolute; left: 50%; bottom: -13px; width: 92px; height: 92px; transform: translateX(-50%) rotate(-5deg); z-index: 1; }
   .seal svg { width: 100%; height: 100%; display: block; }
   .sig { font-size: 11px; color: #44506b; text-align: center; }
   .sigline { margin-top: 26px; border-top: 1px solid #16233c; padding-top: 4px; width: 150px; }
@@ -190,35 +190,59 @@ export function buildCertificateHtml(args: {
   <div class="foot">
     <div class="sig"><div class="sigline">AuctionLedger</div></div>
     <div class="seal" aria-hidden="true">
-      <svg viewBox="-6 -6 132 132" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="-8 -8 136 136" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <radialGradient id="waxFace" cx="50%" cy="35%" r="80%">
-            <stop offset="0%" stop-color="#d55850" />
-            <stop offset="45%" stop-color="#a93226" />
-            <stop offset="100%" stop-color="#7a1f18" />
+          <radialGradient id="waxFace" cx="44%" cy="34%" r="80%">
+            <stop offset="0%" stop-color="#df6a5f" />
+            <stop offset="38%" stop-color="#b8402f" />
+            <stop offset="78%" stop-color="#8e271c" />
+            <stop offset="100%" stop-color="#731b12" />
           </radialGradient>
           <linearGradient id="waxGold" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#f4d78a" />
+            <stop offset="0%" stop-color="#f7dc92" />
             <stop offset="55%" stop-color="#e0bd55" />
-            <stop offset="100%" stop-color="#b7942a" />
+            <stop offset="100%" stop-color="#b2902a" />
           </linearGradient>
+          <linearGradient id="rimShade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#5b120c" stop-opacity="0.72" />
+            <stop offset="100%" stop-color="#5b120c" stop-opacity="0" />
+          </linearGradient>
+          <filter id="sealShadow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.6" />
+          </filter>
+          <filter id="sealGrain" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="noise" />
+            <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0.30 0 0 0 0 0.07 0 0 0 0 0.04 0 0 0 0.5 0" />
+          </filter>
+          <clipPath id="sealClip"><path d="${blob}" /></clipPath>
         </defs>
+        <path d="${blob}" transform="translate(3 4)" fill="#3f0b07" opacity="0.38" filter="url(#sealShadow)" />
         <path d="${blob}" fill="url(#waxFace)" />
+        <g clip-path="url(#sealClip)">
+          <rect x="-8" y="-8" width="136" height="136" filter="url(#sealGrain)" opacity="0.16" />
+          <path d="${blob}" fill="url(#rimShade)" transform="translate(0 14)" opacity="0.6" />
+        </g>
+        <g transform="translate(60 60) scale(0.9) translate(-60 -60)">
+          <path d="${blob}" fill="none" stroke="#7a1f18" stroke-width="6" opacity="0.55" />
+        </g>
         <path d="${blob}" fill="none" stroke="url(#waxGold)" stroke-width="3" />
-        <circle cx="60" cy="60" r="52" fill="none" stroke="url(#waxGold)" stroke-width="1.2" opacity="0.8" />
         <path id="sealTop" d="M 21 60 A 39 39 0 0 1 99 60" fill="none" />
         <path id="sealBottom" d="M 21 60 A 39 39 0 1 0 99 60" fill="none" />
-        <text font-family="Georgia, 'Times New Roman', serif" font-size="10" letter-spacing="2.6" fill="#f4d78a">
+        <text font-family="Georgia, 'Times New Roman', serif" font-size="10" letter-spacing="2.6" fill="#f7dc92">
           <textPath href="#sealTop" startOffset="50%" text-anchor="middle">AUCTIONLEDGER</textPath>
         </text>
-        <text font-family="Georgia, 'Times New Roman', serif" font-size="7.8" letter-spacing="1.7" fill="#f4d78a">
+        <text font-family="Georgia, 'Times New Roman', serif" font-size="7.8" letter-spacing="1.7" fill="#f7dc92">
           <textPath href="#sealBottom" startOffset="50%" text-anchor="middle">TAX LIEN AUCTIONS</textPath>
         </text>
-        <circle cx="21" cy="60" r="1.7" fill="url(#waxGold)" />
-        <circle cx="99" cy="60" r="1.7" fill="url(#waxGold)" />
-        <rect x="43" y="43" width="34" height="34" rx="7" fill="#16233c" />
-        <rect x="43" y="43" width="34" height="34" rx="7" fill="none" stroke="url(#waxGold)" stroke-width="1.2" />
-        <text x="60" y="67" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="19" font-weight="700" fill="#e0bd55">AL</text>
+        <circle cx="21" cy="60" r="2.1" fill="url(#waxGold)" />
+        <circle cx="99" cy="60" r="2.1" fill="url(#waxGold)" />
+        <circle cx="60" cy="38" r="2.1" fill="url(#waxGold)" />
+        <circle cx="60" cy="83" r="2.1" fill="url(#waxGold)" />
+        <g transform="translate(60 60)">
+          <rect x="-17.5" y="-17.5" width="35" height="35" rx="7.5" fill="#16233c" />
+          <rect x="-14.5" y="-14.5" width="29" height="29" rx="5" fill="none" stroke="url(#waxGold)" stroke-width="1" opacity="0.75" />
+        </g>
+        <text x="60" y="66.5" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="700" fill="#f0cd5f">AL</text>
       </svg>
     </div>
     <div class="sig">Certificate No. ${certificateId}</div>
