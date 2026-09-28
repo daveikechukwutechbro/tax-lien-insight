@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   Landmark, CreditCard, CircleDollarSign, Check, Info, ShieldCheck, Bell,
-  Lock, ArrowRight, Wallet, Send, BadgeCheck, PiggyBank, Copy,
+  Lock, ArrowRight, Wallet, Send, BadgeCheck, PiggyBank, Copy, ChevronDown,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { getFunds, getDeposits, createUsdcDeposit, sendMessage } from "@/lib/backend";
@@ -113,31 +113,54 @@ function FundsPage() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="rounded-xl border border-hairline bg-surface-alt p-6">
-        <h1 className="font-display text-3xl font-600 text-navy">Add Funds</h1>
-        <p className="mt-1 text-sm font-500 text-ink">Securely Fund Your Investment Account</p>
-        <p className="mt-3 max-w-2xl text-sm text-ink-muted">
-          Add funds to your Auction Ledger to participate in available tax lien investment
-          opportunities. All deposits are securely tracked and credited to your account after
-          successful confirmation.
-        </p>
-        <div className="mt-4 text-xs uppercase tracking-wider text-ink-muted">
-          Available balance <span className="ml-2 font-display text-base normal-case tracking-normal text-navy">{fmt(funds?.available ?? 0)}</span>
+      {/* Page intro */}
+      <div>
+        <h1 className="font-display text-3xl font-600 text-navy lg:text-4xl">Add Funds</h1>
+        <p className="mt-1 text-[15px] text-ink-muted">Securely fund your investment account.</p>
+
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-hairline bg-surface p-4">
+          <div>
+            <div className="text-[11px] font-500 uppercase tracking-wider text-ink-muted">Available Balance</div>
+            <div className="mt-0.5 font-display text-2xl font-600 text-success tabular-nums">{fmt(funds?.available ?? 0)}</div>
+          </div>
+          <p className="hidden max-w-[260px] text-right text-xs text-ink-muted sm:block">
+            Add funds to participate in available tax lien investment opportunities. Deposits are
+            credited after successful confirmation.
+          </p>
+          <p className="text-xs text-ink-muted sm:hidden">USDC · Instant &amp; secure</p>
         </div>
-      </section>
+
+        <details className="group mt-3 rounded-xl border border-hairline bg-surface-alt p-3">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-600 text-navy [&::-webkit-details-marker]:hidden">
+            <Info className="size-4 text-navy" />
+            How deposits work
+            <ChevronDown className="ml-auto size-4 text-ink-muted transition-transform group-open:rotate-180" />
+          </summary>
+          <p className="mt-2 text-sm text-ink-muted">
+            All deposits are securely tracked and credited to your account after successful
+            confirmation. Deposited USDC goes to your available balance and can be used to bid on
+            tax lien investment opportunities.
+          </p>
+          <p className="mt-2 text-sm text-ink-muted">
+            During our initial rollout we're offering funding through USDC while completing
+            integration with additional payment methods, including ACH, wire transfer, and
+            debit/credit cards. More options will be introduced as they become available.
+          </p>
+        </details>
+      </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_280px]">
         <div className="min-w-0">
           {/* 1. method */}
-          <h2 className="font-display text-lg font-600 text-navy">1. Choose Funding Method</h2>
+          <h2 className="font-display text-lg font-600 text-navy">Choose Funding Method</h2>
+          <p className="mt-1 text-sm text-ink-muted">Select how you'd like to fund your account.</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            <div className="relative rounded-xl border-2 border-success bg-success-soft/40 p-4">
-              <span className="absolute right-3 top-3 grid size-5 place-items-center rounded-full bg-success text-white"><Check className="size-3" /></span>
-              <div className="grid size-10 place-items-center rounded-full bg-success/15 text-success"><CircleDollarSign className="size-5" /></div>
-              <div className="mt-3 font-600 text-navy">USDC (USD Coin)</div>
+            <div className="relative rounded-xl border-2 border-success bg-success-soft/40 p-3.5">
+              <span className="absolute right-2.5 top-2.5 grid size-5 place-items-center rounded-full bg-success text-white"><Check className="size-3" /></span>
+              <div className="grid size-9 place-items-center rounded-full bg-success/15 text-success"><CircleDollarSign className="size-4.5" /></div>
+              <div className="mt-2.5 font-600 text-navy">USDC (USD Coin)</div>
               <span className="mt-1 inline-block rounded bg-success/15 px-2 py-0.5 text-xs font-500 text-success">Available</span>
-              <p className="mt-2 text-xs text-ink-muted">Deposit using USDC, a widely used U.S. dollar-backed stablecoin.</p>
+              <p className="mt-2 text-xs text-ink-muted">Deposit using USDC, a stablecoin backed 1:1 by the U.S. dollar.</p>
               <ul className="mt-3 space-y-1 text-xs text-ink">
                 {["Fast settlement", "Transparent blockchain verification", "Available 24/7"].map((t) => (
                   <li key={t} className="flex gap-1.5"><Check className="mt-0.5 size-3 shrink-0 text-success" />{t}</li>
@@ -145,13 +168,13 @@ function FundsPage() {
               </ul>
             </div>
             <ComingSoon
-              icon={<Landmark className="size-5" />}
+              icon={<Landmark className="size-4.5" />}
               title="Bank Transfer (ACH / Wire)"
               body="We're currently completing our U.S. banking integration. Once available, you'll be able to fund your account directly through ACH and wire transfers."
               onNotify={() => notifyMe("Bank Transfer (ACH / Wire)")}
             />
             <ComingSoon
-              icon={<CreditCard className="size-5" />}
+              icon={<CreditCard className="size-4.5" />}
               title="Debit & Credit Card"
               body="Card funding will be available after the completion of our payment processing integration."
               onNotify={() => notifyMe("Debit & Credit Card")}
@@ -159,7 +182,7 @@ function FundsPage() {
           </div>
 
           {/* 2. amount */}
-          <h2 className="mt-8 font-display text-lg font-600 text-navy">2. Deposit Amount</h2>
+          <h2 className="mt-6 font-display text-lg font-600 text-navy">Deposit Amount</h2>
           <p className="mt-1 text-sm text-ink-muted">Enter the amount you'd like to deposit.</p>
           <label className="mt-3 block text-xs uppercase tracking-wider text-ink-muted">Amount (USD Equivalent)</label>
           <div className="mt-1 flex items-center gap-2 rounded-lg border border-hairline bg-surface px-3">
@@ -184,7 +207,7 @@ function FundsPage() {
           </div>
 
           {/* 3. network */}
-          <h2 className="mt-8 font-display text-lg font-600 text-navy">3. Select Network</h2>
+          <h2 className="mt-6 font-display text-lg font-600 text-navy">Select Network</h2>
           <p className="mt-1 text-sm text-ink-muted">Choose the supported blockchain network.</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             {NETWORKS.map((n) => {
@@ -231,21 +254,12 @@ function FundsPage() {
           )}
 
           {/* 4. next */}
-          <h2 className="mt-8 font-display text-lg font-600 text-navy">4. What Happens Next?</h2>
-          <div className="mt-3 grid gap-4 rounded-xl border border-hairline bg-surface p-5 sm:grid-cols-4">
+          <h2 className="mt-6 font-display text-lg font-600 text-navy">What Happens Next</h2>
+          <div className="mt-3 grid gap-4 rounded-xl border border-hairline bg-surface p-4 sm:grid-cols-4 sm:p-5">
             <Step icon={<Wallet className="size-5" />} n="1. Create Deposit" body="Generate a unique deposit address or payment request." />
             <Step icon={<Send className="size-5" />} n="2. Send USDC" body="Send USDC to the address provided on the selected network." />
             <Step icon={<BadgeCheck className="size-5" />} n="3. Confirmations" body="We'll wait for the required blockchain confirmations." />
             <Step icon={<PiggyBank className="size-5" />} n="4. Funds Added" body="Your account balance updates and your funds are ready to invest." />
-          </div>
-
-          <div className="mt-4 rounded-xl border border-success/30 bg-success-soft/40 p-4 text-xs text-ink">
-            <div className="flex items-center gap-1.5 font-600 text-navy"><ShieldCheck className="size-4 text-success" />Why is USDC currently available?</div>
-            <p className="mt-1 text-ink-muted">
-              During our initial platform rollout, we're offering funding through USDC while completing
-              integration with additional payment methods, including ACH, wire transfer, and debit/credit
-              cards. Additional funding options will be introduced as they become available.
-            </p>
           </div>
         </div>
 
@@ -280,7 +294,7 @@ function FundsPage() {
         </aside>
       </div>
 
-      <h2 className="mt-10 font-display text-xl font-600 text-navy">Withdraw Funds</h2>
+      <h2 className="mt-8 font-display text-xl font-600 text-navy">Withdraw Funds</h2>
       <form onSubmit={withdraw} className="mt-3 grid gap-3 rounded-xl border border-hairline bg-surface p-5 sm:grid-cols-3">
         <label className="text-sm">Amount (USD)
           <input required type="number" min="1" step="0.01" value={wAmount} onChange={(e)=>setWAmount(e.target.value)} className="input mt-1" />
@@ -379,9 +393,9 @@ function Step({ icon, n, body }: { icon: React.ReactNode; n: string; body: strin
 
 function ComingSoon({ icon, title, body, onNotify }: { icon: React.ReactNode; title: string; body: string; onNotify: () => void }) {
   return (
-    <div className="rounded-xl border border-hairline bg-surface p-4">
-      <div className="grid size-10 place-items-center rounded-full bg-gold/20 text-navy">{icon}</div>
-      <div className="mt-3 font-600 text-navy">{title}</div>
+    <div className="rounded-xl border border-hairline bg-surface p-3.5">
+      <div className="grid size-9 place-items-center rounded-full bg-gold/20 text-navy">{icon}</div>
+      <div className="mt-2.5 font-600 text-navy">{title}</div>
       <span className="mt-1 inline-block rounded bg-gold/25 px-2 py-0.5 text-xs font-500 text-navy">Coming Soon</span>
       <p className="mt-2 text-xs italic text-ink-muted">{body}</p>
       <button type="button" onClick={onNotify}
