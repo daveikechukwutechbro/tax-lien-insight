@@ -57,6 +57,7 @@ import {
   cancelAuction,
   createLot,
   listLots,
+  transitionLot,
   registerForAuction,
   reviewRegistration,
   getRegistrationEligibility,
@@ -352,6 +353,14 @@ export function createApp(): Hono {
     const items = await listProperties({});
     return c.json(json(items.items, { total: items.total }));
   });
+  app.delete("/api/v1/admin/properties/:id", async (c) => {
+    requirePermission(c, "property.edit");
+    const id = c.req.param("id");
+    const { rows } = await getPool().query(`SELECT id FROM properties WHERE id = $1`, [id]);
+    if (!rows[0]) throw new NotFoundError("Property not found");
+    await getPool().query(`DELETE FROM properties WHERE id = $1`, [id]);
+    return c.json(json({ id, deleted: true }));
+  });
 
   // ---- Auctions ----
   app.get("/api/v1/auctions", async (c) => {
@@ -412,6 +421,38 @@ export function createApp(): Hono {
   transition(cancelAuction, "auction.close");
 
   // ---- Lots & bids ----
+  app.post("/api/v1/admin/auctions/:id/lots", async (c) => {
+    requirePermission(c, "auction.publish");
+    const body = await c.req.json().catch(() => ({}));
+    const lotId = await createLot(c.req.param("id"), {
+      propertyId: body.propertyId,
+      parcelId: body.parcelId,
+      lotNumber: body.lotNumber,
+      startingRate: Number(body.startingRate) || 0,
+      minimumRate: body.minimumRate != null ? Number(body.minimumRate) : undefined,
+      rateIncrement: body.rateIncrement != null ? Number(body.rateIncrement) : undefined,
+      ratePrecision: body.ratePrecision != null ? Number(body.ratePrecision) : undefined,
+      taxesOwed: body.taxesOwed != null ? Number(body.taxesOwed) : undefined,
+      taxYear: body.taxYear != null ? Number(body.taxYear) : undefined,
+      redemptionPeriodMonths: body.redemptionPeriodMonths != null ? Number(body.redemptionPeriodMonths) : undefined,
+    });
+    return c.json(json({ id: lotId }), 201);
+  });
+  app.patch("/api/v1/admin/auction-lots/:id", async (c) => {
+    requirePermission(c, "auction.publish");
+    const body = await c.req.json().catch(() => ({}));
+    if (!body.status) throw new ValidationError("status is required");
+    await transitionLot(c.req.param("id"), body.status as any, requireUser(c).userId);
+    return c.json(json({ id: c.req.param("id"), status: body.status }));
+  });
+  app.delete("/api/v1/admin/auction-lots/:id", async (c) => {
+    requirePermission(c, "auction.publish");
+    const id = c.req.param("id");
+    const { rows } = await getPool().query(`SELECT id FROM auction_lots WHERE id = $1`, [id]);
+    if (!rows[0]) throw new NotFoundError("Lot not found");
+    await getPool().query(`DELETE FROM auction_lots WHERE id = $1`, [id]);
+    return c.json(json({ id, deleted: true }));
+  });
   app.get("/api/v1/auction-lots/:id", async (c) => {
     const { rows } = await getPool().query(`SELECT * FROM auction_lots WHERE id=$1`, [c.req.param("id")]);
     if (!rows[0]) throw new NotFoundError("Lot not found");

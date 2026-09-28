@@ -1,67 +1,81 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/firebase/client";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { AuctionStatus } from "@/integrations/firebase/types";
-
-type Status = AuctionStatus;
+import {
+  getAdminAuctions,
+  getCounties,
+  createAdminAuction,
+  transitionAdminAuction,
+  AUCTION_TRANSITION_OPTIONS,
+  type AdminAuction,
+} from "@/lib/backend";
+import { invalidatePublicData } from "@/lib/queries/invalidate";
 
 export const Route = createFileRoute("/admin/auctions")({
   component: AuctionsAdmin,
 });
 
+function statusTone(status: string): string {
+  if (status === "live") return "bg-emerald-50 text-emerald-700";
+  if (status === "draft" || status === "scheduled") return "bg-amber-50 text-amber-700";
+  if (status === "cancelled" || status === "withdrawn") return "bg-red-50 text-red-700";
+  if (status === "archived") return "bg-slate-100 text-slate-500";
+  return "bg-navy/5 text-navy";
+}
+
 function AuctionsAdmin() {
   const qc = useQueryClient();
-  const { data: counties = [] } = useQuery({
-    queryKey: ["admin", "counties"],
-    queryFn: async () => (await supabase.from("counties").select("*")).data ?? [],
-  });
+  const countyMap = useQuery({ queryKey: ["admin", "counties"], queryFn: getCounties });
+  const counties = countyMap.data ?? [];
   const { data: rows = [] } = useQuery({
     queryKey: ["admin", "auctions"],
-    queryFn: async () =>
-      (
-        await supabase
-          .from("auctions")
-          .select("*, county:counties(name)")
-          .order("starts_at", { ascending: false })
-      ).data ?? [],
+    queryFn: getAdminAuctions,
   });
 
-  const [title, setTitle] = useState(""),
-    [county, setCounty] = useState("");
-  const [starts, setStarts] = useState(""),
-    [ends, setEnds] = useState("");
-  const [status, setStatus] = useState<Status>("scheduled");
+  const [title, setTitle] = useState("");
+  const [county, setCounty] = useState("");
+  const [starts, setStarts] = useState("");
+  const [ends, setEnds] = useState("");
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from("auctions").insert({
-      title,
-      county_id: county || null,
-      starts_at: starts,
-      ends_at: ends,
-      status,
-    });
-    if (error) return toast.error(error.message);
-    setTitle("");
-    setStarts("");
-    setEnds("");
-    qc.invalidateQueries({ queryKey: ["admin", "auctions"] });
-    toast.success("Auction added");
+    try {
+      await createAdminAuction({
+        title,
+        jurisdictionId: county || undefined,
+        startsAt: starts ? new Date(starts).toISOString() : undefined,
+        endsAt: ends ? new Date(ends).toISOString() : undefined,
+      });
+      toast.success("Auction created");
+      setTitle(""); setCounty(""); setStarts(""); setEnds("");
+      await qc.invalidateQueries({ queryKey: ["admin", "auctions"] });
+      invalidatePublicData(qc);
+    } catch (err) {
+      toast.error((err as Error).message ?? "Could not create auction");
+    }
   }
-  async function updateStatus(id: string, next: Status) {
-    const { error } = await supabase.from("auctions").update({ status: next }).eq("id", id);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["admin", "auctions"] });
+
+  async function transition(r: AdminAuction, next: string) {
+    try {
+      await transitionAdminAuction(r.id, r.state, next);
+      toast.success(`Auction moved to ${next}`);
+      await qc.invalidateQueries({ queryKey: ["admin", "auctions"] });
+      invalidatePublicData(qc);
+    } catch (err) {
+      toast.error((err as Error).message ?? "Transition failed");
+    }
   }
+
+  const countyName = (id: string | null) =>
+    counties.find((c) => c.id === id)?.name ?? "—";
 
   return (
     <div>
       <h2 className="font-display text-2xl font-600 text-navy">Auctions</h2>
       <form
         onSubmit={add}
-        className="mt-4 grid gap-3 rounded-xl border border-hairline bg-surface p-4 sm:grid-cols-2 lg:grid-cols-5"
+        className="mt-4 grid gap-3 rounded-xl border border-hairline bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <input
           required
@@ -72,9 +86,9 @@ function AuctionsAdmin() {
         />
         <select value={county} onChange={(e) => setCounty(e.target.value)} className="input">
           <option value="">— County —</option>
-          {counties.map((c: { id: string; name: string; state: string }) => (
+          {counties.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}, {c.state}
+              {c.name}, {c.stateCode ?? ""}
             </option>
           ))}
         </select>
@@ -92,25 +106,14 @@ function AuctionsAdmin() {
           onChange={(e) => setEnds(e.target.value)}
           className="input"
         />
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as Status)}
-          className="input"
-        >
-          {["draft", "scheduled", "live", "closed", "canceled"].map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <div className="sm:col-span-2 lg:col-span-5">
+        <div className="sm:col-span-2 lg:col-span-4">
           <button className="rounded-md bg-navy px-5 py-2 text-sm font-600 text-primary-foreground">
             Create auction
           </button>
         </div>
       </form>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">
+      <div className="mt-6 overflow-x-auto rounded-xl border border-hairline bg-surface">
         <table className="w-full text-sm">
           <thead className="border-b border-hairline bg-surface-alt text-left text-xs uppercase tracking-wider text-ink-muted">
             <tr>
@@ -118,37 +121,63 @@ function AuctionsAdmin() {
               <th className="px-4 py-2">County</th>
               <th className="px-4 py-2">Starts</th>
               <th className="px-4 py-2">Status</th>
+              <th className="px-4 py-2">Next</th>
+              <th className="px-4 py-2 text-right">Lots</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map(
-              (r: {
-                id: string;
-                title: string;
-                starts_at: string;
-                status: string;
-                county: { name?: string } | null;
-              }) => (
-                <tr key={r.id} className="border-b border-hairline/50 last:border-0">
-                  <td className="px-4 py-2 font-500 text-navy">{r.title}</td>
-                  <td className="px-4 py-2">{(r.county as { name?: string })?.name ?? "—"}</td>
-                  <td className="px-4 py-2 text-xs">{new Date(r.starts_at).toLocaleString()}</td>
-                  <td className="px-4 py-2">
+            {rows.map((r) => (
+              <tr key={r.id} className="border-b border-hairline/50 last:border-0">
+                <td className="px-4 py-2 font-500 text-navy">
+                  {r.title}
+                  {!r.published && (
+                    <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-700">
+                      hidden
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-2">{countyName(r.jurisdictionId)}</td>
+                <td className="px-4 py-2 text-xs">
+                  {r.startsAt ? new Date(r.startsAt).toLocaleString() : "—"}
+                </td>
+                <td className="px-4 py-2">
+                  <span className={`rounded px-2 py-0.5 text-xs capitalize ${statusTone(r.state)}`}>
+                    {r.state.replace(/_/g, " ")}
+                  </span>
+                </td>
+                <td className="px-4 py-2">
+                  {AUCTION_TRANSITION_OPTIONS[r.state]?.length ? (
                     <select
-                      value={r.status}
-                      onChange={(e) => updateStatus(r.id, e.target.value as Status)}
+                      defaultValue=""
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        if (next) void transition(r, next);
+                        e.target.value = "";
+                      }}
                       className="input h-8"
                     >
-                      {["draft", "scheduled", "live", "closed", "canceled"].map((s) => (
-                        <option key={s} value={s}>
-                          {s}
+                      <option value="">—</option>
+                      {AUCTION_TRANSITION_OPTIONS[r.state].map((n) => (
+                        <option key={n} value={n}>
+                          {n.replace(/_/g, " ")}
                         </option>
                       ))}
                     </select>
-                  </td>
-                </tr>
-              ),
-            )}
+                  ) : (
+                    <span className="text-xs text-ink-muted">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-2 text-right">
+                  <Link
+                    to="/admin/liens"
+                    search={{ auction: r.id }}
+                    className="text-navy hover:underline"
+                  >
+                    Manage lots
+                  </Link>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

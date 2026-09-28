@@ -255,12 +255,15 @@ export async function createLot(
     minimumRate?: number;
     rateIncrement?: number;
     ratePrecision?: number;
+    taxesOwed?: number;
+    taxYear?: number;
+    redemptionPeriodMonths?: number;
   },
 ): Promise<string> {
   const { rows } = await getPool().query(
     `INSERT INTO auction_lots
-       (auction_id, property_id, parcel_id, lot_number, status, starting_rate, current_rate, minimum_rate, rate_increment, rate_precision)
-     VALUES ($1,$2,$3,$4,'draft',$5,$5,$6,$7,$8) RETURNING id`,
+       (auction_id, property_id, parcel_id, lot_number, status, starting_rate, current_rate, minimum_rate, rate_increment, rate_precision, taxes_owed, tax_year, redemption_period_months)
+     VALUES ($1,$2,$3,$4,'draft',$5,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
     [
       auctionId,
       input.propertyId ?? null,
@@ -270,6 +273,9 @@ export async function createLot(
       input.minimumRate ?? 0,
       input.rateIncrement ?? 0.25,
       input.ratePrecision ?? 2,
+      input.taxesOwed ?? 0,
+      input.taxYear ?? null,
+      input.redemptionPeriodMonths ?? 24,
     ],
   );
   return rows[0].id as string;
@@ -280,7 +286,8 @@ export async function listLots(auctionId: string) {
     `SELECT al.id, al.auction_id, al.property_id, al.parcel_id, al.lot_number,
             al.status, al.starting_rate, al.current_rate, al.minimum_rate,
             al.taxes_owed, al.tax_year, al.redemption_period_months,
-            p.address, p.city, p.state, p.postal_code, p.property_type, p.assessed_value
+            p.address, p.city, p.state, p.postal_code, p.property_type, p.assessed_value,
+            p.image_data AS image_url
      FROM auction_lots al
      LEFT JOIN properties p ON p.id = al.property_id
      WHERE al.auction_id = $1

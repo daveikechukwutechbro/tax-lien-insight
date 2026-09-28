@@ -56,7 +56,7 @@ function toRow(l: AuctionLot, a: AuctionApi): ScheduledPropertyRow {
       ? (l.property_type as ScheduledPropertyRow["property_type"])
       : "residential",
     description: l.property_type ?? null,
-    image_url: null,
+    image_url: l.image_url ?? null,
     county: a.county?.name ?? "—",
     taxes_owed: l.taxes_owed || 0,
     min_bid: l.taxes_owed || 0,

@@ -1,95 +1,114 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/firebase/client";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { LienStatus } from "@/integrations/firebase/types";
 import { Trash2 } from "lucide-react";
+import {
+  getAdminAuctions,
+  getAdminProperties,
+  getAuctionLots,
+  createAdminLot,
+  transitionAdminLot,
+  deleteAdminLot,
+  LOT_TRANSITION_OPTIONS,
+  type AuctionLot,
+} from "@/lib/backend";
+import { invalidatePublicData } from "@/lib/queries/invalidate";
 
 export const Route = createFileRoute("/admin/liens")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    auction: typeof s.auction === "string" ? s.auction : "",
+  }),
   component: LiensAdmin,
 });
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
+function statusTone(status: string): string {
+  if (status === "live") return "bg-emerald-50 text-emerald-700";
+  if (status === "closed" || status === "awarded") return "bg-navy/10 text-navy";
+  if (status === "cancelled" || status === "withdrawn") return "bg-red-50 text-red-700";
+  if (status === "settled") return "bg-emerald-50 text-emerald-700";
+  return "bg-amber-50 text-amber-700";
+}
+
 function LiensAdmin() {
   const qc = useQueryClient();
-  const { data: propsRows = [] } = useQuery({
-    queryKey: ["admin", "properties-lite"],
-    queryFn: async () =>
-      (
-        await supabase
-          .from("properties")
-          .select("id, address, city, state, parcel_id")
-          .order("address")
-      ).data ?? [],
-  });
+  const { auction: searchAuction } = Route.useSearch();
   const { data: auctions = [] } = useQuery({
-    queryKey: ["admin", "auctions-lite"],
-    queryFn: async () =>
-      (
-        await supabase
-          .from("auctions")
-          .select("id, title, status")
-          .order("starts_at", { ascending: false })
-      ).data ?? [],
+    queryKey: ["admin", "auctions"],
+    queryFn: getAdminAuctions,
   });
-  const { data: rows = [] } = useQuery({
-    queryKey: ["admin", "liens"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("liens")
-        .select(
-          "*, property:properties(address, city, state, parcel_id), auction:auctions(title, status)",
-        )
-        .order("created_at", { ascending: false })
-        .limit(300);
-      if (error) throw error;
-      return data ?? [];
-    },
+  const { data: propsRows = [] } = useQuery({
+    queryKey: ["admin", "properties"],
+    queryFn: getAdminProperties,
   });
 
+  const [auctionId, setAuctionId] = useState(searchAuction || "");
   const [form, setForm] = useState({
     property_id: "",
-    auction_id: "",
-    tax_year: new Date().getFullYear() - 1,
+    tax_year: String(new Date().getFullYear() - 1),
     taxes_owed: "",
-    min_bid: "",
     starting_rate: "18",
-    bid_decrement: "0.25",
+    minimum_rate: "",
+    rate_increment: "0.25",
     redemption_period_months: "24",
   });
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
+  const { data: lots = [], refetch } = useQuery({
+    queryKey: ["admin", "lots", auctionId],
+    queryFn: () => getAuctionLots(auctionId),
+    enabled: Boolean(auctionId),
+  });
+
   async function add(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from("liens").insert({
-      property_id: form.property_id,
-      auction_id: form.auction_id,
-      tax_year: Number(form.tax_year),
-      taxes_owed: Number(form.taxes_owed),
-      min_bid: Number(form.min_bid || form.taxes_owed),
-      starting_rate: Number(form.starting_rate),
-      bid_decrement: Number(form.bid_decrement),
-      redemption_period_months: Number(form.redemption_period_months),
-    });
-    if (error) return toast.error(error.message);
-    toast.success("Lien created");
-    setForm({ ...form, property_id: "", auction_id: "", taxes_owed: "", min_bid: "" });
-    qc.invalidateQueries({ queryKey: ["admin", "liens"] });
+    if (!auctionId) return toast.error("Pick an auction first");
+    try {
+      await createAdminLot(auctionId, {
+        propertyId: form.property_id || undefined,
+        startingRate: Number(form.starting_rate),
+        minimumRate: form.minimum_rate ? Number(form.minimum_rate) : undefined,
+        rateIncrement: Number(form.rate_increment) || undefined,
+        taxesOwed: form.taxes_owed ? Number(form.taxes_owed) : undefined,
+        taxYear: form.tax_year ? Number(form.tax_year) : undefined,
+        redemptionPeriodMonths: Number(form.redemption_period_months) || undefined,
+      });
+      toast.success("Lien created");
+      setForm({ ...form, property_id: "", taxes_owed: "" });
+      await qc.invalidateQueries({ queryKey: ["admin", "lots", auctionId] });
+      invalidatePublicData(qc);
+    } catch (err) {
+      toast.error((err as Error).message ?? "Could not create lien");
+    }
   }
-  async function updateStatus(id: string, status: LienStatus) {
-    const { error } = await supabase.from("liens").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["admin", "liens"] });
+
+  async function changeStatus(lot: AuctionLot, next: string) {
+    try {
+      await transitionAdminLot(lot.id, next);
+      toast.success(`Lot moved to ${next}`);
+      await refetch();
+      invalidatePublicData(qc);
+    } catch (err) {
+      toast.error((err as Error).message ?? "Transition failed");
+    }
   }
+
   async function remove(id: string) {
-    if (!confirm("Delete this lien?")) return;
-    const { error } = await supabase.from("liens").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["admin", "liens"] });
+    if (!confirm("Remove this lot from the auction?")) return;
+    try {
+      await deleteAdminLot(id);
+      toast.success("Lot removed");
+      await refetch();
+      invalidatePublicData(qc);
+    } catch (err) {
+      toast.error((err as Error).message ?? "Could not remove lot");
+    }
   }
+
+  const validLots = lots.filter((l) => LOT_TRANSITION_OPTIONS[l.status]?.length);
 
   return (
     <div>
@@ -97,157 +116,179 @@ function LiensAdmin() {
       <p className="mt-1 text-sm text-ink-muted">
         Attach tax liens to properties and enroll them in an auction.
       </p>
-      <form
-        onSubmit={add}
-        className="mt-4 grid gap-3 rounded-xl border border-hairline bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4"
-      >
+
+      <div className="mt-4 max-w-xs">
+        <label className="mb-1 block text-xs font-500 uppercase tracking-wider text-ink-muted">
+          Auction
+        </label>
         <select
-          required
-          value={form.property_id}
-          onChange={(e) => set("property_id", e.target.value)}
+          value={auctionId}
+          onChange={(e) => setAuctionId(e.target.value)}
           className="input"
         >
-          <option value="">— Property —</option>
-          {propsRows.map((p: { id: string; address: string; city: string; state: string }) => (
-            <option key={p.id} value={p.id}>
-              {p.address}, {p.city} {p.state}
-            </option>
-          ))}
-        </select>
-        <select
-          required
-          value={form.auction_id}
-          onChange={(e) => set("auction_id", e.target.value)}
-          className="input"
-        >
-          <option value="">— Auction —</option>
-          {auctions.map((a: { id: string; title: string; status: string }) => (
+          <option value="">— Pick an auction —</option>
+          {auctions.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.title} ({a.status})
+              {a.title} ({a.state.replace(/_/g, " ")})
             </option>
           ))}
         </select>
-        <input
-          required
-          type="number"
-          placeholder="Tax year"
-          value={form.tax_year}
-          onChange={(e) => set("tax_year", Number(e.target.value))}
-          className="input"
-        />
-        <input
-          required
-          type="number"
-          step="0.01"
-          placeholder="Taxes owed"
-          value={form.taxes_owed}
-          onChange={(e) => set("taxes_owed", e.target.value)}
-          className="input"
-        />
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Min bid"
-          value={form.min_bid}
-          onChange={(e) => set("min_bid", e.target.value)}
-          className="input"
-        />
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Starting rate %"
-          value={form.starting_rate}
-          onChange={(e) => set("starting_rate", e.target.value)}
-          className="input"
-        />
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Bid decrement %"
-          value={form.bid_decrement}
-          onChange={(e) => set("bid_decrement", e.target.value)}
-          className="input"
-        />
-        <input
-          type="number"
-          placeholder="Redemption months"
-          value={form.redemption_period_months}
-          onChange={(e) => set("redemption_period_months", e.target.value)}
-          className="input"
-        />
-        <div className="sm:col-span-2 lg:col-span-4">
-          <button className="rounded-md bg-navy px-5 py-2 text-sm font-600 text-primary-foreground">
-            Create lien
-          </button>
-        </div>
-      </form>
-      <div className="mt-6 overflow-x-auto rounded-xl border border-hairline bg-surface">
-        <table className="w-full text-sm">
-          <thead className="border-b border-hairline bg-surface-alt text-left text-xs uppercase tracking-wider text-ink-muted">
-            <tr>
-              <th className="px-4 py-2">Property</th>
-              <th className="px-4 py-2">Auction</th>
-              <th className="px-4 py-2">Year</th>
-              <th className="px-4 py-2">Owed</th>
-              <th className="px-4 py-2">Rate</th>
-              <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(
-              (r: {
-                id: string;
-                property: { address?: string; city?: string; state?: string } | null;
-                auction: { title?: string } | null;
-                tax_year: number;
-                taxes_owed: number;
-                current_rate: number | null;
-                starting_rate: number;
-                status: string;
-              }) => {
-                const p = r.property;
-                const a = r.auction;
-                return (
-                  <tr key={r.id} className="border-b border-hairline/50 last:border-0">
-                    <td className="px-4 py-2 font-500 text-navy">
-                      {p?.address}
-                      <div className="text-xs text-ink-muted">
-                        {p?.city}, {p?.state}
+      </div>
+
+      {auctionId && (
+        <>
+          <form
+            onSubmit={add}
+            className="mt-4 grid gap-3 rounded-xl border border-hairline bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            <select
+              required
+              value={form.property_id}
+              onChange={(e) => set("property_id", e.target.value)}
+              className="input"
+            >
+              <option value="">— Property —</option>
+              {propsRows.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.address}, {p.city} {p.state} ({p.parcelId ?? "no parcel"})
+                </option>
+              ))}
+            </select>
+            <input
+              required
+              type="number"
+              placeholder="Tax year"
+              value={form.tax_year}
+              onChange={(e) => set("tax_year", e.target.value)}
+              className="input"
+            />
+            <input
+              required
+              type="number"
+              step="0.01"
+              placeholder="Taxes owed"
+              value={form.taxes_owed}
+              onChange={(e) => set("taxes_owed", e.target.value)}
+              className="input"
+            />
+            <input
+              required
+              type="number"
+              step="0.01"
+              placeholder="Starting rate %"
+              value={form.starting_rate}
+              onChange={(e) => set("starting_rate", e.target.value)}
+              className="input"
+            />
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Min rate %"
+              value={form.minimum_rate}
+              onChange={(e) => set("minimum_rate", e.target.value)}
+              className="input"
+            />
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Rate increment %"
+              value={form.rate_increment}
+              onChange={(e) => set("rate_increment", e.target.value)}
+              className="input"
+            />
+            <input
+              type="number"
+              placeholder="Redemption months"
+              value={form.redemption_period_months}
+              onChange={(e) => set("redemption_period_months", e.target.value)}
+              className="input"
+            />
+            <div className="sm:col-span-2 lg:col-span-4">
+              <button className="rounded-md bg-navy px-5 py-2 text-sm font-600 text-primary-foreground">
+                Create lien
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-6 overflow-x-auto rounded-xl border border-hairline bg-surface">
+            <table className="w-full text-sm">
+              <thead className="border-b border-hairline bg-surface-alt text-left text-xs uppercase tracking-wider text-ink-muted">
+                <tr>
+                  <th className="px-4 py-2">Property</th>
+                  <th className="px-4 py-2">Year</th>
+                  <th className="px-4 py-2">Owed</th>
+                  <th className="px-4 py-2">Rate</th>
+                  <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-2">Next</th>
+                  <th className="px-4 py-2 text-right"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {lots.map((lot) => (
+                  <tr key={lot.id} className="border-b border-hairline/50 last:border-0">
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        {lot.image_url && (
+                          <img src={lot.image_url} alt="" className="size-8 rounded-md object-cover" />
+                        )}
+                        <div>
+                          <div className="font-500 text-navy">{lot.address ?? "Unlisted property"}</div>
+                          <div className="text-xs text-ink-muted">
+                            {lot.city}, {lot.state}
+                          </div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-4 py-2 text-xs">{a?.title ?? "—"}</td>
-                    <td className="px-4 py-2">{r.tax_year}</td>
-                    <td className="px-4 py-2 font-600">{fmt(Number(r.taxes_owed))}</td>
-                    <td className="px-4 py-2 text-xs">{r.current_rate ?? r.starting_rate}%</td>
+                    <td className="px-4 py-2">{lot.tax_year ?? "—"}</td>
+                    <td className="px-4 py-2 font-600">{fmt(lot.taxes_owed)}</td>
+                    <td className="px-4 py-2 text-xs">{lot.current_rate ?? lot.starting_rate}%</td>
                     <td className="px-4 py-2">
-                      <select
-                        value={r.status}
-                        onChange={(e) => updateStatus(r.id, e.target.value as LienStatus)}
-                        className="input h-8"
-                      >
-                        {["active", "redeemed", "canceled", "expired"].map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
+                      <span className={`rounded px-2 py-0.5 text-xs capitalize ${statusTone(lot.status)}`}>
+                        {lot.status.replace(/_/g, " ")}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">
+                      {LOT_TRANSITION_OPTIONS[lot.status]?.length ? (
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            if (next) void changeStatus(lot, next);
+                            e.target.value = "";
+                          }}
+                          className="input h-8"
+                        >
+                          <option value="">—</option>
+                          {LOT_TRANSITION_OPTIONS[lot.status].map((n) => (
+                            <option key={n} value={n}>
+                              {n.replace(/_/g, " ")}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="text-xs text-ink-muted">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <button
-                        onClick={() => remove(r.id)}
-                        className="text-destructive hover:text-destructive/80"
-                      >
+                      <button onClick={() => void remove(lot.id)} className="text-destructive hover:text-destructive/80">
                         <Trash2 className="size-4" />
                       </button>
                     </td>
                   </tr>
-                );
-              },
-            )}
-          </tbody>
-        </table>
-      </div>
+                ))}
+                {!lots.length && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-sm text-ink-muted">
+                      {validLots.length ? "No lots yet." : "No lots are enrolled in this auction yet."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
       <style>{`.input{height:36px;border-radius:6px;border:1px solid var(--hairline);background:var(--surface);padding:0 10px;font-size:14px;width:100%}`}</style>
     </div>
   );

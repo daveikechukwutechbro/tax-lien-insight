@@ -82,7 +82,7 @@ export function auctionDetailQuery(id: string) {
                 state: l.state ?? "",
                 zip: l.postal_code ?? "",
                 property_type: l.property_type,
-                image_url: null,
+                image_url: l.image_url ?? null,
               },
             })),
         } satisfies AuctionDetail;

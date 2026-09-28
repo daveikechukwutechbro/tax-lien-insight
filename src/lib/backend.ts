@@ -2,7 +2,7 @@
 // All requests are same-origin (the Vercel proxy forwards /api/v1/* to the
 // Worker) so the session cookie flows automatically.
 
-import { request, type BackendUser } from "@/lib/backend-auth";
+import { request, AuthError, type BackendUser } from "@/lib/backend-auth";
 
 export async function getMe(): Promise<BackendUser | null> {
   return request<BackendUser | null>("/api/v1/me").catch(() => null);
@@ -388,6 +388,7 @@ export type AuctionLot = {
   postal_code: string | null;
   property_type: string | null;
   assessed_value: number | null;
+  image_url: string | null;
 };
 export async function getAuctionLots(auctionId: string): Promise<AuctionLot[]> {
   const rows = await request<
@@ -416,6 +417,7 @@ export async function getAuctionLots(auctionId: string): Promise<AuctionLot[]> {
     postal_code: l.postal_code ?? null,
     property_type: l.property_type ?? null,
     assessed_value: l.assessed_value != null ? Number(l.assessed_value) : null,
+    image_url: l.image_url ?? null,
   }));
 }
 
@@ -487,6 +489,7 @@ export type RawProperty = {
   improvementValue?: number | null;
   countyName: string | null;
   countyState: string | null;
+  imageUrl?: string | null;
   status: string;
   lotId?: string | null;
   lotStatus?: string | null;
@@ -553,6 +556,7 @@ export type RawLot = {
   postal_code?: string | null;
   property_type?: string | null;
   assessed_value?: number | string | null;
+  image_url?: string | null;
 };
 export async function getLot(id: string): Promise<RawLot> {
   const row = await request<RawLot>(`/api/v1/auction-lots/${id}`);
@@ -619,4 +623,154 @@ export async function markNotificationRead(id: string): Promise<void> {
 export async function markAllNotificationsRead(): Promise<number> {
   const res = await request<{ marked: number }>("/api/v1/my/notifications/read-all", { method: "POST" });
   return res.marked ?? 0;
+}
+
+// ---- Admin: properties ----
+
+export type PropertyInput = {
+  jurisdictionId?: string;
+  parcelId?: string;
+  address: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  propertyType?: string;
+  assessedValue?: number;
+  legalDescription?: string;
+  imageData?: string | null;
+};
+
+export async function getAdminProperties(): Promise<RawProperty[]> {
+  return request<RawProperty[]>("/api/v1/admin/properties");
+}
+export async function createAdminProperty(input: PropertyInput): Promise<string> {
+  const res = await request<{ id: string }>("/api/v1/admin/properties", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return res.id;
+}
+export async function updateAdminProperty(id: string, patch: Partial<PropertyInput>): Promise<void> {
+  await request<{ id: string }>(`/api/v1/admin/properties/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+export async function deleteAdminProperty(id: string): Promise<void> {
+  await request<{ deleted: boolean }>(`/api/v1/admin/properties/${id}`, { method: "DELETE" });
+}
+
+// ---- Admin: auctions ----
+
+export type AdminAuction = {
+  id: string;
+  title: string;
+  jurisdictionId: string | null;
+  state: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  published: boolean;
+};
+
+export async function getAdminAuctions(): Promise<AdminAuction[]> {
+  return request<AdminAuction[]>("/api/v1/admin/auctions");
+}
+export async function createAdminAuction(input: {
+  title: string;
+  jurisdictionId?: string;
+  startsAt?: string;
+  endsAt?: string;
+}): Promise<string> {
+  const res = await request<{ id: string }>("/api/v1/admin/auctions", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return res.id;
+}
+
+/** Valid next states for a given auction state (mirrors the backend state machine). */
+export const AUCTION_TRANSITION_OPTIONS: Record<string, string[]> = {
+  draft: ["scheduled", "cancelled"],
+  scheduled: ["registration_open", "cancelled"],
+  registration_open: ["registration_closed", "cancelled"],
+  registration_closed: ["live", "cancelled"],
+  live: ["paused", "closing", "cancelled"],
+  paused: ["live", "cancelled"],
+  closing: ["results_finalized", "cancelled"],
+  results_processing: ["results_finalized", "cancelled"],
+  results_finalized: ["settlement", "cancelled"],
+  settlement: [],
+  closed: ["archived"],
+  cancelled: ["archived"],
+  archived: [],
+};
+
+const AUCTION_TRANSITION_ROUTES: Record<string, Record<string, string>> = {
+  draft: { scheduled: "publish", cancelled: "cancel" },
+  scheduled: { registration_open: "openRegistration", cancelled: "cancel" },
+  registration_open: { registration_closed: "closeRegistration", cancelled: "cancel" },
+  registration_closed: { live: "start", cancelled: "cancel" },
+  live: { paused: "pause", closing: "close", cancelled: "cancel" },
+  paused: { live: "resume", cancelled: "cancel" },
+  closing: { results_finalized: "finalizeResults", cancelled: "cancel" },
+  results_processing: { results_finalized: "finalizeResults", cancelled: "cancel" },
+  results_finalized: { settlement: "settle", cancelled: "cancel" },
+  closed: { archived: "archive" },
+  cancelled: { archived: "archive" },
+  archived: {},
+};
+
+export async function transitionAdminAuction(id: string, from: string, to: string): Promise<AdminAuction> {
+  const route = AUCTION_TRANSITION_ROUTES[from]?.[to];
+  if (!route) {
+    throw new AuthError("INVALID_TRANSITION", `Cannot move auction from "${from}" to "${to}"`, 422);
+  }
+  return request<AdminAuction>(`/api/v1/admin/auctions/${id}/${route}`, { method: "POST" });
+}
+
+// ---- Admin: liens (auction lots) ----
+
+export type LotInput = {
+  propertyId?: string;
+  parcelId?: string;
+  startingRate: number;
+  minimumRate?: number;
+  rateIncrement?: number;
+  taxesOwed?: number;
+  taxYear?: number;
+  redemptionPeriodMonths?: number;
+};
+
+/** Valid next states for a given lot state (mirrors the backend state machine). */
+export const LOT_TRANSITION_OPTIONS: Record<string, string[]> = {
+  draft: ["scheduled", "cancelled"],
+  scheduled: ["open", "cancelled"],
+  open: ["live", "cancelled", "withdrawn"],
+  live: ["paused", "closing", "cancelled", "withdrawn"],
+  paused: ["live", "cancelled"],
+  closing: ["closed", "cancelled"],
+  closed: ["awarded", "unawarded", "cancelled"],
+  awarded: ["settled", "cancelled"],
+  unawarded: ["archived"],
+  cancelled: ["archived"],
+  withdrawn: ["archived"],
+  settled: ["archived"],
+  archived: [],
+};
+
+export async function createAdminLot(auctionId: string, input: LotInput): Promise<string> {
+  const res = await request<{ id: string }>(`/api/v1/admin/auctions/${auctionId}/lots`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return res.id;
+}
+export async function transitionAdminLot(lotId: string, next: string): Promise<void> {
+  await request<{ id: string; status: string }>(`/api/v1/admin/auction-lots/${lotId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: next }),
+  });
+}
+export async function deleteAdminLot(lotId: string): Promise<void> {
+  await request<{ deleted: boolean }>(`/api/v1/admin/auction-lots/${lotId}`, { method: "DELETE" });
 }

@@ -14,6 +14,7 @@ export interface PropertyRecord {
   assessedValue: Cents | null;
   countyName: string | null;
   countyState: string | null;
+  imageUrl: string | null;
   status: string;
   lotId: string | null;
   lotStatus: string | null;
@@ -122,13 +123,14 @@ export async function createProperty(input: {
   assessedValue?: Cents;
   legalDescription?: string;
   zoning?: string;
+  imageData?: string;
   metadata?: Record<string, unknown>;
 }): Promise<string> {
   if (!input.address) throw new ValidationError("Address is required");
   const { rows } = await getPool().query(
     `INSERT INTO properties
-       (jurisdiction_id, parcel_id, address, city, state, postal_code, property_type, assessed_value, legal_description, zoning, metadata)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+       (jurisdiction_id, parcel_id, address, city, state, postal_code, property_type, assessed_value, legal_description, zoning, image_data, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
     [
       input.jurisdictionId ?? null,
       input.parcelId ?? null,
@@ -140,6 +142,7 @@ export async function createProperty(input: {
       input.assessedValue ?? null,
       input.legalDescription ?? null,
       input.zoning ?? null,
+      input.imageData ?? null,
       JSON.stringify(input.metadata ?? {}),
     ],
   );
@@ -156,6 +159,7 @@ export async function updateProperty(id: string, patch: Partial<Record<string, u
     "assessed_value",
     "legal_description",
     "zoning",
+    "image_data",
     "status",
     "metadata",
   ];
@@ -185,6 +189,7 @@ function mapProperty(r: Record<string, unknown>): PropertyRecord {
     assessedValue: r.assessed_value == null ? null : Number(r.assessed_value),
     countyName: (r.county_name as string) ?? null,
     countyState: (r.county_state as string) ?? null,
+    imageUrl: (r.image_data as string) ?? null,
     status: r.status as string,
     lotId: (r.lot_id as string) ?? null,
     lotStatus: (r.lot_status as string) ?? null,
