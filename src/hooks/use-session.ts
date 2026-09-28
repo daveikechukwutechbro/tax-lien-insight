@@ -5,6 +5,7 @@ import {
   onAuthChange,
   readCachedUser,
   cachedUserAgeMs,
+  knownAuthenticated,
   USER_CACHE_KEY,
   type BackendUser,
 } from "@/lib/backend-auth";
@@ -78,8 +79,9 @@ export function useSession() {
         }
       } catch {
         // Transient failure (timeout / Worker blip): never downgrade a signed
-        // in user to the login buttons because the network hiccuped.
-        if (!optimisticRef.current) applyUser(null);
+        // in user to the login buttons because the network hiccuped. Only a
+        // definitive 401/403 (getMe returning null) or an explicit logout
+        // clears the user.
         setSession(null);
       } finally {
         setLoading(false);
@@ -88,12 +90,43 @@ export function useSession() {
     [applyUser],
   );
 
+  const applyCached = useCallback(() => {
+    const cached = readCachedUser();
+    if (!cached) return false;
+    const u = toUser(cached);
+    optimisticRef.current = u;
+    setUser(u);
+    setSession({
+      access_token: "",
+      refresh_token: "",
+      token_type: "bearer",
+      expires_in: 0,
+      expires_at: 0,
+      user: { ...u },
+    } as Session);
+    setLoading(false);
+    return true;
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     let active = true;
     refresh();
     const unsub = onAuthChange(() => {
-      if (active) refresh(true);
+      if (!active) return;
+      // Reflect login/logout immediately from local state instead of waiting
+      // on the /me round-trip: apply a fresh cached session when one exists,
+      // or clear the header the instant a local sign-out happens (logout()
+      // clears the cache and knownAuthenticated before emitting).
+      if (applyCached()) return;
+      if (!knownAuthenticated && !readCachedUser()) {
+        optimisticRef.current = null;
+        setUser(null);
+        setSession(null);
+        setLoading(false);
+        return;
+      }
+      void refresh(true);
     });
     const onStorage = (e: StorageEvent) => {
       if (mounted && e.key === USER_CACHE_KEY) refresh(true);

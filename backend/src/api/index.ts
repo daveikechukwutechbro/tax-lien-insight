@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 import { AuthContext } from "../auth/rbac.js";
+import { cookieOptions } from "../auth/session.js";
 import {
   ok,
   fail,
@@ -177,13 +178,7 @@ export function createApp(): Hono {
     }
     const body = await c.req.json().catch(() => ({}));
     const res = await loginUser(body.email, body.password, { ip: ip(c), userAgent: c.req.header("user-agent") ?? "" });
-    setCookie(c, config.sessionCookieName, res.token, {
-      httpOnly: true,
-      secure: config.isProduction,
-      sameSite: "lax",
-      path: "/",
-      maxAge: config.sessionTtlSeconds,
-    });
+    setCookie(c, config.sessionCookieName, res.token, { ...cookieOptions(), maxAge: config.sessionTtlSeconds });
     return c.json(json({ userId: res.userId }));
   });
 
@@ -192,7 +187,7 @@ export function createApp(): Hono {
     // best-effort; rely on cookie from context
     const ctx = getAuth(c);
     if (ctx) await revokeUserSessions(ctx.userId).catch(() => {});
-    setCookie(c, config.sessionCookieName, "", { maxAge: 0, path: "/" });
+    setCookie(c, config.sessionCookieName, "", { ...cookieOptions(), maxAge: 0 });
     return c.json(json({ success: true }));
   });
 

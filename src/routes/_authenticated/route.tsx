@@ -8,7 +8,16 @@ export const Route = createFileRoute("/_authenticated")({
   pendingComponent: () => <PageSkeleton rows={2} />,
   beforeLoad: async () => {
     if (knownAuthenticated) return {};
-    const user = await getMe();
+    // Retry once on a transient Worker/timeout blip so a slow backend never
+    // bounces a signed-in user to /auth (or shows the error page).
+    let user: Awaited<ReturnType<typeof getMe>> | null = null;
+    for (let i = 0; i < 2 && !user; i++) {
+      try {
+        user = await getMe();
+      } catch {
+        // transient — retry, then redirect if it never settles
+      }
+    }
     if (!user) throw redirect({ to: "/auth" });
     return {};
   },

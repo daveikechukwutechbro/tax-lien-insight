@@ -151,6 +151,17 @@ export function register(input: { email: string; password: string; fullName?: st
 
 export async function login(input: { email: string; password: string }): Promise<void> {
   await request<{ userId: string }>("/api/v1/auth/login", { method: "POST", body: JSON.stringify(input) });
+  // The server accepted the credentials and set the session cookie. Mark the
+  // client as authenticated immediately (it survives the /me round-trip) and
+  // pre-warm the cached user so the header reflects the signed-in state
+  // instantly instead of flashing the logged-out UI while the Worker responds.
+  knownAuthenticated = true;
+  try {
+    const me = await getMe();
+    if (me) knownAuthenticated = true;
+  } catch {
+    // Transient network blip — the next /me settles it. Never fail login here.
+  }
 }
 
 export async function logout(): Promise<void> {
