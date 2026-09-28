@@ -1,7 +1,8 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { Bell, ChevronDown, Landmark, Menu } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { isAdminQuery, profileQuery, unreadNotificationsQuery } from "@/lib/queries/dashboard";
 import { ProfileMenu } from "@/components/site/profile-menu";
 import { ThemeToggle } from "@/components/site/theme-toggle";
@@ -27,9 +28,15 @@ export function SiteHeader() {
   const { data: unread } = useQuery(unreadNotificationsQuery(user?.id));
   const { data: profile } = useQuery(profileQuery(user?.id));
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+  useEffect(() => setMenuOpen(false), [location.href]);
+
+  const initials = (user?.email ?? "?").slice(0, 1).toUpperCase();
+
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
-      <div className="container-tight flex h-16 items-center gap-8">
+      <div className="container-tight flex h-14 items-center gap-3 sm:gap-4 md:h-16 lg:gap-8">
         <Link to={user ? "/dashboard" : "/"} className="flex shrink-0 items-center gap-2.5">
           <span className="grid size-9 place-items-center rounded-md bg-navy text-gold">
             <Landmark className="size-5" strokeWidth={2.25} />
@@ -38,13 +45,13 @@ export function SiteHeader() {
             <span className="font-display text-[15px] font-700 tracking-tight text-navy">
               Auction<span className="text-gold">Ledger</span>
             </span>
-            <span className="mt-0.5 text-[9px] font-600 uppercase tracking-[0.28em] text-ink-muted">
+            <span className="mt-0.5 hidden text-[9px] font-600 uppercase tracking-[0.28em] text-ink-muted sm:block">
               Tax Lien Auctions
             </span>
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 border-l border-hairline pl-6 md:flex">
+        <nav className="hidden items-center gap-5 border-l border-hairline pl-6 lg:flex">
           {nav
             .filter((item) => !(item.adminOnly && !isAdmin))
             .map((item) => (
@@ -68,9 +75,9 @@ export function SiteHeader() {
           )}
         </nav>
 
-        {/* Mobile menu */}
-        <div className="md:hidden">
-          <Sheet>
+        {/* Mobile / tablet menu */}
+        <div className="lg:hidden">
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
               <button
                 type="button"
@@ -81,12 +88,33 @@ export function SiteHeader() {
               </button>
             </SheetTrigger>
             <SheetOverlay />
-            <SheetContent side="left" className="w-[280px]">
-              <nav className="flex h-full flex-col gap-1 py-4">
+            <SheetContent side="left" className="w-[280px] overflow-y-auto">
+              {!loading && !user && (
+                <div className="space-y-2 px-4 pb-4 pt-6">
+                  <SheetClose asChild>
+                    <Link
+                      to="/auth"
+                      className="block w-full rounded-md border border-hairline bg-surface px-4 py-2.5 text-center text-sm font-600 text-navy transition-colors hover:bg-surface-alt"
+                    >
+                      Log in
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link
+                      to="/auth"
+                      search={{ mode: "signup" }}
+                      className="block w-full rounded-md bg-gold px-4 py-2.5 text-center text-sm font-600 text-navy"
+                    >
+                      Create Account
+                    </Link>
+                  </SheetClose>
+                </div>
+              )}
+              <nav className="flex flex-col gap-1 py-4">
                 {nav
                   .filter((item) => !(item.adminOnly && !isAdmin))
                   .map((item) => (
-                    <SheetClose key={item.to} asChild>
+                    <SheetClose asChild key={item.to}>
                       <Link
                         to={item.to}
                         className="rounded-md px-4 py-3 text-sm font-500 text-ink transition-colors hover:bg-surface-alt"
@@ -130,7 +158,7 @@ export function SiteHeader() {
           </Sheet>
         </div>
 
-        <div className="ml-auto flex items-center gap-5">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3 lg:gap-5">
           <ThemeToggle />
           {loading ? null : user ? (
             <>
@@ -148,16 +176,18 @@ export function SiteHeader() {
               </Link>
               <ProfileMenu
                 trigger={
-                  <button className="flex items-center gap-2 rounded-md border border-hairline bg-surface px-2.5 py-1.5 text-sm text-ink transition-colors hover:border-navy/40 hover:bg-surface-alt">
+                  <button className="flex items-center gap-1.5 rounded-full border border-hairline bg-surface p-0.5 text-ink transition-colors hover:border-navy/40 hover:bg-surface-alt sm:gap-2 sm:pr-2.5">
                     {profile?.avatar ? (
-                      <img src={profile.avatar} alt="" className="size-7 rounded-full object-cover" />
+                      <img src={profile.avatar} alt="" className="size-8 rounded-full object-cover md:size-7" />
                     ) : (
-                      <span className="grid size-7 place-items-center rounded-full bg-navy text-xs font-600 text-gold">
-                        {(user.email ?? "?").slice(0, 1).toUpperCase()}
+                      <span className="grid size-8 place-items-center rounded-full bg-navy text-xs font-600 text-gold md:size-7">
+                        {initials}
                       </span>
                     )}
-                    <span className="hidden text-navy md:inline">{user.email?.split("@")[0]}</span>
-                    <ChevronDown className="size-4 text-ink-muted" />
+                    <span className="hidden max-w-[9rem] truncate text-navy md:inline">
+                      {user.email?.split("@")[0]}
+                    </span>
+                    <ChevronDown className="hidden size-4 text-ink-muted md:block" />
                   </button>
                 }
               />
@@ -166,14 +196,14 @@ export function SiteHeader() {
             <>
               <Link
                 to="/auth"
-                className="text-sm font-500 text-ink-muted transition-colors hover:text-navy"
+                className="hidden text-sm font-500 text-ink-muted transition-colors hover:text-navy lg:inline-block"
               >
                 Log in
               </Link>
               <Link
                 to="/auth"
                 search={{ mode: "signup" }}
-                className="inline-flex items-center rounded-md bg-gold px-4 py-2 text-sm font-600 text-navy shadow-sm transition-colors hover:bg-gold-soft"
+                className="hidden whitespace-nowrap items-center rounded-md bg-gold px-4 py-2 text-sm font-600 text-navy shadow-sm transition-colors hover:bg-gold-soft lg:inline-flex"
               >
                 Create Account
               </Link>

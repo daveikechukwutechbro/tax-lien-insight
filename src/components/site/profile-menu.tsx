@@ -3,6 +3,7 @@ import {
   Activity, Bell, Bookmark, Image, LayoutDashboard, LogOut, Settings, ShieldCheck, User, Wallet,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { useSession } from "@/hooks/use-session";
@@ -23,6 +24,7 @@ export function ProfileMenu({ trigger }: { trigger: ReactNode }) {
   const qc = useQueryClient();
   const { data: profile } = useQuery(profileQuery(user?.id));
   const { data: isAdmin } = useQuery(isAdminQuery(user?.id));
+  const [open, setOpen] = useState(false);
 
   const displayName = profile?.full_name ?? user?.email?.split("@")[0] ?? "Bidder";
   const email = user?.email ?? "";
@@ -35,8 +37,10 @@ export function ProfileMenu({ trigger }: { trigger: ReactNode }) {
     router.navigate({ to: "/", replace: true });
   }
 
+  const close = () => setOpen(false);
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel className="px-2 py-1.5">
@@ -49,43 +53,43 @@ export function ProfileMenu({ trigger }: { trigger: ReactNode }) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild onClick={close}>
           <Link to="/dashboard/profile" className="flex items-center gap-2">
             <User className="size-4" /> View Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild onClick={close}>
           <Link to="/dashboard/profile" className="flex items-center gap-2">
             <Settings className="size-4" /> Edit Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild onClick={close}>
           <Link to="/dashboard/profile" className="flex items-center gap-2">
             <Image className="size-4" /> Upload Photo
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild onClick={close}>
           <Link to="/dashboard" className="flex items-center gap-2">
             <LayoutDashboard className="size-4" /> Dashboard
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild onClick={close}>
           <Link to="/dashboard/activity" className="flex items-center gap-2">
             <Activity className="size-4" /> My Activity
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild onClick={close}>
           <Link to="/dashboard/notifications" className="flex items-center gap-2">
             <Bell className="size-4" /> Notifications
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild onClick={close}>
           <Link to="/dashboard/watched" className="flex items-center gap-2">
             <Bookmark className="size-4" /> Watched Properties
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild onClick={close}>
           <Link to="/dashboard/funds" className="flex items-center gap-2">
             <Wallet className="size-4" /> Account Funds
           </Link>
@@ -93,7 +97,7 @@ export function ProfileMenu({ trigger }: { trigger: ReactNode }) {
         {isAdmin && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild onClick={close}>
               <Link to="/admin" className="flex items-center gap-2">
                 <ShieldCheck className="size-4" /> Admin Panel
               </Link>

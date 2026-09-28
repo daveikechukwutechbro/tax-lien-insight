@@ -1,5 +1,6 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 import { Menu } from "lucide-react";
+import { useEffect, useState } from "react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import {
   Sheet,
@@ -19,6 +20,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function DashboardLayout() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+  useEffect(() => setMenuOpen(false), [location.href]);
+
   return (
     <div className="bg-background pb-16">
       <div className="container-tight pt-6">
@@ -28,7 +33,7 @@ function DashboardLayout() {
           </div>
           <div className="min-w-0">
             <div className="mb-4 flex items-center gap-3 lg:hidden">
-              <Sheet>
+              <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
                 <SheetTrigger asChild>
                   <button
                     type="button"
@@ -39,7 +44,7 @@ function DashboardLayout() {
                   </button>
                 </SheetTrigger>
                 <SheetOverlay />
-                <SheetContent side="left" className="w-[260px] p-0">
+                <SheetContent side="left" className="w-[260px] p-0" onOpenAutoFocus={(e) => e.preventDefault()}>
                   <div className="h-[calc(100vh-4rem)] overflow-y-auto py-4">
                     <DashboardSidebar />
                   </div>

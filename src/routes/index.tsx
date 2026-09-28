@@ -306,7 +306,7 @@ function WhyInvestCard() {
 function FilterBar() {
   return (
     <section className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-hairline bg-surface p-3">
-      <div className="relative min-w-[280px] flex-1">
+      <div className="relative min-w-[240px] flex-1 sm:min-w-[280px]">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted" />
         <input
           type="search"
@@ -338,7 +338,7 @@ function SelectPill({ label }: { label: string }) {
   return (
     <button
       type="button"
-      className="inline-flex h-10 min-w-[170px] items-center justify-between gap-2 rounded-md border border-hairline bg-surface px-3 text-sm text-ink hover:border-navy"
+      className="inline-flex h-10 min-w-[140px] grow items-center justify-between gap-2 rounded-md border border-hairline bg-surface px-3 text-sm text-ink hover:border-navy sm:min-w-[170px] sm:grow-0"
     >
       <span>{label}</span>
       <ChevronDown className="size-4 text-ink-muted" />
