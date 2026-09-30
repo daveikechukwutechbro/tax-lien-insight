@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CheckCheck } from "lucide-react";
 import { timeAgo } from "@/components/dashboard/activity-feed";
+import { PageIntro } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/notifications")({
   component: Notifications,
@@ -45,17 +46,17 @@ function Notifications() {
 
   return (
     <div>
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-600 text-navy">Notifications</h1>
-          <p className="mt-1 text-sm text-ink-muted">{unread} unread</p>
-        </div>
-        {unread > 0 && (
-          <button onClick={markAllRead} disabled={busy} className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-xs font-500 text-navy hover:bg-surface-alt disabled:opacity-60">
-            <CheckCheck className="size-3.5" /> Mark all as read
-          </button>
-        )}
-      </div>
+      <PageIntro
+        title="Notifications"
+        subtitle={unread > 0 ? `${unread} unread` : "You're all caught up."}
+        actions={
+          unread > 0 ? (
+            <button onClick={markAllRead} disabled={busy} className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-2 text-xs font-500 text-navy hover:bg-surface-alt disabled:opacity-60">
+              <CheckCheck className="size-3.5" /> Mark all as read
+            </button>
+          ) : undefined
+        }
+      />
       <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">
         {rows.length === 0 ? <p className="p-8 text-center text-sm text-ink-muted">No notifications yet. Watching a property, placing a bid, or funding your account creates one.</p> :
           <ul className="divide-y divide-hairline">

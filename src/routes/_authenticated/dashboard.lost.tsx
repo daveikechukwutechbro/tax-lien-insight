@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/hooks/use-session";
 import { myBidsQuery } from "@/lib/queries/dashboard";
+import { Gavel, TrendingUp, XCircle } from "lucide-react";
+import { PageIntro, StatCard } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/lost")({
   component: LostPage,
@@ -16,13 +18,15 @@ function LostPage() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-600 text-navy">Lost Properties</h1>
-      <p className="mt-1 text-sm text-ink-muted">Properties you bid on but did not win.</p>
+      <PageIntro
+        title="Lost Properties"
+        subtitle="Properties you bid on but did not win."
+      />
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Card label="Total Lost Properties" value={lost.length} sub={`Total Value: ${fmt(total)}`} />
-        <Card label="Total Amount Bid" value={fmt(total)} sub={`Across ${lost.length} Properties`} />
-        <Card label="Highest Bid Lost" value={lost.length ? fmt(Math.max(...lost.map((l) => l.lien.taxes_owed))) : "—"} sub="Across all bids" />
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <StatCard icon={<XCircle className="size-4" />} label="Total Lost Properties" value={lost.length} sub={`Total Value: ${fmt(total)}`} accent="text-destructive" />
+        <StatCard icon={<Gavel className="size-4" />} label="Total Amount Bid" value={fmt(total)} sub={`Across ${lost.length} Properties`} />
+        <StatCard icon={<TrendingUp className="size-4" />} label="Highest Bid Lost" value={lost.length ? fmt(Math.max(...lost.map((l) => l.lien.taxes_owed))) : "—"} sub="Across all bids" accent="text-warning" />
       </div>
 
       <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">
@@ -42,15 +46,6 @@ function LostPage() {
           </ul>
         }
       </div>
-    </div>
-  );
-}
-function Card({ label, value, sub }: { label: string; value: React.ReactNode; sub: string }) {
-  return (
-    <div className="rounded-xl border border-hairline bg-surface p-5">
-      <div className="text-xs uppercase tracking-wider text-ink-muted">{label}</div>
-      <div className="mt-2 font-display text-2xl font-600 text-navy">{value}</div>
-      <div className="text-xs text-ink-muted">{sub}</div>
     </div>
   );
 }

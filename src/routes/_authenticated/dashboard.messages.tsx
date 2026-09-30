@@ -4,6 +4,7 @@ import { useSession } from "@/hooks/use-session";
 import { useState } from "react";
 import { toast } from "sonner";
 import { getMessages, sendMessage } from "@/lib/backend";
+import { PageIntro } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/messages")({
   component: Messages,
@@ -33,8 +34,10 @@ function Messages() {
   }
   return (
     <div>
-      <h1 className="font-display text-3xl font-600 text-navy">Messages & Support</h1>
-      <p className="mt-1 text-sm text-ink-muted">Send our team a message. Replies appear here.</p>
+      <PageIntro
+        title="Messages & Support"
+        subtitle="Send our team a message. Replies appear here."
+      />
       <div className="mt-6 space-y-3">
         {rows.length === 0 && <p className="rounded-xl border border-dashed border-hairline bg-surface p-8 text-center text-sm text-ink-muted">No messages yet.</p>}
         {rows.map((m) => {

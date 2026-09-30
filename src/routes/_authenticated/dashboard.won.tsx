@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { BadgeCheck, CreditCard, Download, TrendingUp, Trophy } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { myBidsQuery, profileQuery } from "@/lib/queries/dashboard";
 import { printLienCertificate } from "@/lib/lien-certificate";
+import { PageIntro, StatCard } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/won")({
   component: WonPage,
@@ -27,14 +28,16 @@ function WonPage() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-600 text-navy">Won Properties</h1>
-      <p className="mt-1 text-sm text-ink-muted">Properties you've successfully won at auction.</p>
+      <PageIntro
+        title="Won Properties"
+        subtitle="Properties you've successfully won at auction."
+      />
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card label="Total Won Properties" value={won.length} sub={`Total Value: ${fmt(total)}`} />
-        <Card label="Total Amount Paid" value={fmt(total)} sub="View Payments" />
-        <Card label="Average Interest Rate" value={`${avgRate.toFixed(2)}%`} sub="Weighted Average" />
-        <Card label="Total Redeemed" value="0" sub="Total Value: $0" />
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={<Trophy className="size-4" />} label="Total Won Properties" value={won.length} sub={`Total Value: ${fmt(total)}`} accent="text-success" />
+        <StatCard icon={<CreditCard className="size-4" />} label="Total Amount Paid" value={fmt(total)} cta="View Payments" href="/dashboard/payments" />
+        <StatCard icon={<TrendingUp className="size-4" />} label="Average Interest Rate" value={`${avgRate.toFixed(2)}%`} sub="Weighted Average" accent="text-success" />
+        <StatCard icon={<BadgeCheck className="size-4" />} label="Total Redeemed" value="0" sub="Total Value: $0" />
       </div>
 
       <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">
@@ -65,15 +68,6 @@ function WonPage() {
           </ul>
         }
       </div>
-    </div>
-  );
-}
-function Card({ label, value, sub }: { label: string; value: React.ReactNode; sub: string }) {
-  return (
-    <div className="rounded-xl border border-hairline bg-surface p-5">
-      <div className="text-xs uppercase tracking-wider text-ink-muted">{label}</div>
-      <div className="mt-2 font-display text-2xl font-600 text-navy">{value}</div>
-      <div className="text-xs text-ink-muted">{sub}</div>
     </div>
   );
 }

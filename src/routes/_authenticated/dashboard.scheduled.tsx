@@ -4,6 +4,7 @@ import { useSession } from "@/hooks/use-session";
 import { getUpcomingAuctions, registerForAuction } from "@/lib/backend";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { PageIntro } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/scheduled")({
   component: Scheduled,
@@ -35,8 +36,10 @@ function Scheduled() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-600 text-navy">Scheduled Auctions</h1>
-      <p className="mt-1 text-sm text-ink-muted">Register in advance to bid the moment they go live.</p>
+      <PageIntro
+        title="Scheduled Auctions"
+        subtitle="Register in advance to bid the moment they go live."
+      />
       <div className="mt-6 grid gap-3">
         {isLoading ? (
           <p className="rounded-xl border border-hairline bg-surface p-8 text-center text-sm text-ink-muted">Loading…</p>

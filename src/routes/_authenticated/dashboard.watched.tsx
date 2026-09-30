@@ -5,6 +5,7 @@ import { watchlistQuery } from "@/lib/queries/dashboard";
 import { removeWatchlistItem } from "@/lib/backend";
 import { Bookmark, CalendarDays, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { PageIntro, StatCard } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/watched")({
   component: WatchedPage,
@@ -29,13 +30,15 @@ function WatchedPage() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-600 text-navy">Watched Properties</h1>
-      <p className="mt-1 text-sm text-ink-muted">Properties you're watching and tracking for upcoming auctions.</p>
+      <PageIntro
+        title="Watched Properties"
+        subtitle="Properties you're watching and tracking for upcoming auctions."
+      />
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <MiniStat icon={<Bookmark className="text-navy" />} label="Total Watched" value={watched.length} sub="Properties" />
-        <MiniStat icon={<CalendarDays className="text-success" />} label="Upcoming Auctions" value={watched.filter((w) => w.auction_starts_at && new Date(w.auction_starts_at) > new Date()).length} sub="Starting Soon" />
-        <MiniStat icon={<CalendarDays className="text-warning" />} label="Not Yet Scheduled" value={watched.filter((w) => !w.auction_starts_at).length} sub="Coming Soon" />
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <StatCard icon={<Bookmark className="size-4" />} label="Total Watched" value={watched.length} sub="Properties" />
+        <StatCard icon={<CalendarDays className="size-4" />} label="Upcoming Auctions" value={watched.filter((w) => w.auction_starts_at && new Date(w.auction_starts_at) > new Date()).length} sub="Starting Soon" accent="text-success" />
+        <StatCard icon={<CalendarDays className="size-4" />} label="Not Yet Scheduled" value={watched.filter((w) => !w.auction_starts_at).length} sub="Coming Soon" accent="text-warning" />
       </div>
 
       <div className="mt-6 rounded-xl border border-hairline bg-surface">
@@ -64,18 +67,6 @@ function WatchedPage() {
          </ul>
         }
       </div>
-    </div>
-  );
-}
-
-function MiniStat({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub: string }) {
-  return (
-    <div className="rounded-xl border border-hairline bg-surface p-5">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-ink-muted">
-        <span className="grid size-8 place-items-center rounded-lg bg-surface-alt">{icon}</span> {label}
-      </div>
-      <div className="mt-2 font-display text-2xl font-600 text-navy">{value}</div>
-      <div className="text-xs text-ink-muted">{sub}</div>
     </div>
   );
 }

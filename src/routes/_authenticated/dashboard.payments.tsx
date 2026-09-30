@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/hooks/use-session";
 import { getInvoices } from "@/lib/backend";
+import { PageIntro } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/payments")({
   component: Payments,
@@ -17,8 +18,7 @@ function Payments() {
   });
   return (
     <div>
-      <h1 className="font-display text-3xl font-600 text-navy">Payments & Invoices</h1>
-      <p className="mt-1 text-sm text-ink-muted">All invoices on your account.</p>
+      <PageIntro title="Payments & Invoices" subtitle="All invoices on your account." />
       {rows.length === 0 ? (
         <p className="mt-6 rounded-xl border border-hairline bg-surface p-8 text-center text-sm text-ink-muted">
           No transactions yet.

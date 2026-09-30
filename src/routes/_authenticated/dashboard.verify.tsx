@@ -5,6 +5,7 @@ import { getKycStatus, submitKyc, createDocument, updateProfile, type KycStatus 
 import { useState } from "react";
 import { toast } from "sonner";
 import { ShieldCheck, Upload, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { PageIntro } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/verify")({
   component: Verify,
@@ -71,11 +72,8 @@ function Verify() {
     <div className="max-w-3xl">
       <div className="flex items-center gap-2 text-navy">
         <ShieldCheck className="size-6" />
-        <h1 className="font-display text-3xl font-600">Identity Verification (KYC)</h1>
+        <PageIntro title="Identity Verification (KYC)" subtitle="Verification is required before you can place bids. Your information is encrypted and reviewed by our compliance team." />
       </div>
-      <p className="mt-1 text-sm text-ink-muted">
-        Verification is required before you can place bids. Your information is encrypted and reviewed by our compliance team.
-      </p>
 
       {status === "verified" && (
         <div className="mt-6 flex items-center gap-3 rounded-xl border border-success/30 bg-success-soft p-4 text-success">

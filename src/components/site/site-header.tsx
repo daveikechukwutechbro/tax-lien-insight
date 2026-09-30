@@ -82,7 +82,7 @@ export function SiteHeader() {
               <button
                 type="button"
                 aria-label="Open navigation menu"
-                className="grid size-10 place-items-center rounded-md border border-hairline bg-surface text-ink hover:bg-surface-alt"
+                className="grid size-10 place-items-center rounded-full border border-hairline bg-surface text-ink shadow-sm transition-colors hover:border-navy/40 hover:bg-surface-alt"
               >
                 <Menu className="size-5" strokeWidth={1.75} />
               </button>

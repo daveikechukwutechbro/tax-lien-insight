@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { myBidsQuery } from "@/lib/queries/dashboard";
 import { useSession } from "@/hooks/use-session";
+import { PageIntro } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/history")({
   component: History,
@@ -13,8 +14,10 @@ function History() {
   const { data: bids = [] } = useQuery(myBidsQuery(user?.id));
   return (
     <div>
-      <h1 className="font-display text-3xl font-600 text-navy">Purchase History</h1>
-      <p className="mt-1 text-sm text-ink-muted">Complete record of every bid you've placed.</p>
+      <PageIntro
+        title="Purchase History"
+        subtitle="Complete record of every bid you've placed."
+      />
       <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">
         {bids.length === 0 ? (
           <p className="p-8 text-center text-sm text-ink-muted">No history yet.</p>

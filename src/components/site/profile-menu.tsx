@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
-  Activity, Bell, Bookmark, Image, LayoutDashboard, LogOut, Settings, ShieldCheck, User, Wallet,
+  Activity, Bell, Bookmark, Gavel, Image, LayoutDashboard, LogOut, Settings, ShieldCheck, User, Wallet,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -28,12 +28,14 @@ export function ProfileMenu({ trigger }: { trigger: ReactNode }) {
 
   const displayName = profile?.full_name ?? user?.email?.split("@")[0] ?? "Bidder";
   const email = user?.email ?? "";
+  const initials = displayName.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase();
 
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
     await logout();
     emitAuthChange();
+    await router.invalidate().catch(() => {});
     router.navigate({ to: "/", replace: true });
   }
 
@@ -43,13 +45,24 @@ export function ProfileMenu({ trigger }: { trigger: ReactNode }) {
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel className="px-2 py-1.5">
-          <div className="truncate text-sm font-600 text-navy">{displayName}</div>
-          <div className="mt-0.5 flex items-center gap-1 text-xs font-normal text-ink-muted">
-            {email}
-            {profile?.verified && (
-              <span className="rounded bg-success-soft px-1 py-0.5 text-[10px] font-600 text-success">Verified</span>
+        <DropdownMenuLabel className="px-2 py-2">
+          <div className="flex items-center gap-2.5">
+            {profile?.avatar ? (
+              <img src={profile.avatar} alt="" className="size-9 shrink-0 rounded-full object-cover" />
+            ) : (
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-navy text-xs font-600 text-gold">
+                {initials}
+              </span>
             )}
+            <div className="min-w-0">
+              <div className="truncate text-sm font-600 text-navy">{displayName}</div>
+              <div className="mt-0.5 flex items-center gap-1 text-xs font-normal text-ink-muted">
+                {email}
+                {profile?.verified && (
+                  <span className="rounded bg-success-soft px-1 py-0.5 text-[10px] font-600 text-success">Verified</span>
+                )}
+              </div>
+            </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -72,6 +85,11 @@ export function ProfileMenu({ trigger }: { trigger: ReactNode }) {
         <DropdownMenuItem asChild onClick={close}>
           <Link to="/dashboard" className="flex items-center gap-2">
             <LayoutDashboard className="size-4" /> Dashboard
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild onClick={close}>
+          <Link to="/auctions" className="flex items-center gap-2">
+            <Gavel className="size-4" /> Auctions
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild onClick={close}>

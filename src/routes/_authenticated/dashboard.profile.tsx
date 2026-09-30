@@ -6,6 +6,7 @@ import { updateProfile } from "@/lib/backend";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Camera, ShieldCheck, BadgeCheck } from "lucide-react";
+import { PageIntro } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/profile")({
   component: Profile,
@@ -132,8 +133,10 @@ function Profile() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="font-display text-3xl font-600 text-navy">Profile Settings</h1>
-      <p className="mt-1 text-sm text-ink-muted">Manage your personal information, photo, and address.</p>
+      <PageIntro
+        title="Profile Settings"
+        subtitle="Manage your personal information, photo, and address."
+      />
 
       <div className="mt-6 rounded-xl border border-hairline bg-surface p-5">
         <div className="flex items-center gap-4">

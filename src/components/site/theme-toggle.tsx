@@ -47,12 +47,7 @@ export function ThemeToggle() {
       type="button"
       onClick={flip}
       aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
-      className="grid size-10 place-items-center rounded-full shadow-sm ring-1 ring-inset transition-all duration-200 hover:scale-105 active:scale-95 dark:ring-gold/30"
-      style={
-        dark
-          ? { backgroundColor: "#1a2f52", color: "#e9b949" }
-          : { backgroundColor: "#ffffff", color: "#14213d" }
-      }
+      className="grid size-10 place-items-center rounded-full border border-hairline bg-surface text-ink shadow-sm transition-all duration-200 hover:text-navy hover:border-navy/40 hover:bg-surface-alt active:scale-95"
     >
       {dark ? <Sun className="size-5" strokeWidth={1.75} /> : <Moon className="size-5" strokeWidth={1.75} />}
     </button>

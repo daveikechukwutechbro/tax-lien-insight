@@ -91,6 +91,25 @@ function AuthPage() {
             : "Access your watchlist, bids, and account."}
         </p>
 
+        <div className="mt-6 grid grid-cols-2 gap-1 rounded-lg border border-hairline bg-surface-alt p-1">
+          <button
+            type="button"
+            onClick={() => router.navigate({ to: "/auth", search: { mode: "login", redirect }, replace: true })}
+            aria-pressed={!isSignup}
+            className={`rounded-md px-4 py-2.5 text-sm font-600 transition-colors ${isSignup ? "text-ink-muted hover:text-navy" : "bg-navy text-primary-foreground shadow-sm"}`}
+          >
+            Log in
+          </button>
+          <button
+            type="button"
+            onClick={() => router.navigate({ to: "/auth", search: { mode: "signup", redirect }, replace: true })}
+            aria-pressed={isSignup}
+            className={`rounded-md px-4 py-2.5 text-sm font-600 transition-colors ${isSignup ? "bg-navy text-primary-foreground shadow-sm" : "text-ink-muted hover:text-navy"}`}
+          >
+            Create account
+          </button>
+        </div>
+
         <form onSubmit={onSubmit} className="mt-6 space-y-3">
           {isSignup && (
             <Field label="Full name">
@@ -146,7 +165,7 @@ function AuthPage() {
           {isSignup ? "Already registered?" : "New here?"}{" "}
           <button
             type="button"
-            onClick={() => router.navigate({ to: "/auth", search: { mode: isSignup ? "login" : "signup" }, replace: true })}
+            onClick={() => router.navigate({ to: "/auth", search: { mode: isSignup ? "login" : "signup", redirect }, replace: true })}
             className="font-500 text-navy underline underline-offset-4"
           >
             {isSignup ? "Log in" : "Create an account"}

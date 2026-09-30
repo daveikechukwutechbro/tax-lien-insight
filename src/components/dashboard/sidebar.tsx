@@ -45,6 +45,7 @@ export function DashboardSidebar() {
     qc.clear();
     await logout();
     emitAuthChange();
+    await router.invalidate().catch(() => {});
     router.navigate({ to: "/", replace: true });
   }
 
@@ -54,9 +55,13 @@ export function DashboardSidebar() {
         trigger={
           <div className="cursor-pointer rounded-xl border border-hairline bg-surface p-4">
             <div className="flex items-center gap-3">
-              <span className="grid size-12 place-items-center rounded-full bg-navy text-sm font-600 text-gold">
-                {initials}
-              </span>
+              {profile?.avatar ? (
+                <img src={profile.avatar} alt="" className="size-12 rounded-full object-cover" />
+              ) : (
+                <span className="grid size-12 place-items-center rounded-full bg-navy text-sm font-600 text-gold">
+                  {initials}
+                </span>
+              )}
               <div className="min-w-0 flex-1">
                 <div className="truncate font-600 text-navy flex items-center gap-1">
                   {displayName}

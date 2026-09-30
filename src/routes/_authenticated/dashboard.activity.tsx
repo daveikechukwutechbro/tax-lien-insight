@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/hooks/use-session";
 import { activityQuery } from "@/lib/queries/dashboard";
 import { ActivityRow } from "@/components/dashboard/activity-feed";
+import { PageIntro } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/activity")({
   component: ActivityPage,
@@ -14,10 +15,10 @@ function ActivityPage() {
 
   return (
     <div>
-      <div>
-        <h1 className="font-display text-3xl font-600 text-navy">My Activity</h1>
-        <p className="mt-1 text-sm text-ink-muted">Everything you've done — bids, watches, deposits, and more.</p>
-      </div>
+      <PageIntro
+        title="My Activity"
+        subtitle="Everything you've done — bids, watches, deposits, and more."
+      />
       <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">
         {items.length === 0 ? (
           <p className="p-8 text-center text-sm text-ink-muted">

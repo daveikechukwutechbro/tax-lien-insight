@@ -4,6 +4,7 @@ import { useSession } from "@/hooks/use-session";
 import { useState } from "react";
 import { toast } from "sonner";
 import { getSavedSearches, saveSearch, deleteSavedSearch } from "@/lib/backend";
+import { PageIntro } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/searches")({
   component: Searches,
@@ -50,8 +51,10 @@ function Searches() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-600 text-navy">Saved Searches</h1>
-      <p className="mt-1 text-sm text-ink-muted">Save filter presets and get alerts when matching properties list.</p>
+      <PageIntro
+        title="Saved Searches"
+        subtitle="Save filter presets and get alerts when matching properties list."
+      />
       <form onSubmit={save} className="mt-6 grid gap-3 rounded-xl border border-hairline bg-surface p-4 sm:grid-cols-2 lg:grid-cols-5">
         <input required placeholder="Name" value={name} onChange={(e)=>setName(e.target.value)} className="input" />
         <input placeholder="Keyword" value={q} onChange={(e)=>setQ(e.target.value)} className="input" />

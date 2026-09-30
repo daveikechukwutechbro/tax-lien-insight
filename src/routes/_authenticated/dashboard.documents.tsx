@@ -4,6 +4,7 @@ import { getMyDocuments, getDocumentUrl } from "@/lib/backend";
 import { FileText, Download } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { PageIntro } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/documents")({
   component: Documents,
@@ -30,8 +31,10 @@ function Documents() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-600 text-navy">Documents</h1>
-      <p className="mt-1 text-sm text-ink-muted">Certificates, invoices, and verification documents issued to you.</p>
+      <PageIntro
+        title="Documents"
+        subtitle="Certificates, invoices, and verification documents issued to you."
+      />
       <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">
         {isLoading ? <p className="p-8 text-center text-sm text-ink-muted">Loading…</p> :
          docs.length === 0 ? <p className="p-8 text-center text-sm text-ink-muted">No documents available.</p> :
