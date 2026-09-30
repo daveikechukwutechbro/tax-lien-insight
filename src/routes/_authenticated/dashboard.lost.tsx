@@ -23,7 +23,7 @@ function LostPage() {
         subtitle="Properties you bid on but did not win."
       />
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard icon={<XCircle className="size-4" />} label="Total Lost Properties" value={lost.length} sub={`Total Value: ${fmt(total)}`} accent="text-destructive" />
         <StatCard icon={<Gavel className="size-4" />} label="Total Amount Bid" value={fmt(total)} sub={`Across ${lost.length} Properties`} />
         <StatCard icon={<TrendingUp className="size-4" />} label="Highest Bid Lost" value={lost.length ? fmt(Math.max(...lost.map((l) => l.lien.taxes_owed))) : "—"} sub="Across all bids" accent="text-warning" />

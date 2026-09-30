@@ -27,7 +27,7 @@ function MyBidsPage() {
         subtitle="Track all the properties you've bid on. View your bid status, amounts, and auction details."
       />
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard icon={<Gavel className="size-4" />} label="Active Bids" value={active.length} sub={`Total Value: ${fmt(active.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} />
         <StatCard icon={<ThumbsDown className="size-4" />} label="Outbid" value={outbid.length} sub={`Total Value: ${fmt(outbid.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} accent="text-destructive" />
         <StatCard icon={<Trophy className="size-4" />} label="Won" value={won.length} sub={`Total Value: ${fmt(won.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} accent="text-success" />

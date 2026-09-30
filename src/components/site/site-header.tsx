@@ -159,7 +159,6 @@ export function SiteHeader() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3 lg:gap-5">
-          <ThemeToggle />
           {loading ? null : user ? (
             <>
               <Link
@@ -196,19 +195,20 @@ export function SiteHeader() {
             <>
               <Link
                 to="/auth"
-                className="hidden text-sm font-500 text-ink-muted transition-colors hover:text-navy lg:inline-block"
+                className="hidden text-sm font-500 text-ink-muted transition-colors hover:text-navy sm:inline-block"
               >
                 Log in
               </Link>
               <Link
                 to="/auth"
                 search={{ mode: "signup" }}
-                className="hidden whitespace-nowrap items-center rounded-md bg-gold px-4 py-2 text-sm font-600 text-navy shadow-sm transition-colors hover:bg-gold-soft lg:inline-flex"
+                className="inline-flex h-10 whitespace-nowrap items-center rounded-md bg-gold px-3 text-xs font-600 text-navy shadow-sm transition-colors hover:bg-gold-soft sm:text-sm sm:px-4"
               >
                 Create Account
               </Link>
             </>
           )}
+          <ThemeToggle />
         </div>
       </div>
     </header>

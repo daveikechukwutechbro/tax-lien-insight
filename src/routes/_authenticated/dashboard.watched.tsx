@@ -35,7 +35,7 @@ function WatchedPage() {
         subtitle="Properties you're watching and tracking for upcoming auctions."
       />
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard icon={<Bookmark className="size-4" />} label="Total Watched" value={watched.length} sub="Properties" />
         <StatCard icon={<CalendarDays className="size-4" />} label="Upcoming Auctions" value={watched.filter((w) => w.auction_starts_at && new Date(w.auction_starts_at) > new Date()).length} sub="Starting Soon" accent="text-success" />
         <StatCard icon={<CalendarDays className="size-4" />} label="Not Yet Scheduled" value={watched.filter((w) => !w.auction_starts_at).length} sub="Coming Soon" accent="text-warning" />

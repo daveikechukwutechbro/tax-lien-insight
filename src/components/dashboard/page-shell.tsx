@@ -45,26 +45,41 @@ export function StatCard({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-xl border border-hairline bg-surface p-4", className)}>
-      <div className="flex items-center gap-2 text-[11px] font-500 uppercase tracking-wider text-ink-muted">
-        <span className="grid size-7 shrink-0 place-items-center rounded-md bg-navy/5 text-navy">
+    <div
+      className={cn(
+        "flex aspect-square flex-col justify-between rounded-2xl border border-hairline bg-surface p-3.5 shadow-sm",
+        className,
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-navy/5 text-navy">
           {icon}
         </span>
-        <span className="truncate">{label}</span>
+        {href && cta && (
+          <Link
+            to={href}
+            aria-label={cta}
+            className="grid size-7 place-items-center rounded-md text-navy transition-colors hover:bg-surface-alt"
+          >
+            <ArrowRight className="size-4" />
+          </Link>
+        )}
       </div>
-      <div className={cn("mt-2 font-display text-2xl font-600 tabular-nums", accent ?? "text-navy")}>
-        {value}
-      </div>
-      {value2 && <div className="text-sm font-600 text-navy tabular-nums">{value2}</div>}
-      {sub && <div className="text-xs text-ink-muted">{sub}</div>}
-      {href && cta && (
-        <Link
-          to={href}
-          className="mt-2 inline-flex items-center gap-1 text-xs font-500 text-navy hover:underline"
+      <div className="min-w-0">
+        <div className="truncate text-[10px] font-600 uppercase tracking-wider text-ink-muted">
+          {label}
+        </div>
+        <div
+          className={cn(
+            "mt-1 truncate font-display text-2xl font-600 tabular-nums leading-none",
+            accent ?? "text-navy",
+          )}
         >
-          {cta} <ArrowRight className="size-3" />
-        </Link>
-      )}
+          {value}
+        </div>
+        {value2 && <div className="mt-1 truncate text-sm font-600 text-navy tabular-nums">{value2}</div>}
+        {sub && <div className="mt-1.5 text-[11px] leading-tight text-ink-muted">{sub}</div>}
+      </div>
     </div>
   );
 }

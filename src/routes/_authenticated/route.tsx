@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated")({
         // transient — retry, then redirect if it never settles
       }
     }
-    if (!user) throw redirect({ to: "/auth" });
+    if (!user) throw redirect({ to: "/", replace: true });
     return {};
   },
   component: () => <Outlet />,

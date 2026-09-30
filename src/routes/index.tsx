@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  pendingMs: 0,
+  pendingMs: 300,
   pendingComponent: () => <PageSkeleton rows={6} />,
   loader: ({ context }) => loaderPrefetch(() => context.queryClient.ensureQueryData(scheduledAuctionQuery))(),
   head: () => ({
@@ -61,7 +61,28 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { data } = useQuery(scheduledAuctionQuery);
+  const { data, isPending, isError, refetch } = useQuery(scheduledAuctionQuery);
+
+  if (isPending && !data) return <PageSkeleton rows={6} />;
+
+  if (isError && !data) {
+    return (
+      <div className="container-tight py-20 text-center">
+        <h1 className="font-display text-2xl font-600 text-navy">We couldn't load upcoming auctions</h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          Something went wrong on our end. Try again in a moment.
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="mt-5 inline-flex items-center rounded-md bg-navy px-5 py-2.5 text-sm font-600 text-primary-foreground shadow-sm transition-colors hover:bg-navy-deep"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
   if (!data) return <PageSkeleton rows={6} />;
   const auctionDate = data.nextStartsAt ? new Date(data.nextStartsAt) : null;
 

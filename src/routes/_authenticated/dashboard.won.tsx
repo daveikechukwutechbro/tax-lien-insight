@@ -33,7 +33,7 @@ function WonPage() {
         subtitle="Properties you've successfully won at auction."
       />
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard icon={<Trophy className="size-4" />} label="Total Won Properties" value={won.length} sub={`Total Value: ${fmt(total)}`} accent="text-success" />
         <StatCard icon={<CreditCard className="size-4" />} label="Total Amount Paid" value={fmt(total)} cta="View Payments" href="/dashboard/payments" />
         <StatCard icon={<TrendingUp className="size-4" />} label="Average Interest Rate" value={`${avgRate.toFixed(2)}%`} sub="Weighted Average" accent="text-success" />

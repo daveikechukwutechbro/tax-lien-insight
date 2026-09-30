@@ -41,12 +41,15 @@ export function DashboardSidebar() {
   const initials = displayName.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase();
 
   async function signOut() {
-    await qc.cancelQueries();
+    await qc.cancelQueries().catch(() => {});
     qc.clear();
-    await logout();
+    const pendingLogout = logout();
+    if (router.state.location.pathname !== "/") {
+      await router.navigate({ to: "/", replace: true });
+    }
     emitAuthChange();
+    await pendingLogout.catch(() => {});
     await router.invalidate().catch(() => {});
-    router.navigate({ to: "/", replace: true });
   }
 
   return (
