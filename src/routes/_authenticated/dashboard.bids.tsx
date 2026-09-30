@@ -6,19 +6,41 @@ import { Gavel, ThumbsDown, Trophy, XCircle } from "lucide-react";
 import { PageIntro, StatCard } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/bids")({
+  validateSearch: (s: Record<string, unknown>): { filter?: string } => ({
+    filter: typeof s.filter === "string" ? s.filter : undefined,
+  }),
   component: MyBidsPage,
 });
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
+const BID_FILTERS = [
+  { value: "all", label: "All" },
+  { value: "active", label: "Active" },
+  { value: "outbid", label: "Outbid" },
+  { value: "won", label: "Won" },
+  { value: "lost", label: "Lost" },
+] as const;
+const BID_FILTER_STATUS: Record<string, string[]> = {
+  active: ["winning"],
+  outbid: ["outbid"],
+  won: ["won"],
+  lost: ["lost"],
+};
+
 function MyBidsPage() {
   const { user } = useSession();
+  const { filter } = Route.useSearch();
   const { data: bids = [], isLoading } = useQuery(myBidsQuery(user?.id));
 
   const active = bids.filter((b) => b.status === "winning");
   const outbid = bids.filter((b) => b.status === "outbid");
   const won = bids.filter((b) => b.status === "won");
   const lost = bids.filter((b) => b.status === "lost");
+
+  const showStatuses = filter ? BID_FILTER_STATUS[filter] : undefined;
+  const visible = showStatuses ? bids.filter((b) => showStatuses.includes(b.status)) : bids;
+  const filterLabel = BID_FILTERS.find((f) => f.value === filter)?.label;
 
   return (
     <div>
@@ -28,11 +50,33 @@ function MyBidsPage() {
       />
 
       <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={<Gavel className="size-4" />} label="Active Bids" value={active.length} sub={`Total Value: ${fmt(active.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} />
-        <StatCard icon={<ThumbsDown className="size-4" />} label="Outbid" value={outbid.length} sub={`Total Value: ${fmt(outbid.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} accent="text-destructive" />
-        <StatCard icon={<Trophy className="size-4" />} label="Won" value={won.length} sub={`Total Value: ${fmt(won.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} accent="text-success" />
-        <StatCard icon={<XCircle className="size-4" />} label="Lost" value={lost.length} sub={`Total Value: ${fmt(lost.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} />
+        <StatCard icon={<Gavel className="size-4" />} label="Active Bids" value={active.length} sub={`Total Value: ${fmt(active.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} to="/dashboard/bids" search={{ filter: "active" }} cta="View" />
+        <StatCard icon={<ThumbsDown className="size-4" />} label="Outbid" value={outbid.length} sub={`Total Value: ${fmt(outbid.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} accent="text-destructive" to="/dashboard/bids" search={{ filter: "outbid" }} cta="View" />
+        <StatCard icon={<Trophy className="size-4" />} label="Won" value={won.length} sub={`Total Value: ${fmt(won.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} accent="text-success" to="/dashboard/bids" search={{ filter: "won" }} cta="View" />
+        <StatCard icon={<XCircle className="size-4" />} label="Lost" value={lost.length} sub={`Total Value: ${fmt(lost.reduce((s, b) => s + b.lien.taxes_owed, 0))}`} to="/dashboard/bids" search={{ filter: "lost" }} cta="View" />
       </div>
+
+      {bids.length > 0 && (
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          {BID_FILTERS.map((f) => (
+            <Link
+              key={f.value}
+              to="/dashboard/bids"
+              search={{ filter: f.value }}
+              className={
+                filter === f.value || (!filter && f.value === "all")
+                  ? "rounded-full bg-navy px-3 py-1.5 text-xs font-600 text-primary-foreground"
+                  : "rounded-full border border-hairline bg-surface px-3 py-1.5 text-xs font-500 text-ink transition-colors hover:border-navy/40 hover:text-navy"
+              }
+            >
+              {f.label}
+            </Link>
+          ))}
+          <span className="text-xs text-ink-muted">
+            {filter && filter !== "all" ? `${visible.length} ${filterLabel?.toLowerCase()} bid${visible.length === 1 ? "" : "s"}` : `${visible.length} total`}
+          </span>
+        </div>
+      )}
 
       {isLoading ? (
         <p className="mt-6 rounded-xl border border-hairline bg-surface p-8 text-center text-sm text-ink-muted">
@@ -42,11 +86,15 @@ function MyBidsPage() {
         <p className="mt-6 rounded-xl border border-hairline bg-surface p-8 text-center text-sm text-ink-muted">
           You haven't placed any bids yet.
         </p>
+      ) : visible.length === 0 ? (
+        <p className="mt-6 rounded-xl border border-hairline bg-surface p-8 text-center text-sm text-ink-muted">
+          No {filterLabel?.toLowerCase()} bids right now.
+        </p>
       ) : (
         <>
           {/* Mobile cards */}
           <div className="mt-6 space-y-3 sm:hidden">
-            {bids.map((b) => (
+            {visible.map((b) => (
               <BidCard key={b.bid_id} bid={b} />
             ))}
           </div>
@@ -66,7 +114,7 @@ function MyBidsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {bids.map((b) => (
+                    {visible.map((b) => (
                       <BidRow key={b.bid_id} bid={b} />
                     ))}
                   </tbody>

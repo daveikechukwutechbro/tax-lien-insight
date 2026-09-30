@@ -6,6 +6,9 @@ import { Gavel, TrendingUp, XCircle } from "lucide-react";
 import { PageIntro, StatCard } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/lost")({
+  validateSearch: (s: Record<string, unknown>): { filter?: string } => ({
+    filter: typeof s.filter === "string" ? s.filter : undefined,
+  }),
   component: LostPage,
 });
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -15,6 +18,7 @@ function LostPage() {
   const { data: bids = [] } = useQuery(myBidsQuery(user?.id));
   const lost = bids.filter((b) => b.status === "lost" || b.status === "outbid");
   const total = lost.reduce((s, b) => s + b.lien.taxes_owed, 0);
+  const top = lost.length ? lost.reduce((a, b) => (b.lien.taxes_owed > a.lien.taxes_owed ? b : a), lost[0]) : null;
 
   return (
     <div>
@@ -24,9 +28,9 @@ function LostPage() {
       />
 
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatCard icon={<XCircle className="size-4" />} label="Total Lost Properties" value={lost.length} sub={`Total Value: ${fmt(total)}`} accent="text-destructive" />
-        <StatCard icon={<Gavel className="size-4" />} label="Total Amount Bid" value={fmt(total)} sub={`Across ${lost.length} Properties`} />
-        <StatCard icon={<TrendingUp className="size-4" />} label="Highest Bid Lost" value={lost.length ? fmt(Math.max(...lost.map((l) => l.lien.taxes_owed))) : "—"} sub="Across all bids" accent="text-warning" />
+        <StatCard icon={<XCircle className="size-4" />} label="Total Lost Properties" value={lost.length} sub={`Total Value: ${fmt(total)}`} accent="text-destructive" to="/dashboard/lost" search={{ filter: "all" }} cta="View" />
+        <StatCard icon={<Gavel className="size-4" />} label="Total Amount Bid" value={fmt(total)} sub={`Across ${lost.length} Properties`} to="/dashboard/lost" search={{ filter: "all" }} cta="View" />
+        <StatCard icon={<TrendingUp className="size-4" />} label="Highest Bid Lost" value={top ? fmt(top.lien.taxes_owed) : "—"} sub="Across all bids" accent="text-warning" to={top ? "/properties/$id" : undefined} params={top ? { id: top.lien.property.id } : undefined} cta="View Property" />
       </div>
 
       <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">

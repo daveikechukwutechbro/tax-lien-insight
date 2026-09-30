@@ -2,11 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { BadgeCheck, CreditCard, Download, TrendingUp, Trophy } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { myBidsQuery, profileQuery } from "@/lib/queries/dashboard";
+import { myBidsQuery, profileQuery, dashboardSummaryQuery } from "@/lib/queries/dashboard";
 import { printLienCertificate } from "@/lib/lien-certificate";
 import { PageIntro, StatCard } from "@/components/dashboard/page-shell";
 
 export const Route = createFileRoute("/_authenticated/dashboard/won")({
+  validateSearch: (s: Record<string, unknown>): { filter?: string } => ({
+    filter: typeof s.filter === "string" ? s.filter : undefined,
+  }),
   component: WonPage,
 });
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -15,6 +18,7 @@ function WonPage() {
   const { user } = useSession();
   const { data: bids = [] } = useQuery(myBidsQuery(user?.id));
   const { data: profile } = useQuery(profileQuery(user?.id));
+  const { data: summary } = useQuery(dashboardSummaryQuery(user?.id));
   const won = bids.filter((b) => b.status === "won");
   const total = won.reduce((s, b) => s + b.lien.taxes_owed, 0);
   const avgRate = won.length ? won.reduce((s, b) => s + b.interest_rate, 0) / won.length : 0;
@@ -34,10 +38,10 @@ function WonPage() {
       />
 
       <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={<Trophy className="size-4" />} label="Total Won Properties" value={won.length} sub={`Total Value: ${fmt(total)}`} accent="text-success" />
-        <StatCard icon={<CreditCard className="size-4" />} label="Total Amount Paid" value={fmt(total)} cta="View Payments" href="/dashboard/payments" />
-        <StatCard icon={<TrendingUp className="size-4" />} label="Average Interest Rate" value={`${avgRate.toFixed(2)}%`} sub="Weighted Average" accent="text-success" />
-        <StatCard icon={<BadgeCheck className="size-4" />} label="Total Redeemed" value="0" sub="Total Value: $0" />
+        <StatCard icon={<Trophy className="size-4" />} label="Total Won Properties" value={won.length} sub={`Total Value: ${fmt(total)}`} accent="text-success" to="/dashboard/won" search={{ filter: "all" }} cta="View" />
+        <StatCard icon={<CreditCard className="size-4" />} label="Total Amount Paid" value={fmt(total)} cta="View Payments" to="/dashboard/payments" />
+        <StatCard icon={<TrendingUp className="size-4" />} label="Average Interest Rate" value={`${avgRate.toFixed(2)}%`} sub="Weighted Average" accent="text-success" to="/dashboard/won" search={{ filter: "all" }} cta="View" />
+        <StatCard icon={<BadgeCheck className="size-4" />} label="Total Redeemed" value={summary ? String(summary.redemptions.completed) : "…"} sub={`Interest ${fmt(summary?.redemptions.realizedInterest ?? 0)}`} accent="text-success" to="/dashboard/won" search={{ filter: "all" }} cta="View" />
       </div>
 
       <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">

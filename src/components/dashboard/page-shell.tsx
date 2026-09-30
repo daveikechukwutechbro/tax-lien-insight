@@ -30,7 +30,9 @@ export function StatCard({
   value2,
   sub,
   accent,
-  href,
+  to,
+  params,
+  search,
   cta,
   className,
 }: {
@@ -40,14 +42,17 @@ export function StatCard({
   value2?: string;
   sub?: string;
   accent?: string;
-  href?: string;
+  to?: string;
+  params?: Record<string, string>;
+  search?: Record<string, unknown>;
   cta?: string;
   className?: string;
 }) {
-  return (
+  const card = (
     <div
       className={cn(
         "flex aspect-square flex-col justify-between rounded-2xl border border-hairline bg-surface p-3.5 shadow-sm",
+        to && "transition-colors hover:border-navy/40 hover:bg-surface-alt/50",
         className,
       )}
     >
@@ -55,15 +60,7 @@ export function StatCard({
         <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-navy/5 text-navy">
           {icon}
         </span>
-        {href && cta && (
-          <Link
-            to={href}
-            aria-label={cta}
-            className="grid size-7 place-items-center rounded-md text-navy transition-colors hover:bg-surface-alt"
-          >
-            <ArrowRight className="size-4" />
-          </Link>
-        )}
+        {to && cta && <ArrowRight className="size-4 shrink-0 text-ink-muted" />}
       </div>
       <div className="min-w-0">
         <div className="truncate text-[10px] font-600 uppercase tracking-wider text-ink-muted">
@@ -82,4 +79,13 @@ export function StatCard({
       </div>
     </div>
   );
+
+  if (to) {
+    return (
+      <Link to={to as never} params={params as never} search={search as never} aria-label={cta ?? label} className="min-w-0">
+        {card}
+      </Link>
+    );
+  }
+  return card;
 }
