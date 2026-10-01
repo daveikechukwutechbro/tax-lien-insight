@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
-  Activity, Bell, Bookmark, Gavel, Image, LayoutDashboard, LogOut, Settings, ShieldCheck, User, Wallet,
+  Activity, Bell, Bookmark, Gavel, LayoutDashboard, LogOut, ShieldCheck, User, Wallet,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -71,17 +71,7 @@ export function ProfileMenu({ trigger }: { trigger: ReactNode }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild onClick={close}>
           <Link to="/dashboard/profile" className="flex items-center gap-2">
-            <User className="size-4" /> View Profile
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild onClick={close}>
-          <Link to="/dashboard/profile" className="flex items-center gap-2">
-            <Settings className="size-4" /> Edit Profile
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild onClick={close}>
-          <Link to="/dashboard/profile" className="flex items-center gap-2">
-            <Image className="size-4" /> Upload Photo
+            <User className="size-4" /> Profile Settings
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

@@ -204,7 +204,8 @@ export function SiteHeader() {
                 search={{ mode: "signup" }}
                 className="inline-flex h-10 whitespace-nowrap items-center rounded-md bg-gold px-3 text-xs font-600 text-navy shadow-sm transition-colors hover:bg-gold-soft sm:text-sm sm:px-4"
               >
-                Create Account
+                <span className="sm:hidden">Sign Up</span>
+                <span className="hidden sm:inline">Create Account</span>
               </Link>
             </>
           )}
