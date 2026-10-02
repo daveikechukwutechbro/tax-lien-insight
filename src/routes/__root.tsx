@@ -4,17 +4,22 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { MobileBottomNav } from "@/components/dashboard/bottom-nav";
+import { DashboardSidebar } from "@/components/dashboard/sidebar";
+import { Sheet, SheetContent, SheetOverlay } from "@/components/ui/sheet";
 import { Toaster } from "sonner";
 import { onAuthChange } from "@/lib/backend-auth";
+import { useSession } from "@/hooks/use-session";
 
 function NotFoundComponent() {
   return (
@@ -129,6 +134,10 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const { user, loading } = useSession();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [location.href]);
 
   useEffect(() => {
     const sub = onAuthChange(() => {
@@ -138,15 +147,30 @@ function RootComponent() {
     return () => sub();
   }, [router, queryClient]);
 
+  const signedIn = !loading && !!user;
+
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen flex-col bg-background text-foreground">
         <SiteHeader />
-        <main className="flex-1">
+        <main className={signedIn ? "flex-1 pb-24 lg:pb-0" : "flex-1"}>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
         </main>
         <SiteFooter />
+        {signedIn && (
+          <>
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetOverlay />
+              <SheetContent side="left" className="w-[260px] p-0" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <div className="h-[calc(100vh-4rem)] overflow-y-auto py-4">
+                  <DashboardSidebar />
+                </div>
+              </SheetContent>
+            </Sheet>
+            <MobileBottomNav onMore={() => setMenuOpen(true)} moreOpen={menuOpen} />
+          </>
+        )}
         <Toaster richColors position="top-right" closeButton />
       </div>
     </QueryClientProvider>

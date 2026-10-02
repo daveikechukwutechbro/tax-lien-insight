@@ -18,7 +18,7 @@ export function MobileBottomNav({ onMore, moreOpen }: { onMore: () => void; more
   const activeKey =
     (Object.entries(GROUPS).find(([, g]) => g.match.some((p) => pathname.startsWith(p)))?.[0] as
       | keyof typeof GROUPS
-      | undefined) ?? "more";
+      | undefined);
 
   return (
     <nav
@@ -64,15 +64,15 @@ export function MobileBottomNav({ onMore, moreOpen }: { onMore: () => void; more
           <span
             className={cn(
               "grid size-8 place-items-center rounded-full transition-colors",
-              moreOpen || activeKey === "more" ? "bg-navy/10 text-navy" : "text-ink-muted",
+              moreOpen ? "bg-navy/10 text-navy" : "text-ink-muted",
             )}
           >
-            <Menu className="size-5" strokeWidth={moreOpen || activeKey === "more" ? 2.25 : 1.75} />
+            <Menu className="size-5" strokeWidth={moreOpen ? 2.25 : 1.75} />
           </span>
           <span
             className={cn(
               "text-[10px] font-500 leading-none",
-              moreOpen || activeKey === "more" ? "text-navy" : "text-ink-muted",
+              moreOpen ? "text-navy" : "text-ink-muted",
             )}
           >
             More

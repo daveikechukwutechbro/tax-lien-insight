@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Gavel } from "lucide-react";
+import { ArrowRight, Gavel } from "lucide-react";
 import { auctionsListQuery } from "@/lib/queries/discovery";
 import { loaderPrefetch } from "@/lib/queries/prefetch";
 import { PageSkeleton } from "@/components/site/page-skeleton";
@@ -58,7 +58,7 @@ function AuctionsPage() {
             <h2 className="font-display text-xl font-600 text-navy capitalize">{k === "scheduled" ? "Upcoming" : k}</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {grouped[k].map((a) => (
-                <Link key={a.id} to="/auctions/$id" params={{ id: a.id }} className="rounded-xl border border-hairline bg-surface p-5 hover:border-navy">
+                <Link key={a.id} to="/auctions/$id" params={{ id: a.id }} aria-label={`View ${a.lien_count} properties in ${a.title}`} className="group rounded-xl border border-hairline bg-surface p-5 transition-colors hover:border-navy">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-display text-lg font-600 text-navy">{a.title}</div>
@@ -70,6 +70,12 @@ function AuctionsPage() {
                     <Stat label="Starts" value={fmtDate(a.starts_at)} />
                     <Stat label="Liens" value={a.lien_count.toString()} />
                     <Stat label="Taxes owed" value={fmt$(a.total_taxes_owed)} />
+                  </div>
+                  <div className="mt-4 flex items-center justify-between border-t border-hairline pt-3">
+                    <span className="text-sm font-600 text-navy">
+                      View {a.lien_count} {a.lien_count === 1 ? "property" : "properties"}
+                    </span>
+                    <ArrowRight className="size-4 text-ink-muted transition-transform group-hover:translate-x-0.5 group-hover:text-navy" strokeWidth={2} />
                   </div>
                 </Link>
               ))}

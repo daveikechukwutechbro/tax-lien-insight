@@ -1,13 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
-import { useEffect, useState } from "react";
-import { MobileBottomNav } from "@/components/dashboard/bottom-nav";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
-import {
-  Sheet,
-  SheetContent,
-  SheetOverlay,
-} from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -44,23 +37,12 @@ function pageLabel(pathname: string) {
 }
 
 function DashboardLayout() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-  useEffect(() => setMenuOpen(false), [location.href]);
   const label = pageLabel(location.pathname);
   const isRoot = location.pathname === "/dashboard";
 
   return (
-    <div className="bg-background pb-24 lg:pb-16">
-      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-        <SheetOverlay />
-        <SheetContent side="left" className="w-[260px] p-0" onOpenAutoFocus={(e) => e.preventDefault()}>
-          <div className="h-[calc(100vh-4rem)] overflow-y-auto py-4">
-            <DashboardSidebar />
-          </div>
-        </SheetContent>
-      </Sheet>
-
+    <div className="bg-background">
       <div className="container-tight pt-4 lg:pt-6">
         <div className="lg:grid lg:grid-cols-[240px_1fr] lg:gap-6">
           <div className="hidden lg:block">
@@ -83,8 +65,6 @@ function DashboardLayout() {
           </div>
         </div>
       </div>
-
-      <MobileBottomNav onMore={() => setMenuOpen(true)} moreOpen={menuOpen} />
     </div>
   );
 }
