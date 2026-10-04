@@ -3,19 +3,18 @@ import { Bell, ChevronDown, Landmark, Menu } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { isAdminQuery, profileQuery, unreadNotificationsQuery } from "@/lib/queries/dashboard";
+import { profileQuery, unreadNotificationsQuery } from "@/lib/queries/dashboard";
 import { ProfileMenu } from "@/components/site/profile-menu";
 import { ThemeToggle } from "@/components/site/theme-toggle";
 import { Sheet, SheetTrigger, SheetContent, SheetOverlay, SheetClose } from "@/components/ui/sheet";
 
-type NavItem = { to: string; label: string; adminOnly?: boolean };
+type NavItem = { to: string; label: string };
 
 const nav: NavItem[] = [
   { to: "/auctions", label: "Auctions" },
   { to: "/states", label: "By State" },
   { to: "/search", label: "Search Properties" },
   { to: "/how-it-works", label: "How It Works" },
-  { to: "/admin", label: "Admin", adminOnly: true },
 ];
 
 const linkCls =
@@ -24,7 +23,6 @@ const linkActive = "text-navy font-600";
 
 export function SiteHeader() {
   const { user, loading } = useSession();
-  const { data: isAdmin } = useQuery(isAdminQuery(user?.id));
   const { data: unread } = useQuery(unreadNotificationsQuery(user?.id));
   const { data: profile } = useQuery(profileQuery(user?.id));
 
@@ -52,18 +50,16 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-5 border-l border-hairline pl-6 lg:flex">
-          {nav
-            .filter((item) => !(item.adminOnly && !isAdmin))
-            .map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`${linkCls} ${item.adminOnly ? "text-navy" : ""}`}
-                activeProps={{ className: linkActive }}
-              >
-                {item.label}
-              </Link>
-            ))}
+          {nav.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={linkCls}
+              activeProps={{ className: linkActive }}
+            >
+              {item.label}
+            </Link>
+          ))}
           {!loading && user && (
             <Link
               to="/dashboard"
@@ -111,19 +107,17 @@ export function SiteHeader() {
                 </div>
               )}
               <nav className="flex flex-col gap-1 py-4">
-                {nav
-                  .filter((item) => !(item.adminOnly && !isAdmin))
-                  .map((item) => (
-                    <SheetClose asChild key={item.to}>
-                      <Link
-                        to={item.to}
-                        className="rounded-md px-4 py-3 text-sm font-500 text-ink transition-colors hover:bg-surface-alt"
-                        activeProps={{ className: "bg-navy/5 text-navy font-600" }}
-                      >
-                        {item.label}
-                      </Link>
-                    </SheetClose>
-                  ))}
+                {nav.map((item) => (
+                  <SheetClose asChild key={item.to}>
+                    <Link
+                      to={item.to}
+                      className="rounded-md px-4 py-3 text-sm font-500 text-ink transition-colors hover:bg-surface-alt"
+                      activeProps={{ className: "bg-navy/5 text-navy font-600" }}
+                    >
+                      {item.label}
+                    </Link>
+                  </SheetClose>
+                ))}
                 {!loading && user && (
                   <SheetClose asChild>
                     <Link

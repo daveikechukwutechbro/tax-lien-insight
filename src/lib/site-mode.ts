@@ -1,0 +1,1 @@
+export const ADMIN_SITE = import.meta.env?.VITE_ADMIN_ONLY === "1";

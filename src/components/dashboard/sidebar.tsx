@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import {
   LayoutDashboard, Gavel, Bookmark, Trophy, XCircle, CalendarClock,
-  Receipt, CreditCard, Wallet, UserRound, Bell, Search, FileText, MessageSquare, LogOut, ShieldCheck, BadgeCheck, ChevronDown, Activity,
+  Receipt, CreditCard, Wallet, UserRound, Bell, Search, FileText, MessageSquare, LogOut, BadgeCheck, ChevronDown, Activity,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { logout, emitAuthChange } from "@/lib/backend-auth";
-import { isAdminQuery, profileQuery } from "@/lib/queries/dashboard";
+import { profileQuery } from "@/lib/queries/dashboard";
 import { useRouter } from "@tanstack/react-router";
 import { ProfileMenu } from "@/components/site/profile-menu";
 
@@ -35,7 +35,6 @@ export function DashboardSidebar() {
   const router = useRouter();
   const qc = useQueryClient();
   const { data: profile } = useQuery(profileQuery(user?.id));
-  const { data: isAdmin } = useQuery(isAdminQuery(user?.id));
 
   const displayName = profile?.full_name ?? user?.email?.split("@")[0] ?? "Bidder";
   const initials = displayName.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase();
@@ -92,11 +91,6 @@ export function DashboardSidebar() {
             <Icon className="size-4" strokeWidth={1.75} /> {label}
           </Link>
         ))}
-        {isAdmin && (
-          <Link to="/admin" className="mt-1 flex items-center gap-2.5 rounded-md border-t border-hairline px-3 py-2 pt-3 text-navy font-600 hover:bg-surface-alt">
-            <ShieldCheck className="size-4" /> Admin Panel
-          </Link>
-        )}
         <button onClick={signOut} className="mt-1 flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-ink hover:bg-surface-alt">
           <LogOut className="size-4" /> Log Out
         </button>

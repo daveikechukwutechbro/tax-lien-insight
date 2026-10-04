@@ -7,6 +7,7 @@ import {
   useLocation,
   HeadContent,
   Scripts,
+  redirect,
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 
@@ -18,8 +19,11 @@ import { MobileBottomNav } from "@/components/dashboard/bottom-nav";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { Sheet, SheetContent, SheetOverlay } from "@/components/ui/sheet";
 import { Toaster } from "sonner";
-import { onAuthChange } from "@/lib/backend-auth";
+import { onAuthChange, logout, emitAuthChange } from "@/lib/backend-auth";
 import { useSession } from "@/hooks/use-session";
+import { useQueryClient } from "@tanstack/react-query";
+import { Landmark, LogOut } from "lucide-react";
+import { ADMIN_SITE } from "@/lib/site-mode";
 
 function NotFoundComponent() {
   return (
@@ -82,6 +86,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  beforeLoad: ({ location }) => {
+    if (ADMIN_SITE && !location.pathname.startsWith("/admin")) {
+      throw redirect({ to: "/admin", replace: true });
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -131,6 +140,53 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function AdminShell() {
+  const router = useRouter();
+  const qc = useQueryClient();
+
+  async function signOut() {
+    await qc.cancelQueries().catch(() => {});
+    qc.clear();
+    const pendingLogout = logout();
+    if (router.state.location.pathname !== "/") {
+      await router.navigate({ to: "/", replace: true });
+    }
+    emitAuthChange();
+    await pendingLogout.catch(() => {});
+    router.invalidate().catch(() => {});
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <header className="sticky top-0 z-40 border-b border-hairline bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
+        <div className="container-tight flex h-14 items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="grid size-9 place-items-center rounded-md bg-navy text-gold">
+              <Landmark className="size-5" strokeWidth={2.25} />
+            </span>
+            <span className="font-display text-[15px] font-700 tracking-tight text-navy">
+              Auction<span className="text-gold">Ledger</span>
+              <span className="ml-2 rounded bg-navy/5 px-1.5 py-0.5 text-[10px] font-600 uppercase tracking-widest text-navy">
+                Admin
+              </span>
+            </span>
+          </div>
+          <button
+            onClick={signOut}
+            className="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-surface px-3 py-1.5 text-sm font-500 text-ink transition-colors hover:border-navy/40 hover:bg-surface-alt"
+          >
+            <LogOut className="size-4" /> Sign out
+          </button>
+        </div>
+      </header>
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Toaster richColors position="top-right" closeButton />
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
@@ -146,6 +202,14 @@ function RootComponent() {
     });
     return () => sub();
   }, [router, queryClient]);
+
+  if (ADMIN_SITE) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <AdminShell />
+      </QueryClientProvider>
+    );
+  }
 
   const signedIn = !loading && !!user;
 

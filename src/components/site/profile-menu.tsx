@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
-  Activity, Bell, Bookmark, Gavel, LayoutDashboard, LogOut, ShieldCheck, User, Wallet,
+  Activity, Bell, Bookmark, Gavel, LayoutDashboard, LogOut, User, Wallet,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { useSession } from "@/hooks/use-session";
 import { logout, emitAuthChange } from "@/lib/backend-auth";
-import { isAdminQuery, profileQuery } from "@/lib/queries/dashboard";
+import { profileQuery } from "@/lib/queries/dashboard";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -23,7 +23,6 @@ export function ProfileMenu({ trigger }: { trigger: ReactNode }) {
   const router = useRouter();
   const qc = useQueryClient();
   const { data: profile } = useQuery(profileQuery(user?.id));
-  const { data: isAdmin } = useQuery(isAdminQuery(user?.id));
   const [open, setOpen] = useState(false);
 
   const displayName = profile?.full_name ?? user?.email?.split("@")[0] ?? "Bidder";
@@ -105,16 +104,6 @@ export function ProfileMenu({ trigger }: { trigger: ReactNode }) {
             <Wallet className="size-4" /> Account Funds
           </Link>
         </DropdownMenuItem>
-        {isAdmin && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild onClick={close}>
-              <Link to="/admin" className="flex items-center gap-2">
-                <ShieldCheck className="size-4" /> Admin Panel
-              </Link>
-            </DropdownMenuItem>
-          </>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
           <LogOut className="size-4" /> Sign out

@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, Link, redirect } from "@tanstack/react-router";
 import { getMe } from "@/lib/backend-auth";
+import { ADMIN_SITE } from "@/lib/site-mode";
 import {
   ShieldCheck,
   LayoutDashboard,
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/admin")({
     const user = await getMe();
     if (!user) throw redirect({ to: "/auth" });
     const isAdmin = user.roles.includes("admin") || user.roles.includes("super_admin");
-    if (!isAdmin) throw redirect({ to: "/dashboard" });
+    if (!isAdmin) throw redirect({ to: ADMIN_SITE ? "/auth" : "/dashboard" });
     return { user };
   },
   component: AdminLayout,
