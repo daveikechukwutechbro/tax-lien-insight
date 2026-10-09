@@ -87,8 +87,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   beforeLoad: ({ location }) => {
-    if (ADMIN_SITE && !location.pathname.startsWith("/admin")) {
-      throw redirect({ to: "/admin", replace: true });
+    if (ADMIN_SITE) {
+      const allowed = ["/admin", "/auth", "/verify", "/reset"];
+      const isAllowed = allowed.some((p) => location.pathname === p || location.pathname.startsWith(p + "/"));
+      if (!isAllowed) {
+        throw redirect({ to: "/admin", replace: true });
+      }
     }
   },
   head: () => ({
