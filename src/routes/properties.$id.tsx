@@ -82,6 +82,14 @@ function PropertyDetail() {
 
   const p = data;
   const gallery = [p.image_url, ...p.gallery_urls].filter(Boolean) as string[];
+  const [mainIdx, setMainIdx] = useState(0);
+  const mainSafe = mainIdx < gallery.length ? mainIdx : 0;
+
+  const taxesOwed = lien?.taxes_owed ?? p.property_taxes_owed ?? null;
+  const interestRate =
+    lien?.current_rate != null ? lien.current_rate : lien?.starting_rate != null ? lien.starting_rate : p.property_interest_rate ?? null;
+  const taxYear = lien?.tax_year ?? p.property_tax_year ?? null;
+  const redemptionMonths = lien?.redemption_period_months ?? p.property_redemption_months ?? null;
 
   return (
     <div className="bg-background pb-16">
@@ -94,11 +102,36 @@ function PropertyDetail() {
         <div className="mt-2 grid gap-6 lg:grid-cols-[1fr_360px]">
           <div>
             <div className="rounded-xl border border-hairline bg-surface p-4">
-              {gallery[0] ? <img src={gallery[0]} alt={p.address} className="aspect-[16/10] w-full rounded-lg object-cover" /> : <div className="aspect-[16/10] w-full rounded-lg bg-surface-alt" />}
+              {gallery[mainSafe] ? (
+                <img
+                  src={gallery[mainSafe]}
+                  alt={p.address}
+                  className="aspect-[16/10] w-full rounded-lg object-cover"
+                />
+              ) : (
+                <div className="aspect-[16/10] w-full rounded-lg bg-surface-alt" />
+              )}
               {gallery.length > 1 && (
-                <div className="mt-3 grid grid-cols-4 gap-2">
-                  {gallery.slice(1, 5).map((u) => <img key={u} src={u} alt="" className="aspect-square w-full rounded-md object-cover" />)}
+                <div className="mt-3 grid grid-cols-5 gap-2">
+                  {gallery.map((u, i) => (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => setMainIdx(i)}
+                      className={`overflow-hidden rounded-md border-2 ${i === mainSafe ? "border-navy" : "border-transparent"}`}
+                    >
+                      <img src={u} alt="" className="aspect-square w-full object-cover" />
+                    </button>
+                  ))}
                 </div>
+              )}
+              {p.video_url && (
+                <video
+                  src={p.video_url}
+                  controls
+                  preload="metadata"
+                  className="mt-3 aspect-video w-full rounded-lg bg-black"
+                />
               )}
             </div>
 
@@ -116,6 +149,10 @@ function PropertyDetail() {
                 <Field label="Baths" value={p.bathrooms ?? "—"} />
                 <Field label="Assessed" value={p.assessed_value ? fmt(p.assessed_value) : "—"} />
                 <Field label="Use Type" value={p.use_type ?? "—"} />
+                {taxesOwed != null && <Field label="Taxes Owed" value={fmt(taxesOwed)} />}
+                {interestRate != null && <Field label="Interest Rate" value={`${interestRate.toFixed(2)}%`} />}
+                {taxYear != null && <Field label="Tax Year" value={taxYear} />}
+                {redemptionMonths != null && <Field label="Redemption" value={`${redemptionMonths} mo`} />}
               </dl>
               {(p.owner_name || p.owner_mailing_address) && (
                 <div className="mt-5 rounded-lg bg-surface-alt p-4 text-sm">

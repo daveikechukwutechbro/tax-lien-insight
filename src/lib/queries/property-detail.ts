@@ -13,6 +13,7 @@ export type PropertyDetail = {
   description: string | null;
   image_url: string | null;
   gallery_urls: string[];
+  video_url: string | null;
   year_built: number | null;
   living_area_sqft: number | null;
   lot_size_acres: number | null;
@@ -24,6 +25,10 @@ export type PropertyDetail = {
   improvement_value: number | null;
   owner_name: string | null;
   owner_mailing_address: string | null;
+  property_taxes_owed: number | null;
+  property_interest_rate: number | null;
+  property_tax_year: number | null;
+  property_redemption_months: number | null;
   county: { name: string; state: string };
   lien: {
     id: string;
@@ -122,6 +127,7 @@ async function buildDetailFromLot(
       description: null,
       image_url: lot.image_url ?? null,
       gallery_urls: [],
+      video_url: null,
       year_built: null,
       living_area_sqft: null,
       lot_size_acres: null,
@@ -133,6 +139,10 @@ async function buildDetailFromLot(
       improvement_value: null,
       owner_name: null,
       owner_mailing_address: null,
+      property_taxes_owed: null,
+      property_interest_rate: null,
+      property_tax_year: null,
+      property_redemption_months: null,
       county: auction?.county ?? { name: "", state: lot.state ?? "" },
       lien: makeLien(lot, auction),
       documents: [],
@@ -182,20 +192,25 @@ async function buildDetail(
     state: p.state ?? "",
     zip: p.postalCode ?? "",
     property_type: p.propertyType,
-    description: null,
+    description: p.legalDescription ?? null,
     image_url: p.imageUrl ?? null,
-    gallery_urls: [],
-    year_built: null,
-    living_area_sqft: null,
-    lot_size_acres: null,
-    bedrooms: null,
-    bathrooms: null,
-    use_type: p.propertyType,
+    gallery_urls: p.gallery ?? [],
+    video_url: p.videoUrl ?? null,
+    year_built: p.yearBuilt ?? null,
+    living_area_sqft: p.livingAreaSqft ?? null,
+    lot_size_acres: p.lotSizeAcres != null ? Number(p.lotSizeAcres) : null,
+    bedrooms: p.bedrooms ?? null,
+    bathrooms: p.bathrooms ?? null,
+    use_type: p.useType ?? null,
     assessed_value: p.assessedValue,
     land_value: p.landValue ?? null,
     improvement_value: p.improvementValue ?? null,
-    owner_name: null,
-    owner_mailing_address: null,
+    owner_name: p.ownerName ?? null,
+    owner_mailing_address: p.ownerMailingAddress ?? null,
+    property_taxes_owed: p.propertyTaxesOwed ?? null,
+    property_interest_rate: p.propertyInterestRate ?? null,
+    property_tax_year: p.propertyTaxYear ?? null,
+    property_redemption_months: p.propertyRedemptionMonths ?? null,
     county: p.countyName ? { name: p.countyName, state: p.countyState ?? p.state ?? "" } : { name: "", state: p.state ?? "" },
     lien,
     documents: [],

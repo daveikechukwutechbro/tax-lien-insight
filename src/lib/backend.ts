@@ -487,6 +487,7 @@ export type RawProperty = {
   assessedValue: number | null;
   landValue?: number | null;
   improvementValue?: number | null;
+  legalDescription?: string | null;
   countyName: string | null;
   countyState: string | null;
   imageUrl?: string | null;
@@ -499,6 +500,20 @@ export type RawProperty = {
   auctionId?: string | null;
   auctionStatus?: string | null;
   auctionStartsAt?: string | null;
+  gallery?: string[];
+  videoUrl?: string | null;
+  yearBuilt?: number | null;
+  livingAreaSqft?: number | null;
+  lotSizeAcres?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  useType?: string | null;
+  ownerName?: string | null;
+  ownerMailingAddress?: string | null;
+  propertyTaxesOwed?: number | null;
+  propertyInterestRate?: number | null;
+  propertyTaxYear?: number | null;
+  propertyRedemptionMonths?: number | null;
 };
 export async function getProperty(id: string): Promise<RawProperty> {
   return request<RawProperty>(`/api/v1/properties/${id}`);
@@ -638,6 +653,20 @@ export type PropertyInput = {
   assessedValue?: number;
   legalDescription?: string;
   imageData?: string | null;
+  gallery?: string[] | null;
+  videoUrl?: string | null;
+  yearBuilt?: number | null;
+  livingAreaSqft?: number | null;
+  lotSizeAcres?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  useType?: string | null;
+  ownerName?: string | null;
+  ownerMailingAddress?: string | null;
+  taxesOwed?: number | null;
+  interestRate?: number | null;
+  taxYear?: number | null;
+  redemptionPeriodMonths?: number | null;
 };
 
 export async function getAdminProperties(): Promise<RawProperty[]> {

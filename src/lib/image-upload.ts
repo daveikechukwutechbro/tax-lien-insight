@@ -35,3 +35,16 @@ export async function fileToDataUrl(file: File, maxBytes = 512 * 1024): Promise<
     URL.revokeObjectURL(url);
   }
 }
+
+// Reads a user-selected video file into a base64 data URL for storage. No
+// re-encoding (browsers can't transcode), so a size cap is enforced instead.
+export async function videoToDataUrl(file: File, maxBytes = 20 * 1024 * 1024): Promise<string> {
+  if (!file.type.startsWith("video/")) throw new Error("Please choose a video file (MP4, WebM, MOV).");
+  if (file.size > maxBytes) throw new Error("Video must be under 20 MB — try a shorter clip.");
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Could not read video"));
+    reader.readAsDataURL(file);
+  });
+}
