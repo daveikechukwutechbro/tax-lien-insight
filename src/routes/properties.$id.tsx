@@ -5,7 +5,7 @@ import { useSession } from "@/hooks/use-session";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Bookmark, BookmarkCheck, FileText, MapPin } from "lucide-react";
+import { Bookmark, BookmarkCheck, FileText, MapPin, Maximize2, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { addWatchItem, placeBidApi, getLotEligibility, removeWatchlistItem } from "@/lib/backend";
 import { watchlistQuery, profileQuery, dashboardSummaryQuery } from "@/lib/queries/dashboard";
 import { SmartBackButton } from "@/components/site/smart-back";
@@ -84,6 +84,11 @@ function PropertyDetail() {
   const gallery = [p.image_url, ...p.gallery_urls].filter(Boolean) as string[];
   const [mainIdx, setMainIdx] = useState(0);
   const mainSafe = mainIdx < gallery.length ? mainIdx : 0;
+  const [viewer, setViewer] = useState<number | null>(null);
+  const media = [
+    ...gallery.map((url) => ({ type: "image" as const, url })),
+    ...(p.video_url ? [{ type: "video" as const, url: p.video_url }] : []),
+  ];
 
   const taxesOwed = lien?.taxes_owed ?? p.property_taxes_owed ?? null;
   const interestRate =
@@ -103,11 +108,21 @@ function PropertyDetail() {
           <div>
             <div className="rounded-xl border border-hairline bg-surface p-4">
               {gallery[mainSafe] ? (
-                <img
-                  src={gallery[mainSafe]}
-                  alt={p.address}
-                  className="aspect-[16/10] w-full rounded-lg object-cover"
-                />
+                <button
+                  type="button"
+                  onClick={() => setViewer(mainSafe)}
+                  className="group relative block w-full cursor-zoom-in"
+                  title="View full screen"
+                >
+                  <img
+                    src={gallery[mainSafe]}
+                    alt={p.address}
+                    className="aspect-[16/10] w-full rounded-lg bg-surface-alt object-contain"
+                  />
+                  <span className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 text-[11px] font-500 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    <Maximize2 className="size-3.5" /> Full screen
+                  </span>
+                </button>
               ) : (
                 <div className="aspect-[16/10] w-full rounded-lg bg-surface-alt" />
               )}
@@ -126,12 +141,22 @@ function PropertyDetail() {
                 </div>
               )}
               {p.video_url && (
-                <video
-                  src={p.video_url}
-                  controls
-                  preload="metadata"
-                  className="mt-3 aspect-video w-full rounded-lg bg-black"
-                />
+                <div className="relative mt-3">
+                  <video
+                    src={p.video_url}
+                    controls
+                    preload="metadata"
+                    className="aspect-video w-full rounded-lg bg-black"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setViewer(gallery.length)}
+                    className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 text-[11px] font-500 text-white hover:bg-black/80"
+                    title="Play full screen"
+                  >
+                    <Maximize2 className="size-3.5" /> Full screen
+                  </button>
+                </div>
               )}
             </div>
 
@@ -182,6 +207,14 @@ function PropertyDetail() {
           <BidPanel property={p} watching={!!watching} onToggleWatch={toggleWatch} />
         </div>
       </div>
+      {viewer !== null && media[viewer] && (
+        <PropertyLightbox
+          media={media}
+          index={viewer}
+          onClose={() => setViewer(null)}
+          onIndex={setViewer}
+        />
+      )}
     </div>
   );
 }
@@ -338,4 +371,102 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 }
 function Cell({ label, value }: { label: string; value: number }) {
   return <div className="rounded-md bg-navy text-primary-foreground py-2"><div className="font-display text-xl font-600">{String(value).padStart(2, "0")}</div><div className="text-[10px] uppercase tracking-wider opacity-70">{label}</div></div>;
+}
+
+type MediaItem = { type: "image" | "video"; url: string };
+
+function PropertyLightbox({
+  media,
+  index,
+  onClose,
+  onIndex,
+}: {
+  media: MediaItem[];
+  index: number;
+  onClose: () => void;
+  onIndex: (i: number) => void;
+}) {
+  const item = media[index];
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowRight" && media.length > 1) onIndex((index + 1) % media.length);
+      else if (e.key === "ArrowLeft" && media.length > 1) onIndex((index - 1 + media.length) % media.length);
+    }
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [index, media.length, onClose, onIndex]);
+
+  if (!item) return null;
+  const prev = (index - 1 + media.length) % media.length;
+  const next = (index + 1) % media.length;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-4 top-4 z-10 grid size-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/25"
+        aria-label="Close"
+      >
+        <X className="size-5" />
+      </button>
+
+      {media.length > 1 && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onIndex(prev); }}
+          className="absolute left-3 z-10 grid size-11 place-items-center rounded-full bg-white/10 text-white hover:bg-white/25"
+          aria-label="Previous"
+        >
+          <ChevronLeft className="size-6" />
+        </button>
+      )}
+
+      {item.type === "image" ? (
+        <img
+          src={item.url}
+          alt=""
+          onClick={(e) => e.stopPropagation()}
+          className="max-h-[92vh] max-w-[95vw] rounded-lg object-contain"
+        />
+      ) : (
+        <video
+          src={item.url}
+          controls
+          autoPlay
+          onClick={(e) => e.stopPropagation()}
+          className="max-h-[92vh] max-w-[95vw] rounded-lg bg-black"
+        />
+      )}
+
+      {media.length > 1 && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onIndex(next); }}
+          className="absolute right-3 z-10 grid size-11 place-items-center rounded-full bg-white/10 text-white hover:bg-white/25"
+          aria-label="Next"
+        >
+          <ChevronRight className="size-6" />
+        </button>
+      )}
+
+      {media.length > 1 && (
+        <div className="absolute bottom-4 rounded-full bg-white/10 px-3 py-1 text-xs font-500 text-white">
+          {index + 1} / {media.length}
+        </div>
+      )}
+    </div>
+  );
 }
