@@ -803,3 +803,140 @@ export async function transitionAdminLot(lotId: string, next: string): Promise<v
 export async function deleteAdminLot(lotId: string): Promise<void> {
   await request<{ deleted: boolean }>(`/api/v1/admin/auction-lots/${lotId}`, { method: "DELETE" });
 }
+export async function updateAdminLot(lotId: string, patch: Partial<LotInput> & { lotNumber?: number; currentRate?: number }): Promise<void> {
+  await request<{ id: string; updated: boolean }>(`/api/v1/admin/auction-lots/${lotId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+// ---- Admin: auctions (edit) ----
+
+export async function updateAdminAuction(id: string, patch: { title?: string }): Promise<void> {
+  await request<{ id: string }>(`/api/v1/admin/auctions/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+// ---- Admin: dashboard ----
+
+export type AdminDashboard = {
+  users: number;
+  auctions: number;
+  activeAuctions: number;
+  confirmedDeposits: number;
+  properties: number;
+  liens: number;
+  lots: number;
+  bids: number;
+  pendingKyc: number;
+  counties: number;
+  totalFunds: string;
+  recent: {
+    id: string;
+    action: string;
+    entity_type: string | null;
+    entity_id: string | null;
+    created_at: string;
+    email: string | null;
+  }[];
+};
+
+export async function getAdminDashboard(): Promise<AdminDashboard> {
+  return request<AdminDashboard>("/api/v1/admin/dashboard");
+}
+
+// ---- Admin: jurisdictions / counties ----
+
+export type AdminJurisdiction = {
+  id: string;
+  parent_id: string | null;
+  jurisdiction_type: string;
+  official_code: string | null;
+  name: string;
+  state_id: string | null;
+  state_code: string | null;
+  state_name: string | null;
+  status: string;
+  created_at: string | null;
+};
+
+export async function getAdminJurisdictions(): Promise<{ jurisdictions: AdminJurisdiction[]; states: { id: string; code: string; name: string; status: string }[] }> {
+  return request(`/api/v1/admin/jurisdictions`);
+}
+export async function createAdminJurisdiction(input: {
+  name: string;
+  jurisdictionType: string;
+  stateId?: string;
+  officialCode?: string;
+}): Promise<string> {
+  const res = await request<{ id: string }>("/api/v1/admin/jurisdictions", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return res.id;
+}
+export async function updateAdminJurisdiction(
+  id: string,
+  patch: { name?: string; officialCode?: string; status?: "active" | "inactive" },
+): Promise<void> {
+  await request<{ id: string }>(`/api/v1/admin/jurisdictions/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+export async function deactivateAdminJurisdiction(id: string): Promise<void> {
+  await request<{ id: string; deactivated: boolean }>(`/api/v1/admin/jurisdictions/${id}`, { method: "DELETE" });
+}
+
+// ---- Site content ----
+
+export type SiteContent = {
+  slug: string;
+  body: Record<string, unknown>;
+  updatedAt: string | null;
+};
+
+export const SITE_CONTENT_SLUGS = ["settings", "home", "how-it-works", "faq", "rates", "resources", "support", "about"] as const;
+export type SiteContentSlug = (typeof SITE_CONTENT_SLUGS)[number];
+
+export async function getSiteContent(slug: string): Promise<SiteContent> {
+  return request<SiteContent>(`/api/v1/site-content/${slug}`);
+}
+export async function getAdminSiteContent(): Promise<SiteContent[]> {
+  return request<SiteContent[]>("/api/v1/admin/site-content");
+}
+export async function saveAdminSiteContent(slug: string, body: Record<string, unknown>): Promise<SiteContent> {
+  return request<SiteContent>(`/api/v1/admin/site-content/${slug}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+// ---- Admin: users ----
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  status: string;
+  email_verified: boolean;
+  created_at: string;
+  roles: string[];
+};
+
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  return request<AdminUser[]>("/api/v1/admin/users");
+}
+export async function setAdminUserStatus(id: string, status: string, reason?: string): Promise<void> {
+  await request<{ id: string; status: string }>(`/api/v1/admin/users/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, reason }),
+  });
+}
+export async function setAdminUserRole(id: string, role: string, action: "add" | "remove"): Promise<void> {
+  await request<{ id: string }>(`/api/v1/admin/users/${id}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role, action }),
+  });
+}

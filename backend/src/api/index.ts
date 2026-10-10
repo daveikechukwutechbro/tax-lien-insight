@@ -31,7 +31,22 @@ import {
 } from "../auth/auth.service.js";
 import { assignRole, revokeRole, isAdmin } from "../auth/rbac.js";
 import { isEmailConfigured } from "../providers/email/index.js";
-import { listStates, listJurisdictions, getJurisdictionRules } from "../jurisdictions/jurisdictions.service.js";
+import {
+  listStates,
+  listStatesAdmin,
+  listJurisdictions,
+  listJurisdictionsAdmin,
+  getJurisdiction,
+  getJurisdictionRules,
+  createJurisdiction,
+  updateJurisdiction,
+} from "../jurisdictions/jurisdictions.service.js";
+import {
+  getSiteContent,
+  upsertSiteContent,
+  listSiteContent,
+  checkContentSlug,
+} from "../content/content.service.js";
 import {
   listProperties,
   getProperty,
@@ -440,10 +455,38 @@ export function createApp(): Hono {
   });
   app.patch("/api/v1/admin/auction-lots/:id", async (c) => {
     requirePermission(c, "auction.publish");
+    const id = c.req.param("id");
     const body = await c.req.json().catch(() => ({}));
-    if (!body.status) throw new ValidationError("status is required");
-    await transitionLot(c.req.param("id"), body.status as any, requireUser(c).userId);
-    return c.json(json({ id: c.req.param("id"), status: body.status }));
+    if (body.status) {
+      await transitionLot(id, body.status as any, requireUser(c).userId);
+      return c.json(json({ id, status: body.status }));
+    }
+    const { rows } = await getPool().query(`SELECT id FROM auction_lots WHERE id = $1`, [id]);
+    if (!rows[0]) throw new NotFoundError("Lot not found");
+    const fields: string[] = [];
+    const values: unknown[] = [];
+    const num = (v: unknown, alt?: number) => (v === undefined || v === null || v === "" ? (alt ?? undefined) : Number(v));
+    const set = (col: string, v: unknown, alt?: number) => {
+      const n = num(v, alt);
+      if (n === undefined) return;
+      fields.push(`${col} = $${values.length + 1}`);
+      values.push(n);
+    };
+    set("lot_number", body.lotNumber);
+    set("parcel_id", body.parcelId);
+    set("starting_rate", body.startingRate);
+    set("current_rate", body.currentRate);
+    set("minimum_rate", body.minimumRate);
+    set("rate_increment", body.rateIncrement);
+    set("rate_precision", body.ratePrecision);
+    set("taxes_owed", body.taxesOwed);
+    set("tax_year", body.taxYear);
+    set("redemption_period_months", body.redemptionPeriodMonths);
+    if (fields.length === 0) return c.json(json({ id, updated: false }));
+    fields.push(`updated_at = now()`);
+    values.push(id);
+    await getPool().query(`UPDATE auction_lots SET ${fields.join(", ")} WHERE id = $${values.length}`, values);
+    return c.json(json({ id, updated: true }));
   });
   app.delete("/api/v1/admin/auction-lots/:id", async (c) => {
     requirePermission(c, "auction.publish");
@@ -918,17 +961,52 @@ export function createApp(): Hono {
     return c.json(json(res));
   });
 
+  // ---- Public site content (editable pages/settings) ----
+  app.get("/api/v1/site-content/:slug", async (c) => {
+    const slug = c.req.param("slug");
+    await checkContentSlug(slug);
+    const content = await getSiteContent(slug);
+    if (!content) return c.json(json({ slug, body: {}, updatedAt: null }));
+    return c.json(json(content));
+  });
+
   // ---- Admin ----
   app.get("/api/v1/admin/dashboard", async (c) => {
     requireAdmin(c);
-    const { rows: users } = await getPool().query(`SELECT count(*)::int AS c FROM users`);
-    const { rows: auctions } = await getPool().query(`SELECT count(*)::int AS c FROM auctions`);
-    const { rows: deposits } = await getPool().query(`SELECT count(*)::int AS c FROM crypto_deposits WHERE status='confirmed'`);
+    const q = (sql: string) => getPool().query(sql);
+    const [users, auctions, deposits, properties, liens, lots, bids, activeAuctions, pendingKyc, countyRows, funds] =
+      await Promise.all([
+        q(`SELECT count(*)::int AS c FROM users`),
+        q(`SELECT count(*)::int AS c FROM auctions WHERE status <> 'cancelled'`),
+        q(`SELECT count(*)::int AS c FROM crypto_deposits WHERE status='confirmed'`),
+        q(`SELECT count(*)::int AS c FROM properties`),
+        q(`SELECT count(*)::int AS c FROM liens`),
+        q(`SELECT count(*)::int AS c FROM auction_lots`),
+        q(`SELECT count(*)::int AS c FROM bids`),
+        q(`SELECT count(*)::int AS c FROM auctions WHERE status IN ('open','registration','live')`),
+        q(`SELECT count(*)::int AS c FROM kyc_submissions WHERE status='pending'`),
+        q(`SELECT count(*)::int AS c FROM jurisdictions WHERE status='active'`),
+        q(`SELECT COALESCE(SUM(balance),0)::numeric(14,2)::text AS s FROM funds_accounts`),
+      ]);
+    const { rows: recent } = await getPool().query(
+      `SELECT a.id, a.action, a.entity_type, a.entity_id, a.created_at, u.email
+       FROM audit_log a LEFT JOIN users u ON u.id = a.actor_id
+       ORDER BY a.created_at DESC LIMIT 12`,
+    );
     return c.json(
       json({
-        users: users[0].c,
-        auctions: auctions[0].c,
-        confirmedDeposits: deposits[0].c,
+        users: users.rows[0].c,
+        auctions: auctions.rows[0].c,
+        activeAuctions: activeAuctions.rows[0].c,
+        confirmedDeposits: deposits.rows[0].c,
+        properties: properties.rows[0].c,
+        liens: liens.rows[0].c,
+        lots: lots.rows[0].c,
+        bids: bids.rows[0].c,
+        pendingKyc: pendingKyc.rows[0].c,
+        counties: countyRows.rows[0].c,
+        totalFunds: funds.rows[0].s ?? "0",
+        recent,
       }),
     );
   });
@@ -1016,6 +1094,59 @@ export function createApp(): Hono {
   app.get("/api/v1/admin/audit", async (c) => {
     requirePermission(c, "audit.view");
     return c.json(json(await listAudit({ action: c.req.query("action") ?? undefined, entityType: c.req.query("entityType") ?? undefined })));
+  });
+
+  // ---- Admin: jurisdictions ----
+  app.get("/api/v1/admin/jurisdictions", async (c) => {
+    requireAdmin(c);
+    return c.json(json({ jurisdictions: await listJurisdictionsAdmin(), states: await listStatesAdmin() }));
+  });
+  app.post("/api/v1/admin/jurisdictions", async (c) => {
+    const ctx = requirePermission(c, "property.edit");
+    const body = await c.req.json().catch(() => ({}));
+    if (!body.name || !body.jurisdictionType) throw new ValidationError("name and jurisdictionType are required");
+    const id = await createJurisdiction({
+      jurisdictionType: body.jurisdictionType,
+      name: body.name,
+      stateId: body.stateId ?? undefined,
+      parentId: body.parentId ?? undefined,
+      officialCode: body.officialCode ?? undefined,
+      metadata: body.metadata ?? undefined,
+    });
+    await recordAdminAction({ actorUserId: ctx.userId, action: "JURISDICTION_CREATED", targetUserId: undefined, reason: body.name });
+    return c.json(json({ id }), 201);
+  });
+  app.patch("/api/v1/admin/jurisdictions/:id", async (c) => {
+    const ctx = requirePermission(c, "property.edit");
+    const id = c.req.param("id");
+    const body = await c.req.json().catch(() => ({}));
+    await getJurisdiction(id);
+    await updateJurisdiction(id, { name: body.name, officialCode: body.officialCode, status: body.status });
+    await recordAdminAction({ actorUserId: ctx.userId, action: "JURISDICTION_UPDATED", targetUserId: undefined, reason: body.name });
+    return c.json(json({ id }));
+  });
+  app.delete("/api/v1/admin/jurisdictions/:id", async (c) => {
+    const ctx = requirePermission(c, "property.edit");
+    const id = c.req.param("id");
+    await getJurisdiction(id);
+    await updateJurisdiction(id, { status: "inactive" });
+    await recordAdminAction({ actorUserId: ctx.userId, action: "JURISDICTION_DEACTIVATED", targetUserId: undefined, reason: c.req.query("reason") ?? undefined });
+    return c.json(json({ id, deactivated: true }));
+  });
+
+  // ---- Admin: site content ----
+  app.get("/api/v1/admin/site-content", async (c) => {
+    requirePermission(c, "content.manage");
+    return c.json(json(await listSiteContent()));
+  });
+  app.put("/api/v1/admin/site-content/:slug", async (c) => {
+    const ctx = requirePermission(c, "content.manage");
+    const slug = c.req.param("slug");
+    await checkContentSlug(slug);
+    const body = await c.req.json().catch(() => ({}));
+    const updated = await upsertSiteContent(slug, body ?? {}, ctx.userId);
+    await recordAdminAction({ actorUserId: ctx.userId, action: "CONTENT_UPDATED", targetUserId: undefined, reason: slug });
+    return c.json(json(updated));
   });
 
   return app;

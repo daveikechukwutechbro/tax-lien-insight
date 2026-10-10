@@ -47,7 +47,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -86,7 +86,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  beforeLoad: ({ location }) => {
+  beforeLoad: ({ location }: any) => {
     if (ADMIN_SITE) {
       const allowed = ["/admin", "/auth", "/verify", "/reset"];
       const isAllowed = allowed.some((p) => location.pathname === p || location.pathname.startsWith(p + "/"));

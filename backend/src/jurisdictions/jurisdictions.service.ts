@@ -47,6 +47,60 @@ export async function listJurisdictions(stateId?: string) {
   return rows;
 }
 
+export async function listJurisdictionsAdmin() {
+  const { rows } = await getPool().query(
+    `SELECT j.id, j.parent_id, j.jurisdiction_type, j.official_code, j.name, j.state_id, j.status,
+            j.created_at,
+            s.code AS state_code, s.name AS state_name
+     FROM jurisdictions j
+     LEFT JOIN states s ON s.id = j.state_id
+     ORDER BY COALESCE(s.name, ''), j.name`,
+  );
+  return rows;
+}
+
+export async function listStatesAdmin() {
+  const { rows } = await getPool().query(
+    `SELECT id, code, name, country_code, status FROM states ORDER BY name`,
+  );
+  return rows;
+}
+
+export async function updateJurisdiction(
+  jurisdictionId: string,
+  input: { name?: string; officialCode?: string; status?: "active" | "inactive" },
+) {
+  const fields: string[] = [];
+  const values: unknown[] = [];
+  if (input.name !== undefined) {
+    fields.push(`name = $${values.length + 1}`);
+    values.push(input.name);
+  }
+  if (input.officialCode !== undefined) {
+    fields.push(`official_code = $${values.length + 1}`);
+    values.push(input.officialCode);
+  }
+  if (input.status !== undefined) {
+    fields.push(`status = $${values.length + 1}`);
+    values.push(input.status);
+  }
+  if (fields.length === 0) return;
+  values.push(jurisdictionId);
+  await getPool().query(
+    `UPDATE jurisdictions SET ${fields.join(", ")}, updated_at = now() WHERE id = $${values.length}`,
+    values,
+  );
+}
+
+export async function getJurisdiction(jurisdictionId: string) {
+  const { rows } = await getPool().query(
+    `SELECT j.*, s.code AS state_code FROM jurisdictions j LEFT JOIN states s ON s.id = j.state_id WHERE j.id = $1`,
+    [jurisdictionId],
+  );
+  if (!rows[0]) throw new NotFoundError("Jurisdiction not found");
+  return rows[0];
+}
+
 export async function getJurisdictionRules(jurisdictionId: string): Promise<JurisdictionRule> {
   const { rows } = await getPool().query(
     `SELECT * FROM jurisdiction_rules

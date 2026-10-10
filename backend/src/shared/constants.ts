@@ -44,6 +44,7 @@ export const PERMISSIONS = [
   "redemption.view",
   "redemption.manage",
   "audit.view",
+  "content.manage",
   "system.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
@@ -58,7 +59,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   property_manager: ["property.create", "property.edit"],
   finance_manager: ["funds.view", "funds.adjust", "certificate.issue", "certificate.revoke", "redemption.manage"],
   compliance_officer: ["audit.view", "kyc.review", "user.view"],
-  content_manager: ["property.edit"],
+  content_manager: ["property.edit", "content.manage"],
   auditor: ["audit.view", "user.view", "bid.view", "funds.view", "kyc.review", "redemption.view"],
   admin: [
     "auction.create",
@@ -79,6 +80,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "redemption.view",
     "redemption.manage",
     "audit.view",
+    "content.manage",
     "system.manage",
   ],
   super_admin: [
@@ -100,6 +102,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "redemption.view",
     "redemption.manage",
     "audit.view",
+    "content.manage",
     "system.manage",
   ],
 };
