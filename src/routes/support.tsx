@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Mail, Clock, MessageSquare, Send, CheckCircle2, Phone } from "lucide-react";
 import { toast } from "sonner";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
@@ -15,9 +16,8 @@ export const Route = createFileRoute("/support")({
   component: SupportPage,
 });
 
-const SUPPORT_EMAIL = "auctionledger@gmail.com";
-
 function SupportPage() {
+  const { eyebrow, title, subtitle, email: supportEmail, hours, hoursNote } = useSiteContent("support");
   const [sent, setSent] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -33,7 +33,7 @@ function SupportPage() {
     const body = encodeURIComponent(
       `Name: ${name}\nEmail: ${email}\nTopic: ${topic}\n\n${message}`,
     );
-    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`[Support] ${topic}`)}&body=${body}`;
+    window.location.href = `mailto:${supportEmail}?subject=${encodeURIComponent(`[Support] ${topic}`)}&body=${body}`;
     setSent(true);
     toast.success("Opening your email app — press send and we'll get back to you within 24 hours.");
   }
@@ -44,13 +44,10 @@ function SupportPage() {
         <div className="container-tight py-14">
           <div className="flex items-center gap-2 text-gold">
             <Mail className="size-5" />
-            <span className="text-xs uppercase tracking-[0.24em]">Contact Support</span>
+            <span className="text-xs uppercase tracking-[0.24em]">{eyebrow}</span>
           </div>
-          <h1 className="mt-3 font-display text-4xl font-600">We're here to help</h1>
-          <p className="mt-2 max-w-2xl text-primary-foreground/80">
-            Questions about bidding, your funds, certificates, or a redemption pay-out?
-            Send us an email and a member of the team will get back to you within one business day.
-          </p>
+          <h1 className="mt-3 font-display text-4xl font-600">{title}</h1>
+          <p className="mt-2 max-w-2xl text-primary-foreground/80">{subtitle}</p>
         </div>
       </section>
 
@@ -69,7 +66,7 @@ function SupportPage() {
                 <h3 className="mt-3 font-display text-lg font-600 text-navy">Almost done!</h3>
                 <p className="mt-1 text-sm text-ink">
                   Your email app should now be open with your message filled in. Just press{" "}
-                  <strong>Send</strong> and our team will reply to <strong>{email || SUPPORT_EMAIL}</strong>{" "}
+                  <strong>Send</strong> and our team will reply to <strong>{email || supportEmail}</strong>{" "}
                   within 24 hours.
                 </p>
                 <button
@@ -140,12 +137,12 @@ function SupportPage() {
             <InfoCard
               icon={<Mail className="size-5" />}
               title="Email us"
-              lines={[SUPPORT_EMAIL, "We reply within 24 hours, usually much faster."]}
+              lines={[supportEmail, "We reply within 24 hours, usually much faster."]}
             />
             <InfoCard
               icon={<Clock className="size-5" />}
               title="Support hours"
-              lines={["Mon – Fri, 9am – 6pm ET", "Weekend messages are answered on the next business day."]}
+              lines={[hours, hoursNote]}
             />
             <InfoCard
               icon={<MessageSquare className="size-5" />}

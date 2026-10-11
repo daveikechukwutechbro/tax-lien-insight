@@ -414,8 +414,22 @@ export function createApp(): Hono {
     requirePermission(c, "auction.publish");
     const id = c.req.param("id");
     const body = await c.req.json().catch(() => ({}));
-    if (body.title) await getPool().query(`UPDATE auctions SET title=$1, updated_at=now() WHERE id=$2`, [body.title, id]);
-    return c.json(json({ id }));
+    const fields: string[] = [];
+    const values: unknown[] = [];
+    const setText = (col: string, v: unknown) => {
+      if (v === undefined) return;
+      fields.push(`${col} = $${values.length + 1}`);
+      values.push(v === "" ? null : v);
+    };
+    setText("title", body.title);
+    setText("jurisdiction_id", body.jurisdictionId);
+    setText("starts_at", body.startsAt);
+    setText("ends_at", body.endsAt);
+    if (fields.length === 0) return c.json(json({ id, updated: false }));
+    fields.push("updated_at = now()");
+    values.push(id);
+    await getPool().query(`UPDATE auctions SET ${fields.join(", ")} WHERE id = $${values.length}`, values);
+    return c.json(json({ id, updated: true }));
   });
   const transition = (fn: (id: string, actor: string) => Promise<any>, perm: string) =>
     app.post(`/api/v1/admin/auctions/:id/${fn.name.replace(/Auction$/, "")}`, async (c) => {

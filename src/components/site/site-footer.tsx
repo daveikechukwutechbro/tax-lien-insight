@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useSession } from "@/hooks/use-session";
+import { useSiteContent } from "@/lib/site-content";
+import { BrandName } from "@/components/site/site-header";
 
 export function SiteFooter() {
   const { user, loading } = useSession();
+  const { siteName, footerBlurb, footerLegal } = useSiteContent("settings");
   const signedIn = !loading && !!user;
   const accountLinks = signedIn
     ? [
@@ -20,13 +23,10 @@ export function SiteFooter() {
     <footer className="mt-16 border-t border-hairline bg-navy-deep text-primary-foreground">
       <div className="container-tight grid gap-10 py-14 md:grid-cols-4">
         <div className="space-y-3">
-          <div className="font-display text-lg font-600">
-            Auction<span className="text-gold">Ledger</span>
+          <div className="font-display text-lg font-600 text-primary-foreground">
+            <BrandName name={siteName} />
           </div>
-          <p className="max-w-xs text-sm text-primary-foreground/70">
-            The transparent multi-state marketplace for tax lien certificates.
-            Registered bidders only. Not financial advice.
-          </p>
+          <p className="max-w-xs text-sm text-primary-foreground/70">{footerBlurb}</p>
         </div>
         <FooterCol
           title="Marketplace"
@@ -48,8 +48,8 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-white/10">
         <div className="container-tight flex flex-col items-start justify-between gap-2 py-5 text-xs text-primary-foreground/60 md:flex-row md:items-center">
-          <p>© {new Date().getFullYear()} Auction Ledger. All rights reserved.</p>
-          <p>Licensed in participating US jurisdictions. Bidding subject to county rules.</p>
+          <p>© {new Date().getFullYear()} {siteName}. All rights reserved.</p>
+          <p>{footerLegal}</p>
         </div>
       </div>
     </footer>

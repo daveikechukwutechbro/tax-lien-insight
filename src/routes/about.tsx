@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Building2, Globe, Lock, ShieldCheck, BarChart3, ArrowRight } from "lucide-react";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -30,6 +31,7 @@ const values = [
 ];
 
 function AboutPage() {
+  const { title, intro, ctaTitle, ctaSubtitle } = useSiteContent("about");
   return (
     <main className="bg-background pb-20">
       <div className="container-tight">
@@ -41,14 +43,9 @@ function AboutPage() {
               About Auction Ledger
             </div>
             <h1 className="mt-4 font-display text-4xl font-600 text-navy sm:text-5xl">
-              The marketplace tax lien investors actually want to use.
+              {title}
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-ink-muted">
-              Auction Ledger was built to solve a simple problem: tax lien auctions are a powerful
-              investment opportunity, but the process is fragmented, opaque, and stuck behind
-              outdated county portals. We bring every participating jurisdiction together on one
-              platform — so you can research, compare, and invest with confidence.
-            </p>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-ink-muted">{intro}</p>
           </div>
         </section>
 
@@ -136,8 +133,8 @@ function AboutPage() {
 
         {/* CTA */}
         <section className="mt-20 text-center">
-          <h2 className="font-display text-3xl font-600 text-navy">Ready to invest?</h2>
-          <p className="mt-3 text-ink-muted">Create a free bidder account and start researching the next auction.</p>
+          <h2 className="font-display text-3xl font-600 text-navy">{ctaTitle}</h2>
+          <p className="mt-3 text-ink-muted">{ctaSubtitle}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link to="/auth" search={{ mode: "signup" }} className="inline-flex items-center gap-2 rounded-md bg-navy px-6 py-3 text-sm font-600 text-primary-foreground hover:bg-navy-deep">
               Get started

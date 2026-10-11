@@ -5,6 +5,7 @@ import { scheduledAuctionQuery, type ScheduledPropertyRow } from "@/lib/queries/
 import { loaderPrefetch } from "@/lib/queries/prefetch";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useSession } from "@/hooks/use-session";
+import { useSiteContent } from "@/lib/site-content";
 import { PageSkeleton } from "@/components/site/page-skeleton";
 import {
   CalendarDays,
@@ -105,16 +106,14 @@ function HomePage() {
 }
 
 function HeroRow({ auctionDate }: { auctionDate: Date | null }) {
+  const { heroTitle, heroSubtitle } = useSiteContent("home");
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_auto_auto] lg:items-end">
       <div>
         <h1 className="font-display text-4xl font-600 tracking-tight text-navy sm:text-5xl">
-          Upcoming Tax Lien Auction
+          {heroTitle}
         </h1>
-        <p className="mt-3 max-w-2xl text-[15px] text-ink-muted">
-          These properties are scheduled for auction. Register now and be ready to bid
-          on secured tax lien certificates.
-        </p>
+        <p className="mt-3 max-w-2xl text-[15px] text-ink-muted">{heroSubtitle}</p>
       </div>
       {auctionDate && (
         <>
@@ -297,12 +296,8 @@ function Stat({
 }
 
 function WhyInvestCard() {
-  const items = [
-    "Earn interest up to 18% or more",
-    "Secured by real estate",
-    "Low investment minimums",
-    "Potential for high returns",
-  ];
+  const { whyInvest } = useSiteContent("home");
+  const items = whyInvest.map((i) => i.text);
   return (
     <div className="rounded-lg bg-navy-deep p-5 text-primary-foreground lg:w-[300px]">
       <div className="text-sm font-600 text-gold">Why Invest in Tax Liens?</div>
@@ -553,6 +548,7 @@ function StatusPill({ status }: { status: ScheduledPropertyRow["auction_status"]
 
 function RegisterBanner() {
   const { user, loading } = useSession();
+  const { ctaTitle, ctaSubtitle } = useSiteContent("home");
   const signedIn = !loading && !!user;
   return (
     <section className="mt-8 flex flex-col items-start justify-between gap-4 rounded-xl border border-gold-soft bg-gold-soft/40 p-6 sm:flex-row sm:items-center">
@@ -562,12 +558,12 @@ function RegisterBanner() {
         </div>
         <div>
           <div className="font-display text-lg font-600 text-navy">
-            {signedIn ? "You're all set to bid." : "Register now to participate in the auction."}
+            {signedIn ? "You're all set to bid." : ctaTitle}
           </div>
           <p className="text-sm text-ink-muted">
             {signedIn
               ? "Add funds to your ledger, review the properties below, and place your bids when the auction goes live."
-              : "Create an account, add funds, and be ready to bid when the auction goes live."}
+              : ctaSubtitle}
           </p>
         </div>
       </div>

@@ -2,12 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import {
   getAdminAuctions,
   getAdminProperties,
   getAuctionLots,
   createAdminLot,
+  updateAdminLot,
   transitionAdminLot,
   deleteAdminLot,
   LOT_TRANSITION_OPTIONS,
@@ -62,6 +63,53 @@ function LiensAdmin() {
     queryFn: () => getAuctionLots(auctionId),
     enabled: Boolean(auctionId),
   });
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    taxes_owed: "",
+    tax_year: "",
+    starting_rate: "",
+    current_rate: "",
+    minimum_rate: "",
+    rate_increment: "",
+    redemption_period_months: "",
+  });
+
+  function startEdit(lot: AuctionLot) {
+    setEditingId(lot.id);
+    setEditForm({
+      taxes_owed: String(lot.taxes_owed ?? ""),
+      tax_year: String(lot.tax_year ?? ""),
+      starting_rate: String(lot.starting_rate ?? ""),
+      current_rate: String(lot.current_rate ?? ""),
+      minimum_rate: String(lot.minimum_rate ?? ""),
+      rate_increment: "",
+      redemption_period_months: String(lot.redemption_period_months ?? ""),
+    });
+  }
+
+  async function saveEdit() {
+    if (!editingId) return;
+    try {
+      await updateAdminLot(editingId, {
+        taxesOwed: editForm.taxes_owed ? Number(editForm.taxes_owed) : undefined,
+        taxYear: editForm.tax_year ? Number(editForm.tax_year) : undefined,
+        startingRate: editForm.starting_rate ? Number(editForm.starting_rate) : undefined,
+        currentRate: editForm.current_rate ? Number(editForm.current_rate) : undefined,
+        minimumRate: editForm.minimum_rate ? Number(editForm.minimum_rate) : undefined,
+        rateIncrement: editForm.rate_increment ? Number(editForm.rate_increment) : undefined,
+        redemptionPeriodMonths: editForm.redemption_period_months
+          ? Number(editForm.redemption_period_months)
+          : undefined,
+      });
+      toast.success("Lien updated");
+      setEditingId(null);
+      await refetch();
+      invalidatePublicData(qc);
+    } catch (err) {
+      toast.error((err as Error).message ?? "Could not update lien");
+    }
+  }
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
@@ -220,11 +268,40 @@ function LiensAdmin() {
                   <th className="px-4 py-2">Rate</th>
                   <th className="px-4 py-2">Status</th>
                   <th className="px-4 py-2">Next</th>
-                  <th className="px-4 py-2 text-right"></th>
+                  <th className="px-4 py-2 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {lots.map((lot) => (
+                {lots.map((lot) =>
+                  editingId === lot.id ? (
+                    <tr key={lot.id} className="border-b border-hairline/50 bg-surface-alt/60 last:border-0">
+                      <td colSpan={7} className="px-4 py-3">
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                          <EField label="Taxes owed" value={editForm.taxes_owed} onChange={(v) => setEditForm({ ...editForm, taxes_owed: v })} />
+                          <EField label="Tax year" value={editForm.tax_year} onChange={(v) => setEditForm({ ...editForm, tax_year: v })} />
+                          <EField label="Starting rate %" value={editForm.starting_rate} onChange={(v) => setEditForm({ ...editForm, starting_rate: v })} />
+                          <EField label="Current rate %" value={editForm.current_rate} onChange={(v) => setEditForm({ ...editForm, current_rate: v })} />
+                          <EField label="Minimum rate %" value={editForm.minimum_rate} onChange={(v) => setEditForm({ ...editForm, minimum_rate: v })} />
+                          <EField label="Rate increment %" value={editForm.rate_increment} onChange={(v) => setEditForm({ ...editForm, rate_increment: v })} />
+                          <EField label="Redemption months" value={editForm.redemption_period_months} onChange={(v) => setEditForm({ ...editForm, redemption_period_months: v })} />
+                          <div className="flex items-end justify-end gap-2">
+                            <button
+                              onClick={() => void saveEdit()}
+                              className="rounded-md bg-navy px-3 py-1.5 text-xs font-600 text-primary-foreground"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="rounded-md border border-hairline px-3 py-1.5 text-xs font-500 text-ink"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
                   <tr key={lot.id} className="border-b border-hairline/50 last:border-0">
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-2">
@@ -270,12 +347,22 @@ function LiensAdmin() {
                       )}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <button onClick={() => void remove(lot.id)} className="text-destructive hover:text-destructive/80">
-                        <Trash2 className="size-4" />
-                      </button>
+                      <div className="inline-flex items-center gap-3">
+                        <button
+                          onClick={() => startEdit(lot)}
+                          aria-label="Edit lien"
+                          className="text-ink-muted transition-colors hover:text-navy"
+                        >
+                          <Pencil className="size-4" />
+                        </button>
+                        <button onClick={() => void remove(lot.id)} className="text-destructive hover:text-destructive/80">
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                  ),
+                )}
                 {!lots.length && (
                   <tr>
                     <td colSpan={7} className="px-4 py-8 text-center text-sm text-ink-muted">
@@ -291,5 +378,28 @@ function LiensAdmin() {
 
       <style>{`.input{height:36px;border-radius:6px;border:1px solid var(--hairline);background:var(--surface);padding:0 10px;font-size:14px;width:100%}`}</style>
     </div>
+  );
+}
+
+function EField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-xs font-500 text-ink-muted">{label}</span>
+      <input
+        type="number"
+        step="0.01"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="input mt-1 h-8"
+      />
+    </label>
   );
 }

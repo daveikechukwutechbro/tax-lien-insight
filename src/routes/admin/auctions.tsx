@@ -6,11 +6,20 @@ import {
   getAdminAuctions,
   getCounties,
   createAdminAuction,
+  updateAdminAuction,
   transitionAdminAuction,
   AUCTION_TRANSITION_OPTIONS,
   type AdminAuction,
 } from "@/lib/backend";
 import { invalidatePublicData } from "@/lib/queries/invalidate";
+import { Pencil } from "lucide-react";
+
+function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export const Route = createFileRoute("/admin/auctions")({
   component: AuctionsAdmin,
@@ -37,6 +46,37 @@ function AuctionsAdmin() {
   const [county, setCounty] = useState("");
   const [starts, setStarts] = useState("");
   const [ends, setEnds] = useState("");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", county: "", starts: "", ends: "" });
+
+  function startEdit(r: AdminAuction) {
+    setEditingId(r.id);
+    setEditForm({
+      title: r.title,
+      county: r.jurisdictionId ?? "",
+      starts: toLocalInput(r.startsAt),
+      ends: toLocalInput(r.endsAt),
+    });
+  }
+
+  async function saveEdit() {
+    if (!editingId) return;
+    try {
+      await updateAdminAuction(editingId, {
+        title: editForm.title,
+        jurisdictionId: editForm.county,
+        startsAt: editForm.starts ? new Date(editForm.starts).toISOString() : "",
+        endsAt: editForm.ends ? new Date(editForm.ends).toISOString() : "",
+      });
+      toast.success("Auction updated");
+      setEditingId(null);
+      await qc.invalidateQueries({ queryKey: ["admin", "auctions"] });
+      invalidatePublicData(qc);
+    } catch (err) {
+      toast.error((err as Error).message ?? "Could not update auction");
+    }
+  }
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
@@ -122,62 +162,132 @@ function AuctionsAdmin() {
               <th className="px-4 py-2">Starts</th>
               <th className="px-4 py-2">Status</th>
               <th className="px-4 py-2">Next</th>
-              <th className="px-4 py-2 text-right">Lots</th>
+              <th className="px-4 py-2 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-b border-hairline/50 last:border-0">
-                <td className="px-4 py-2 font-500 text-navy">
-                  {r.title}
-                  {!r.published && (
-                    <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-700">
-                      hidden
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-2">{countyName(r.jurisdictionId)}</td>
-                <td className="px-4 py-2 text-xs">
-                  {r.startsAt ? new Date(r.startsAt).toLocaleString() : "—"}
-                </td>
-                <td className="px-4 py-2">
-                  <span className={`rounded px-2 py-0.5 text-xs capitalize ${statusTone(r.state)}`}>
-                    {r.state.replace(/_/g, " ")}
-                  </span>
-                </td>
-                <td className="px-4 py-2">
-                  {AUCTION_TRANSITION_OPTIONS[r.state]?.length ? (
+            {rows.map((r) =>
+              editingId === r.id ? (
+                <tr key={r.id} className="border-b border-hairline/50 bg-surface-alt/60 last:border-0">
+                  <td className="px-4 py-2">
+                    <input
+                      value={editForm.title}
+                      onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                      className="input h-8"
+                    />
+                  </td>
+                  <td className="px-4 py-2">
                     <select
-                      defaultValue=""
-                      onChange={(e) => {
-                        const next = e.target.value;
-                        if (next) void transition(r, next);
-                        e.target.value = "";
-                      }}
+                      value={editForm.county}
+                      onChange={(e) => setEditForm({ ...editForm, county: e.target.value })}
                       className="input h-8"
                     >
-                      <option value="">—</option>
-                      {AUCTION_TRANSITION_OPTIONS[r.state].map((n) => (
-                        <option key={n} value={n}>
-                          {n.replace(/_/g, " ")}
+                      <option value="">— County —</option>
+                      {counties.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}, {c.stateCode ?? ""}
                         </option>
                       ))}
                     </select>
-                  ) : (
-                    <span className="text-xs text-ink-muted">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-2 text-right">
-                  <Link
-                    to="/admin/liens"
-                    search={{ auction: r.id }}
-                    className="text-navy hover:underline"
-                  >
-                    Manage lots
-                  </Link>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-4 py-2">
+                    <input
+                      type="datetime-local"
+                      value={editForm.starts}
+                      onChange={(e) => setEditForm({ ...editForm, starts: e.target.value })}
+                      className="input h-8"
+                    />
+                    <input
+                      type="datetime-local"
+                      value={editForm.ends}
+                      onChange={(e) => setEditForm({ ...editForm, ends: e.target.value })}
+                      className="input mt-1 h-8"
+                    />
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className={`rounded px-2 py-0.5 text-xs capitalize ${statusTone(r.state)}`}>
+                      {r.state.replace(/_/g, " ")}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2" colSpan={2}>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => void saveEdit()}
+                        className="rounded-md bg-navy px-3 py-1.5 text-xs font-600 text-primary-foreground"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="rounded-md border border-hairline px-3 py-1.5 text-xs font-500 text-ink"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                <tr key={r.id} className="border-b border-hairline/50 last:border-0">
+                  <td className="px-4 py-2 font-500 text-navy">
+                    {r.title}
+                    {!r.published && (
+                      <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-700">
+                        hidden
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">{countyName(r.jurisdictionId)}</td>
+                  <td className="px-4 py-2 text-xs">
+                    {r.startsAt ? new Date(r.startsAt).toLocaleString() : "—"}
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className={`rounded px-2 py-0.5 text-xs capitalize ${statusTone(r.state)}`}>
+                      {r.state.replace(/_/g, " ")}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">
+                    {AUCTION_TRANSITION_OPTIONS[r.state]?.length ? (
+                      <select
+                        defaultValue=""
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          if (next) void transition(r, next);
+                          e.target.value = "";
+                        }}
+                        className="input h-8"
+                      >
+                        <option value="">—</option>
+                        {AUCTION_TRANSITION_OPTIONS[r.state].map((n) => (
+                          <option key={n} value={n}>
+                            {n.replace(/_/g, " ")}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-xs text-ink-muted">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    <div className="inline-flex items-center gap-3">
+                      <Link
+                        to="/admin/liens"
+                        search={{ auction: r.id }}
+                        className="text-navy hover:underline"
+                      >
+                        Manage lots
+                      </Link>
+                      <button
+                        onClick={() => startEdit(r)}
+                        aria-label="Edit auction"
+                        className="text-ink-muted transition-colors hover:text-navy"
+                      >
+                        <Pencil className="size-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </div>

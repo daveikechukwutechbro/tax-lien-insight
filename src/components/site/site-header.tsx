@@ -7,6 +7,18 @@ import { profileQuery, unreadNotificationsQuery } from "@/lib/queries/dashboard"
 import { ProfileMenu } from "@/components/site/profile-menu";
 import { ThemeToggle } from "@/components/site/theme-toggle";
 import { Sheet, SheetTrigger, SheetContent, SheetOverlay, SheetClose } from "@/components/ui/sheet";
+import { useSiteContent } from "@/lib/site-content";
+
+export function BrandName({ name }: { name: string }) {
+  const idx = name.indexOf(" ");
+  if (idx === -1) return <>{name}</>;
+  return (
+    <>
+      {name.slice(0, idx)}
+      <span className="text-gold">{name.slice(idx)}</span>
+    </>
+  );
+}
 
 type NavItem = { to: string; label: string };
 
@@ -25,6 +37,7 @@ export function SiteHeader() {
   const { user, loading } = useSession();
   const { data: unread } = useQuery(unreadNotificationsQuery(user?.id));
   const { data: profile } = useQuery(profileQuery(user?.id));
+  const { siteName, siteTagline, announcementText } = useSiteContent("settings");
 
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
@@ -34,6 +47,13 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
+      {announcementText.trim() && (
+        <div className="bg-navy text-primary-foreground">
+          <div className="container-tight py-2 text-center text-xs font-500 tracking-wide">
+            {announcementText}
+          </div>
+        </div>
+      )}
       <div className="container-tight flex h-14 items-center gap-3 sm:gap-4 md:h-16 lg:gap-8">
         <Link to={user ? "/dashboard" : "/"} className="flex shrink-0 items-center gap-2.5">
           <span className="grid size-9 place-items-center rounded-md bg-navy text-gold">
@@ -41,10 +61,10 @@ export function SiteHeader() {
           </span>
           <span className="flex flex-col leading-none">
             <span className="font-display text-[15px] font-700 tracking-tight text-navy">
-              Auction<span className="text-gold">Ledger</span>
+              <BrandName name={siteName} />
             </span>
             <span className="mt-0.5 hidden text-[9px] font-600 uppercase tracking-[0.28em] text-ink-muted sm:block">
-              Tax Lien Auctions
+              {siteTagline}
             </span>
           </span>
         </Link>

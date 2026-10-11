@@ -7,6 +7,7 @@ import {
   ChevronDown,
   FileText,
 } from "lucide-react";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/resources")({
   head: () => ({
@@ -264,18 +265,17 @@ const sections: GuideSection[] = [
 ];
 
 function ResourcesPage() {
+  const { eyebrow, title, subtitle } = useSiteContent("resources");
   return (
     <main className="bg-background pb-20">
       <section className="border-b border-hairline bg-navy text-primary-foreground">
         <div className="container-tight py-14">
           <div className="flex items-center gap-2 text-gold">
             <BookOpen className="size-5" />
-            <span className="text-xs uppercase tracking-[0.24em]">Investor Resources</span>
+            <span className="text-xs uppercase tracking-[0.24em]">{eyebrow}</span>
           </div>
-          <h1 className="mt-3 font-display text-4xl font-600">Everything you need to invest with confidence</h1>
-          <p className="mt-2 max-w-2xl text-primary-foreground/80">
-            Guides, tutorials, forms, state schedules, and answers — expand any item below for the full detail.
-          </p>
+          <h1 className="mt-3 font-display text-4xl font-600">{title}</h1>
+          <p className="mt-2 max-w-2xl text-primary-foreground/80">{subtitle}</p>
         </div>
       </section>
 

@@ -8,6 +8,7 @@ import {
   Info,
   BookOpen,
 } from "lucide-react";
+import { useSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/rates")({
   head: () => ({
@@ -107,20 +108,17 @@ const MODEL_LABEL: Record<RateModel, { label: string; badge: string }> = {
 const lienStates = STATE_RATES.filter((s) => s.model !== "deed");
 
 function RatesPage() {
+  const { eyebrow, title, subtitle } = useSiteContent("rates");
   return (
     <main className="bg-background pb-20">
       <section className="border-b border-hairline bg-navy text-primary-foreground">
         <div className="container-tight py-14">
           <div className="flex items-center gap-2 text-gold">
             <Percent className="size-5" />
-            <span className="text-xs uppercase tracking-[0.24em]">State Reference</span>
+            <span className="text-xs uppercase tracking-[0.24em]">{eyebrow}</span>
           </div>
-          <h1 className="mt-3 font-display text-4xl font-600">Interest rates by state</h1>
-          <p className="mt-2 max-w-2xl text-primary-foreground/80">
-            The statutory interest a tax lien certificate can earn, how that rate is set, and any
-            minimum â€” for every US state and DC. Rates are statutory ceilings and were checked
-            against state law; confirm the current figure with the county before you bid.
-          </p>
+          <h1 className="mt-3 font-display text-4xl font-600">{title}</h1>
+          <p className="mt-2 max-w-2xl text-primary-foreground/80">{subtitle}</p>
         </div>
       </section>
 

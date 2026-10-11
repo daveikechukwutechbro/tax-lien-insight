@@ -812,7 +812,10 @@ export async function updateAdminLot(lotId: string, patch: Partial<LotInput> & {
 
 // ---- Admin: auctions (edit) ----
 
-export async function updateAdminAuction(id: string, patch: { title?: string }): Promise<void> {
+export async function updateAdminAuction(
+  id: string,
+  patch: { title?: string; jurisdictionId?: string; startsAt?: string; endsAt?: string },
+): Promise<void> {
   await request<{ id: string }>(`/api/v1/admin/auctions/${id}`, {
     method: "PATCH",
     body: JSON.stringify(patch),
