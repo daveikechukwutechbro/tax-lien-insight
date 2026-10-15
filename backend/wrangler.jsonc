@@ -17,6 +17,12 @@
   "observability": {
     "enabled": true
   },
+  // Keep the Worker isolate and the Neon compute warm so the first request
+  // after an idle period is not a multi-second cold start (which tripped the
+  // frontend proxy timeout and surfaced as "this page didn't load").
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
   "vars": {
     // Non-secret defaults only. NEVER put real credentials here — use secrets.
     "ENVIRONMENT": "production"

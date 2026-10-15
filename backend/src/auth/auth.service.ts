@@ -1,6 +1,6 @@
 import { randomBytes, createHash } from "node:crypto";
 import { getPool, transaction, type TxClient } from "../db/pool.js";
-import { hashPassword, verifyPassword, normalizeEmail, isValidEmail } from "./password.js";
+import { hashPassword, verifyPasswordWithUpgrade, normalizeEmail, isValidEmail } from "./password.js";
 import { createSession, revokeSession, revokeAllUserSessions } from "./session.js";
 import { AppError, ConflictError, NotFoundError, ValidationError, UnauthorizedError } from "../shared/errors.js";
 import { sendEmail, isEmailConfigured } from "../providers/email/index.js";
@@ -113,12 +113,15 @@ export async function loginUser(
     await recordLoginAttempt({ userId: ok.id, success: false, reason: "pending_verification", meta });
     throw new AppError("ACCOUNT_LOCKED", "Account pending email verification", 403);
   }
-  const valid = await verifyPassword(password, ok.password_hash);
+  const { valid, upgradedHash } = await verifyPasswordWithUpgrade(password, ok.password_hash);
   if (!valid) {
     await recordLoginAttempt({ userId: ok.id, success: false, reason: "bad_password", meta });
     throw new UnauthorizedError("Invalid credentials");
   }
   await recordLoginAttempt({ userId: ok.id, success: true, meta });
+  if (upgradedHash) {
+    await getPool().query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [upgradedHash, ok.id]);
+  }
   await getPool().query(`UPDATE users SET last_login_at = now() WHERE id = $1`, [ok.id]);
   const { token, sessionId } = await createSession(ok.id, meta);
   return { token, sessionId, userId: ok.id };

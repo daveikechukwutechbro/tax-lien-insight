@@ -25,9 +25,10 @@ export async function proxyToBackend(request: Request): Promise<Response> {
     init.body = request.body as unknown as ReadableStream;
     init.duplex = "half";
   }
-  // Fail fast instead of letting a slow/cold upstream hang the request and
-  // produce a non-JSON 5xx (which the client can't parse into an envelope).
-  init.signal = AbortSignal.timeout(9000);
+  // The backend Worker can be slow on a cold start (Neon connect + password
+  // hashing). Allow generous headroom so auth/list calls are not aborted and
+  // turned into a 504 the client can't recover from.
+  init.signal = AbortSignal.timeout(20000);
   let upstream: Response;
   try {
     upstream = await fetch(target.toString(), init);

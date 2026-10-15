@@ -82,7 +82,9 @@ export async function getMe(): Promise<BackendUser | null> {
       clearCachedUser();
       return null;
     }
-    throw err;
+    // Transient failure (proxy timeout, cold start, 5xx): never let a blip
+    // crash the route. Fall back to the cached user, or null if none.
+    return readCachedUser();
   }
 }
 

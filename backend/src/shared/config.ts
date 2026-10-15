@@ -83,6 +83,26 @@ export const config = {
   objectStorageSecretKey: str("OBJECT_STORAGE_SECRET_KEY"),
   objectStoragePublicBaseUrl: str("OBJECT_STORAGE_PUBLIC_BASE_URL"),
 
+  // Card / fiat on-ramp (Transak). Buyer pays with a card; Transak buys USDC and
+  // delivers it to `onrampUsdcWallet`. We verify the delivery on-chain before
+  // crediting the internal ledger, so provider config is required but not trusted.
+  transakApiKey: str("TRANSAK_API_KEY"),
+  // Short-lived (7-day) JWT. Optional: if unset, it is derived from the API
+  // secret below and refreshed automatically.
+  transakAccessToken: str("TRANSAK_ACCESS_TOKEN"),
+  transakApiSecret: str("TRANSAK_API_SECRET"),
+  transakWebhookSecret: str("TRANSAK_WEBHOOK_SECRET"),
+  transakEnv: str("TRANSAK_ENV", "PRODUCTION"),
+  transakReferrerDomain: str("TRANSAK_REFERRER_DOMAIN"),
+  onrampUsdcWallet: str("ONRAMP_USDC_WALLET"),
+  onrampNetwork: str("ONRAMP_NETWORK", "base"),
+  onrampCrypto: str("ONRAMP_CRYPTO", "USDC"),
+  onrampFiatCurrency: str("ONRAMP_FIAT_CURRENCY", "USD"),
+  onrampMinCents: int("ONRAMP_MIN_CENTS", 2000),
+  onrampMaxCents: int("ONRAMP_MAX_CENTS", 1000000),
+  // When true, unsigned webhooks are accepted (local/dev only). Never enable in production.
+  onrampAllowUnsignedWebhook: bool("ONRAMP_ALLOW_UNSIGNED_WEBHOOK", false),
+
   cronSecret: str("CRON_SECRET"),
   adminBootstrapSecret: str("ADMIN_BOOTSTRAP_SECRET"),
   adminBootstrapEmail: str("ADMIN_BOOTSTRAP_EMAIL", "admin@auctionledger.com"),

@@ -9,6 +9,7 @@
  * The runtime is detected once at module load; `getPool()` stays synchronous
  * for every service thanks to top-level await.
  */
+import { AsyncLocalStorage } from "node:async_hooks";
 import { config } from "../shared/config.js";
 import { logger } from "../shared/logger.js";
 
@@ -31,11 +32,11 @@ export interface DbPool {
   on(event: string, listener: (err: Error) => void): void;
 }
 
-function isCloudflareWorkers(): boolean {
+export function isCloudflareWorkers(): boolean {
   return typeof (globalThis as Record<string, unknown>).WebSocketPair !== "undefined";
 }
 
-async function createPool(): Promise<DbPool> {
+async function createPool(quiet = false): Promise<DbPool> {
   if (isCloudflareWorkers()) {
     const neon = await import("@neondatabase/serverless");
     // Workers ship a native WebSocket global.
@@ -47,7 +48,7 @@ async function createPool(): Promise<DbPool> {
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 10_000,
     });
-    logger.info("Database pool ready (driver=neon-serverless)");
+    if (!quiet) logger.info("Database pool ready (driver=neon-serverless)");
     return pool as unknown as DbPool;
   }
   const { Pool } = await import("pg");
@@ -60,7 +61,7 @@ async function createPool(): Promise<DbPool> {
   pool.on("error", (err: Error) => {
     logger.error("Unexpected PostgreSQL pool error", { errorCode: (err as { code?: string }).code });
   });
-  logger.info("Database pool ready (driver=node-postgres)");
+  if (!quiet) logger.info("Database pool ready (driver=node-postgres)");
   return pool as unknown as DbPool;
 }
 
@@ -68,9 +69,25 @@ const _pool: DbPool = await createPool();
 
 let poolOverride: DbPool | null = null;
 
+// On Cloudflare Workers, WebSocket connections (and other I/O objects) are bound
+// to the request that created them and cannot be reused by another request.
+// The Neon pool therefore must be created per-request; we scope it with
+// AsyncLocalStorage so the synchronous `getPool()` everywhere keeps working.
+const requestPools = new AsyncLocalStorage<DbPool>();
+
+/** Create a fresh pool for a single request (Workers only). */
+export async function createRequestPool(): Promise<DbPool> {
+  return createPool(true);
+}
+
+/** Run `fn` with `pool` as the active database pool for the current async context. */
+export function runWithPool<T>(pool: DbPool, fn: () => Promise<T>): Promise<T> {
+  return requestPools.run(pool, fn);
+}
+
 /** Shared application pool. Safe to call synchronously anywhere after import. */
 export function getPool(): DbPool {
-  return poolOverride ?? _pool;
+  return requestPools.getStore() ?? poolOverride ?? _pool;
 }
 
 /** Allow tests / pg-mem to inject a custom pool. */

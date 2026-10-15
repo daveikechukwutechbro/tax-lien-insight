@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Landmark, CreditCard, CircleDollarSign, Check, Info, ShieldCheck, Bell,
-  Lock, ArrowRight, Wallet, Send, BadgeCheck, PiggyBank, Copy, ChevronDown,
+  Lock, ArrowRight, Wallet, Send, BadgeCheck, PiggyBank, Copy, ChevronDown, ExternalLink,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
-import { getFunds, getDeposits, createUsdcDeposit, sendMessage } from "@/lib/backend";
+import {
+  getFunds, getDeposits, createUsdcDeposit, sendMessage,
+  getOnRampConfig, getOnRampOrders, createOnRampOrder,
+} from "@/lib/backend";
 import {
   NETWORKS, NETWORK_DISPLAY, QUICK_AMOUNTS, USDC_ADDRESSES, type NetworkKey,
 } from "@/lib/funding";
@@ -51,8 +54,52 @@ function FundsPage() {
     },
   });
 
+  const { data: onramp } = useQuery({
+    queryKey: ["onramp-config"],
+    queryFn: getOnRampConfig,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  const { data: onrampOrders = [] } = useQuery({
+    queryKey: ["onramp", user?.id],
+    enabled: !!user?.id,
+    queryFn: getOnRampOrders,
+  });
+
+  const allRows = [
+    ...rows,
+    ...onrampOrders.map((o) => ({
+      id: o.id,
+      kind: "card purchase",
+      amount: (o.deliveredCryptoCents ?? o.fiatAmountCents) / 100,
+      method: `Card — ${o.cryptoSymbol}`,
+      status: o.status,
+      created_at: o.createdAt,
+    })),
+  ].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+
+  const pendingOnramp = onrampOrders.some(
+    (o) => !["credited", "failed", "cancelled", "expired", "refunded", "verification_failed"].includes(o.status),
+  );
+  useEffect(() => {
+    if (!pendingOnramp) return;
+    const t = setInterval(() => {
+      qc.invalidateQueries({ queryKey: ["onramp"] });
+      qc.invalidateQueries({ queryKey: ["funds"] });
+    }, 15000);
+    return () => clearInterval(t);
+  }, [pendingOnramp, qc]);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("onramp")) {
+      qc.invalidateQueries({ queryKey: ["onramp"] });
+      qc.invalidateQueries({ queryKey: ["funds"] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [amount, setAmount] = useState("5000.00");
   const [network, setNetwork] = useState<NetworkKey>("base");
+  const [method, setMethod] = useState<"usdc" | "card">("usdc");
   const [busy, setBusy] = useState(false);
   const [deposit, setDeposit] = useState<{ address: string; id: string } | null>(null);
 
@@ -74,6 +121,27 @@ function FundsPage() {
       qc.invalidateQueries({ queryKey: ["deposits"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not create deposit");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function payWithCard() {
+    const cents = Math.round(amt * 100);
+    const min = onramp?.minCents ?? 2000;
+    const max = onramp?.maxCents ?? 1000000;
+    if (cents < min || cents > max) {
+      return toast.error(`Enter an amount between ${fmt(min / 100)} and ${fmt(max / 100)}`);
+    }
+    setBusy(true);
+    try {
+      const email = (user as { email?: string } | null)?.email;
+      const res = await createOnRampOrder({ fiatAmountCents: cents, email });
+      window.open(res.widgetUrl, "_blank", "noopener,noreferrer");
+      toast.success("Complete your card payment in the new window. Your USDC is credited once confirmed.");
+      qc.invalidateQueries({ queryKey: ["onramp"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start card payment");
     } finally {
       setBusy(false);
     }
@@ -155,8 +223,14 @@ function FundsPage() {
           <h2 className="font-display text-lg font-600 text-navy">Choose Funding Method</h2>
           <p className="mt-1 text-sm text-ink-muted">Select how you'd like to fund your account.</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            <div className="relative rounded-xl border-2 border-success bg-success-soft/40 p-3.5">
-              <span className="absolute right-2.5 top-2.5 grid size-5 place-items-center rounded-full bg-success text-white"><Check className="size-3" /></span>
+            <button
+              type="button"
+              onClick={() => { setMethod("usdc"); setDeposit(null); }}
+              className={`relative rounded-xl border-2 p-3.5 text-left ${method === "usdc" ? "border-success bg-success-soft/40" : "border-hairline bg-surface hover:border-success/50"}`}
+            >
+              {method === "usdc" && (
+                <span className="absolute right-2.5 top-2.5 grid size-5 place-items-center rounded-full bg-success text-white"><Check className="size-3" /></span>
+              )}
               <div className="grid size-9 place-items-center rounded-full bg-success/15 text-success"><CircleDollarSign className="size-4.5" /></div>
               <div className="mt-2.5 font-600 text-navy">USDC (USD Coin)</div>
               <span className="mt-1 inline-block rounded bg-success/15 px-2 py-0.5 text-xs font-500 text-success">Available</span>
@@ -166,21 +240,80 @@ function FundsPage() {
                   <li key={t} className="flex gap-1.5"><Check className="mt-0.5 size-3 shrink-0 text-success" />{t}</li>
                 ))}
               </ul>
-            </div>
+            </button>
             <ComingSoon
               icon={<Landmark className="size-4.5" />}
               title="Bank Transfer (ACH / Wire)"
               body="We're currently completing our U.S. banking integration. Once available, you'll be able to fund your account directly through ACH and wire transfers."
               onNotify={() => notifyMe("Bank Transfer (ACH / Wire)")}
             />
-            <ComingSoon
-              icon={<CreditCard className="size-4.5" />}
-              title="Debit & Credit Card"
-              body="Card funding will be available after the completion of our payment processing integration."
-              onNotify={() => notifyMe("Debit & Credit Card")}
-            />
+            {onramp?.configured ? (
+              <button
+                type="button"
+                onClick={() => setMethod("card")}
+                className={`relative rounded-xl border-2 p-3.5 text-left ${method === "card" ? "border-success bg-success-soft/40" : "border-hairline bg-surface hover:border-success/50"}`}
+              >
+                {method === "card" && (
+                  <span className="absolute right-2.5 top-2.5 grid size-5 place-items-center rounded-full bg-success text-white"><Check className="size-3" /></span>
+                )}
+                <div className="grid size-9 place-items-center rounded-full bg-gold/20 text-navy"><CreditCard className="size-4.5" /></div>
+                <div className="mt-2.5 font-600 text-navy">Debit &amp; Credit Card</div>
+                <span className="mt-1 inline-block rounded bg-success/15 px-2 py-0.5 text-xs font-500 text-success">Available</span>
+                <p className="mt-2 text-xs text-ink-muted">Buy USDC instantly with a debit or credit card. Powered by Transak.</p>
+                <ul className="mt-3 space-y-1 text-xs text-ink">
+                  {["No crypto wallet needed", "Instant card checkout", "USDC credited on confirmation"].map((t) => (
+                    <li key={t} className="flex gap-1.5"><Check className="mt-0.5 size-3 shrink-0 text-success" />{t}</li>
+                  ))}
+                </ul>
+              </button>
+            ) : (
+              <ComingSoon
+                icon={<CreditCard className="size-4.5" />}
+                title="Debit & Credit Card"
+                body="Card funding will be available after the completion of our payment processing integration."
+                onNotify={() => notifyMe("Debit & Credit Card")}
+              />
+            )}
           </div>
 
+          {method === "card" && (
+            <div className="mt-4 rounded-xl border border-hairline bg-surface p-5">
+              <h3 className="font-display text-lg font-600 text-navy">Pay with Card</h3>
+              <p className="mt-1 text-sm text-ink-muted">
+                You'll be redirected to our secure payment partner (Transak) to complete the purchase.
+                Your USDC is credited to your balance once the blockchain transfer is confirmed.
+              </p>
+              <label className="mt-3 block text-xs uppercase tracking-wider text-ink-muted">Amount (USD)</label>
+              <div className="mt-1 flex items-center gap-2 rounded-lg border border-hairline bg-surface px-3">
+                <span className="font-display text-lg text-ink-muted">$</span>
+                <input
+                  type="number" min="1" step="0.01" value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="h-12 w-full bg-transparent font-display text-xl font-600 text-navy outline-none"
+                />
+                <span className="text-xs font-500 text-ink-muted">{onramp?.fiatCurrency ?? "USD"}</span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {QUICK_AMOUNTS.map((q) => (
+                  <button key={q} type="button" onClick={() => setAmount(q.toFixed(2))}
+                    className={`rounded-md border px-4 py-1.5 text-sm font-500 ${amt === q ? "border-navy bg-navy text-primary-foreground" : "border-hairline bg-surface text-ink hover:border-navy"}`}>
+                    ${q.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-ink-muted">
+                Card purchases are processed by Transak. Fees are shown before you confirm. Min{" "}
+                {fmt((onramp?.minCents ?? 2000) / 100)} · Max {fmt((onramp?.maxCents ?? 1000000) / 100)}.
+              </p>
+              <button onClick={payWithCard} disabled={busy}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-navy px-5 py-3.5 text-sm font-600 text-primary-foreground disabled:opacity-60">
+                <CreditCard className="size-4" /> {busy ? "Starting…" : "Continue with card"} <ExternalLink className="ml-auto size-4" />
+              </button>
+            </div>
+          )}
+
+          {method === "usdc" && (
+            <>
           {/* 2. amount */}
           <h2 className="mt-6 font-display text-lg font-600 text-navy">Deposit Amount</h2>
           <p className="mt-1 text-sm text-ink-muted">Enter the amount you'd like to deposit.</p>
@@ -261,18 +394,47 @@ function FundsPage() {
             <Step icon={<BadgeCheck className="size-5" />} n="3. Confirmations" body="We'll wait for the required blockchain confirmations." />
             <Step icon={<PiggyBank className="size-5" />} n="4. Funds Added" body="Your account balance updates and your funds are ready to invest." />
           </div>
+            </>
+          )}
+
+          {method === "card" && (
+            <>
+              <h2 className="mt-6 font-display text-lg font-600 text-navy">What Happens Next</h2>
+              <div className="mt-3 grid gap-4 rounded-xl border border-hairline bg-surface p-4 sm:grid-cols-4 sm:p-5">
+                <Step icon={<CreditCard className="size-5" />} n="1. Enter Amount" body="Choose how much USDC you want to buy with your card." />
+                <Step icon={<ExternalLink className="size-5" />} n="2. Pay Securely" body="Complete the payment in the secure Transak window." />
+                <Step icon={<BadgeCheck className="size-5" />} n="3. USDC Delivered" body="Transak sends USDC to our wallet on the selected network." />
+                <Step icon={<PiggyBank className="size-5" />} n="4. Funds Added" body="We verify the transfer on-chain and credit your balance." />
+              </div>
+            </>
+          )}
         </div>
 
         {/* right rail */}
         <aside className="space-y-4">
-          <div className="rounded-xl border border-hairline bg-surface p-4">
-            <div className="text-sm font-600 text-navy">Deposit Summary</div>
-            <Row label="You Send" value={`${fmtUSDC(amt)} USDC`} strong />
-            <Row label="Network" value={NETWORK_DISPLAY[network]} strong />
-            <Row label="Est. Network Fee" value={`~ ${fee} USDC`} strong />
-            <div className="mt-3 text-xs uppercase tracking-wider text-ink-muted">You Will Receive</div>
-            <div className="font-display text-lg font-600 text-success">{fmtUSDC(receive)} USDC</div>
-          </div>
+          {method === "usdc" ? (
+            <div className="rounded-xl border border-hairline bg-surface p-4">
+              <div className="text-sm font-600 text-navy">Deposit Summary</div>
+              <Row label="You Send" value={`${fmtUSDC(amt)} USDC`} strong />
+              <Row label="Network" value={NETWORK_DISPLAY[network]} strong />
+              <Row label="Est. Network Fee" value={`~ ${fee} USDC`} strong />
+              <div className="mt-3 text-xs uppercase tracking-wider text-ink-muted">You Will Receive</div>
+              <div className="font-display text-lg font-600 text-success">{fmtUSDC(receive)} USDC</div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-hairline bg-surface p-4">
+              <div className="text-sm font-600 text-navy">Card Purchase Summary</div>
+              <Row label="You Pay" value={fmt(amt)} strong />
+              <Row label="Delivery Network" value={onramp?.network ?? "Base"} strong />
+              <Row label="Provider" value={`Transak · ${onramp?.cryptoSymbol ?? "USDC"}`} strong />
+              <div className="mt-3 text-xs uppercase tracking-wider text-ink-muted">Est. You Will Receive</div>
+              <div className="font-display text-lg font-600 text-success">≈ {fmtUSDC(amt)} USDC</div>
+              <p className="mt-2 text-[11px] text-ink-muted">
+                Final amount depends on Transak's fees, shown before you confirm. You're credited the
+                USDC actually delivered on-chain.
+              </p>
+            </div>
+          )}
           <div className="rounded-xl border border-hairline bg-surface-alt p-4">
             <div className="flex items-center gap-1.5 text-sm font-600 text-navy"><Info className="size-4" />Why USDC?</div>
             <ul className="mt-2 space-y-1 text-xs text-ink">
@@ -311,13 +473,13 @@ function FundsPage() {
 
       <h2 className="mt-8 font-display text-xl font-600 text-navy">Recent Requests</h2>
       <div className="mt-3 overflow-hidden rounded-xl border border-hairline bg-surface">
-        {rows.length === 0 ? (
+        {allRows.length === 0 ? (
           <p className="p-8 text-center text-sm text-ink-muted">No requests yet.</p>
         ) : (
           <>
             {/* Mobile cards */}
             <div className="space-y-3 sm:hidden">
-              {rows.map((r) => (
+                  {allRows.map((r) => (
                 <div key={r.id} className="border-b border-hairline/60 p-4 last:border-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -348,7 +510,7 @@ function FundsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => (
+              {allRows.map((r) => (
                     <tr key={r.id} className="border-b border-hairline/50 last:border-0">
                       <td className="px-4 py-2 text-xs">
                         {new Date(r.created_at).toLocaleDateString()}
@@ -411,6 +573,17 @@ function StatusPill({ s }: { s: string }) {
     approved: "bg-blue-100 text-blue-800",
     completed: "bg-emerald-100 text-emerald-800",
     rejected: "bg-red-100 text-red-800",
+    created: "bg-slate-100 text-slate-700",
+    pending_payment: "bg-amber-100 text-amber-800",
+    processing: "bg-amber-100 text-amber-800",
+    confirming: "bg-amber-100 text-amber-800",
+    credited: "bg-emerald-100 text-emerald-800",
+    confirmed: "bg-emerald-100 text-emerald-800",
+    refunded: "bg-blue-100 text-blue-800",
+    failed: "bg-red-100 text-red-800",
+    cancelled: "bg-red-100 text-red-800",
+    expired: "bg-red-100 text-red-800",
+    verification_failed: "bg-red-100 text-red-800",
   };
   return <span className={`rounded px-2 py-0.5 text-xs font-500 ${map[s] ?? "bg-slate-100 text-slate-700"}`}>{s}</span>;
 }

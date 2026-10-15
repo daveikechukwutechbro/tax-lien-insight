@@ -82,6 +82,13 @@ import { placeBid, listBidsForLot, getUserBids } from "../bids/bids.service.js";
 import { getAccount, getSummary, adjustBalance } from "../funds/funds.service.js";
 import { listDeposits, createDeposit, confirmDeposit } from "../usdc/usdc.service.js";
 import {
+  createOnRampOrder,
+  handleOnRampWebhook,
+  listOnRampOrders,
+  getOnRampOrder,
+  getOnRampPublicConfig,
+} from "../onramp/onramp.service.js";
+import {
   issueCertificate,
   verifyCertificate,
   revokeCertificate,
@@ -174,6 +181,13 @@ export function createApp(): Hono {
         timestamp: new Date().toISOString(),
       }),
     );
+  });
+
+  // ---- Provider webhooks (public; verified by signature + on-chain check) ----
+  app.post("/api/v1/webhooks/transak", async (c) => {
+    const raw = await c.req.text();
+    const result = await handleOnRampWebhook(c.req.raw.headers, raw);
+    return c.json(json(result));
   });
 
   // ---- Auth ----
@@ -905,6 +919,31 @@ export function createApp(): Hono {
     return c.json(json(await listDeposits(ctx.userId)));
   });
 
+  // ---- Card / fiat on-ramp (buy USDC with a debit/credit card) ----
+  app.get("/api/v1/onramp/config", async (c) => {
+    return c.json(json(getOnRampPublicConfig()));
+  });
+  app.post("/api/v1/onramp/orders", async (c) => {
+    const ctx = requireUser(c);
+    if (!rateLimit(c, "onramp", 20)) {
+      const f = fail("RATE_LIMITED", "Too many card funding attempts", 429);
+      return c.json(f.body, 429);
+    }
+    const body = await c.req.json().catch(() => ({}));
+    const cents = Math.round(Number(body.fiatAmountCents));
+    if (!Number.isFinite(cents) || cents <= 0) throw new ValidationError("fiatAmountCents is required");
+    const res = await createOnRampOrder(ctx.userId, { fiatAmountCents: cents, email: body.email });
+    return c.json(json(res), 201);
+  });
+  app.get("/api/v1/my/onramp/orders", async (c) => {
+    const ctx = requireUser(c);
+    return c.json(json(await listOnRampOrders(ctx.userId)));
+  });
+  app.get("/api/v1/my/onramp/orders/:id", async (c) => {
+    const ctx = requireUser(c);
+    return c.json(json(await getOnRampOrder(ctx.userId, c.req.param("id"))));
+  });
+
   // ---- Payments / invoices ----
   app.get("/api/v1/payments", async (c) => {
     const ctx = requireUser(c);
@@ -988,24 +1027,23 @@ export function createApp(): Hono {
   app.get("/api/v1/admin/dashboard", async (c) => {
     requireAdmin(c);
     const q = (sql: string) => getPool().query(sql);
-    const [users, auctions, deposits, properties, liens, lots, bids, activeAuctions, pendingKyc, countyRows, funds] =
+    const [users, auctions, deposits, properties, lots, bids, activeAuctions, pendingKyc, countyRows, funds] =
       await Promise.all([
         q(`SELECT count(*)::int AS c FROM users`),
         q(`SELECT count(*)::int AS c FROM auctions WHERE status <> 'cancelled'`),
         q(`SELECT count(*)::int AS c FROM crypto_deposits WHERE status='confirmed'`),
         q(`SELECT count(*)::int AS c FROM properties`),
-        q(`SELECT count(*)::int AS c FROM liens`),
         q(`SELECT count(*)::int AS c FROM auction_lots`),
         q(`SELECT count(*)::int AS c FROM bids`),
         q(`SELECT count(*)::int AS c FROM auctions WHERE status IN ('open','registration','live')`),
-        q(`SELECT count(*)::int AS c FROM kyc_submissions WHERE status='pending'`),
+        q(`SELECT count(*)::int AS c FROM kyc_verifications WHERE status IN ('submitted','processing','manual_review')`),
         q(`SELECT count(*)::int AS c FROM jurisdictions WHERE status='active'`),
-        q(`SELECT COALESCE(SUM(balance),0)::numeric(14,2)::text AS s FROM funds_accounts`),
+        q(`SELECT COALESCE(SUM(available_balance + held_balance + pending_balance),0)::numeric(14,2)::text AS s FROM funds_accounts`),
       ]);
     const { rows: recent } = await getPool().query(
-      `SELECT a.id, a.action, a.entity_type, a.entity_id, a.created_at, u.email
-       FROM audit_log a LEFT JOIN users u ON u.id = a.actor_id
-       ORDER BY a.created_at DESC LIMIT 12`,
+      `SELECT a.id, a.action, a.entity_type, a.entity_id, a.timestamp AS created_at, u.email
+       FROM audit_logs a LEFT JOIN users u ON u.id = a.actor_user_id
+       ORDER BY a.timestamp DESC LIMIT 12`,
     );
     return c.json(
       json({
@@ -1014,7 +1052,6 @@ export function createApp(): Hono {
         activeAuctions: activeAuctions.rows[0].c,
         confirmedDeposits: deposits.rows[0].c,
         properties: properties.rows[0].c,
-        liens: liens.rows[0].c,
         lots: lots.rows[0].c,
         bids: bids.rows[0].c,
         pendingKyc: pendingKyc.rows[0].c,

@@ -184,6 +184,51 @@ export async function createUsdcDeposit(input: {
   return { id: res.depositId, status: res.status };
 }
 
+export type OnRampConfig = {
+  configured: boolean;
+  provider: string;
+  minCents: number;
+  maxCents: number;
+  fiatCurrency: string;
+  cryptoSymbol: string;
+  network: string;
+  onChainVerification: boolean;
+};
+export async function getOnRampConfig(): Promise<OnRampConfig> {
+  return request<OnRampConfig>("/api/v1/onramp/config");
+}
+
+export type OnRampOrder = {
+  id: string;
+  status: string;
+  provider: string;
+  providerOrderId: string | null;
+  fiatAmountCents: number;
+  fiatCurrency: string;
+  cryptoSymbol: string;
+  network: string;
+  quotedCryptoCents: number | null;
+  deliveredCryptoCents: number | null;
+  transactionHash: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  creditedAt: string | null;
+};
+export async function getOnRampOrders(): Promise<OnRampOrder[]> {
+  return request<OnRampOrder[]>("/api/v1/my/onramp/orders");
+}
+
+export async function createOnRampOrder(input: {
+  fiatAmountCents: number;
+  email?: string;
+}): Promise<{ orderId: string; status: string; widgetUrl: string }> {
+  return request<{ orderId: string; status: string; widgetUrl: string }>("/api/v1/onramp/orders", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
 export type Invoice = {
   id: string;
   total: number | string;
