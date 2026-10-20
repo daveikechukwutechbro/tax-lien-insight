@@ -14,6 +14,7 @@ import {
 } from "@/lib/backend";
 import { invalidatePublicData } from "@/lib/queries/invalidate";
 import { fileToDataUrl, videoToDataUrl } from "@/lib/image-upload";
+import { VisibilityToggle } from "@/components/admin/visibility-toggle";
 
 export const Route = createFileRoute("/admin/properties")({
   component: PropertiesAdmin,
@@ -150,6 +151,18 @@ function PropertiesAdmin() {
       invalidatePublicData(qc);
     } catch (err) {
       toast.error((err as Error).message ?? "Could not delete property");
+    }
+  }
+
+  async function toggleVisible(p: RawProperty) {
+    const next = !(p.isVisible ?? true);
+    try {
+      await updateAdminProperty(p.id, { isVisible: next });
+      toast.success(next ? "Property is now visible on the site" : "Property hidden from the site");
+      await qc.invalidateQueries({ queryKey: ["admin", "properties"] });
+      invalidatePublicData(qc);
+    } catch (err) {
+      toast.error((err as Error).message ?? "Could not update visibility");
     }
   }
 
@@ -520,6 +533,7 @@ function PropertiesAdmin() {
               <th className="px-4 py-2">Type</th>
               <th className="px-4 py-2">Parcel</th>
               <th className="px-4 py-2">Lien</th>
+              <th className="px-4 py-2">On site</th>
               <th className="px-4 py-2 text-right">Actions</th>
             </tr>
           </thead>
@@ -552,6 +566,9 @@ function PropertiesAdmin() {
                   ) : (
                     <span className="text-xs text-ink-muted">none</span>
                   )}
+                </td>
+                <td className="px-4 py-2">
+                  <VisibilityToggle visible={p.isVisible ?? true} onToggle={() => toggleVisible(p)} label="property" />
                 </td>
                 <td className="px-4 py-2 text-right">
                   <button

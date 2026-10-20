@@ -17,6 +17,7 @@ export interface PropertyRecord {
   imageUrl: string | null;
   legalDescription: string | null;
   status: string;
+  isVisible: boolean;
   lotId: string | null;
   lotStatus: string | null;
   startingRate: number | null;
@@ -70,10 +71,14 @@ export async function listProperties(filters: {
   jurisdictionId?: string;
   page?: number;
   pageSize?: number;
+  visibleOnly?: boolean;
 }): Promise<{ items: PropertyRecord[]; total: number }> {
   const where: string[] = [];
   const params: unknown[] = [];
   let i = 1;
+  if (filters.visibleOnly) {
+    where.push(`p.is_visible = true`);
+  }
   if (filters.state) {
     where.push(`p.state = $${i++}`);
     params.push(filters.state);
@@ -118,7 +123,7 @@ export async function listProperties(filters: {
   return { items: rows.map(mapProperty), total };
 }
 
-export async function getProperty(id: string): Promise<PropertyRecord> {
+export async function getProperty(id: string, opts: { publicOnly?: boolean } = {}): Promise<PropertyRecord> {
   const { rows } = await getPool().query(
     `SELECT p.*, j.name AS county_name, s.code AS county_state,
             lot.lot_id, lot.lot_status, lot.starting_rate, lot.current_rate, lot.taxes_owed,
@@ -126,7 +131,7 @@ export async function getProperty(id: string): Promise<PropertyRecord> {
             ${PROPERTY_DETAIL_COLS}
      FROM properties p
      ${PROPERTY_JOINS}
-     WHERE p.id = $1`,
+     WHERE p.id = $1${opts.publicOnly ? " AND p.is_visible = true" : ""}`,
     [id],
   );
   if (!rows[0]) throw new NotFoundError("Property not found");
@@ -199,42 +204,55 @@ export async function createProperty(input: {
   return rows[0].id as string;
 }
 
-export async function updateProperty(id: string, patch: Partial<Record<string, unknown>>): Promise<void> {
-  const allowed = [
-    "address",
-    "city",
-    "state",
-    "postal_code",
-    "property_type",
-    "assessed_value",
-    "legal_description",
-    "zoning",
-    "image_data",
-    "status",
-    "metadata",
-    "gallery",
-    "video_url",
-    "year_built",
-    "living_area_sqft",
-    "lot_size_acres",
-    "bedrooms",
-    "bathrooms",
-    "use_type",
-    "owner_name",
-    "owner_mailing_address",
-    "taxes_owed",
-    "interest_rate",
-    "tax_year",
-    "redemption_period_months",
-  ];
+const PROPERTY_COLUMNS = new Set([
+  "jurisdiction_id",
+  "parcel_id",
+  "address",
+  "city",
+  "state",
+  "postal_code",
+  "property_type",
+  "assessed_value",
+  "legal_description",
+  "zoning",
+  "image_data",
+  "status",
+  "metadata",
+  "gallery",
+  "video_url",
+  "year_built",
+  "living_area_sqft",
+  "lot_size_acres",
+  "bedrooms",
+  "bathrooms",
+  "use_type",
+  "owner_name",
+  "owner_mailing_address",
+  "taxes_owed",
+  "interest_rate",
+  "tax_year",
+  "redemption_period_months",
+  "is_visible",
+]);
+
+// The admin UI speaks camelCase; the columns are snake_case. Normalise either
+// spelling so a patched field is never silently dropped.
+function toSnake(key: string): string {
+  return key.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);
+}
+
+export async function updateProperty(id: string, patch: Record<string, unknown>): Promise<void> {
   const sets: string[] = [];
   const params: unknown[] = [];
   let i = 1;
-  for (const [k, v] of Object.entries(patch)) {
-    if (!allowed.includes(k)) continue;
-    sets.push(`${k === "postal_code" ? "postal_code" : k} = $${i++}`);
-    if (k === "metadata" || (k === "gallery" && v != null)) {
-      params.push(JSON.stringify(v));
+  for (const [rawKey, v] of Object.entries(patch)) {
+    const col = toSnake(rawKey);
+    if (!PROPERTY_COLUMNS.has(col)) continue;
+    sets.push(`${col} = $${i++}`);
+    if (col === "metadata" || col === "gallery") {
+      params.push(v == null ? null : JSON.stringify(v));
+    } else if (col === "is_visible") {
+      params.push(typeof v === "boolean" ? v : v === "true");
     } else {
       params.push(v ?? null);
     }
@@ -260,6 +278,7 @@ function mapProperty(r: Record<string, unknown>): PropertyRecord {
     imageUrl: (r.image_data as string) ?? null,
     legalDescription: (r.legal_description as string) ?? null,
     status: r.status as string,
+    isVisible: r.is_visible !== false,
     lotId: (r.lot_id as string) ?? null,
     lotStatus: (r.lot_status as string) ?? null,
     startingRate: r.starting_rate == null ? null : Number(r.starting_rate),

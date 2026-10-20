@@ -78,37 +78,38 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.995 0.003 240);
-  --foreground: oklch(0.18 0.03 260);
+  /* Crisp neutral light theme: no blue cast, white cards on a near-white page. */
+  --background: oklch(0.996 0 0);
+  --foreground: oklch(0.21 0.012 264);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.03 260);
+  --card-foreground: oklch(0.21 0.012 264);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.03 260);
+  --popover-foreground: oklch(0.21 0.012 264);
   --primary: oklch(0.22 0.08 262);
-  --primary-foreground: oklch(0.985 0.003 240);
-  --secondary: oklch(0.965 0.008 250);
+  --primary-foreground: oklch(0.985 0.002 260);
+  --secondary: oklch(0.972 0.002 264);
   --secondary-foreground: oklch(0.22 0.08 262);
-  --muted: oklch(0.965 0.008 250);
-  --muted-foreground: oklch(0.52 0.03 258);
+  --muted: oklch(0.972 0.002 264);
+  --muted-foreground: oklch(0.47 0.012 264);
   --accent: oklch(0.82 0.15 82);
   --accent-foreground: oklch(0.22 0.08 262);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.915 0.012 255);
-  --input: oklch(0.915 0.012 255);
+  --border: oklch(0.912 0.003 264);
+  --input: oklch(0.912 0.003 264);
   --ring: oklch(0.22 0.08 262);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
+  --sidebar: oklch(0.996 0 0);
+  --sidebar-foreground: oklch(0.21 0.02 264);
   --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-primary-foreground: oklch(0.996 0 0);
+  --sidebar-accent: oklch(0.968 0.003 264);
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-border: oklch(0.912 0.003 264);
   --sidebar-ring: oklch(0.704 0.04 256.788);
 
   /* Brand — Chicago TaxLien Auctions */
@@ -117,11 +118,11 @@
   --navy-soft: oklch(0.32 0.08 262);
   --gold: oklch(0.82 0.15 82);
   --gold-soft: oklch(0.93 0.09 88);
-  --ink: oklch(0.18 0.03 260);
-  --ink-muted: oklch(0.52 0.03 258);
+  --ink: oklch(0.21 0.012 264);
+  --ink-muted: oklch(0.47 0.012 264);
   --surface: oklch(1 0 0);
-  --surface-alt: oklch(0.98 0.008 250);
-  --hairline: oklch(0.92 0.01 255);
+  --surface-alt: oklch(0.976 0.002 264);
+  --hairline: oklch(0.912 0.003 264);
   --success: oklch(0.62 0.14 165);
   --success-soft: oklch(0.94 0.05 175);
   --warning: oklch(0.72 0.16 55);

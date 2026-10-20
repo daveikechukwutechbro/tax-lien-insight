@@ -17,7 +17,8 @@ export type EmailTemplate =
   | "certificate"
   | "redemption"
   | "support"
-  | "saved_search";
+  | "saved_search"
+  | "broadcast";
 
 export interface SendEmailInput {
   template: EmailTemplate;
@@ -241,6 +242,22 @@ const TEMPLATES: Record<EmailTemplate, (v: Record<string, string>) => RenderedEm
     ),
     text: `${v.matches ?? 0} new matches for ${v.searchName}.`,
   }),
+  broadcast: (v) => {
+    const title = v.title || `An update from ${BRAND}`;
+    const bodyText = v.body ?? "";
+    const bodyHtml = bodyText
+      .split(/\n{2,}/)
+      .map((chunk) => chunk.trim())
+      .filter(Boolean)
+      .map((chunk) => para(chunk.replace(/\s*\n\s*/g, " ")))
+      .join("");
+    const url = v.link ? (v.link.startsWith("http") ? v.link : `${v.appUrl ?? ""}${v.link}`) : "";
+    return {
+      subject: v.subject || title,
+      html: layout(heading(title) + bodyHtml + (url ? ctaLink("View in your account", url) : "")),
+      text: `${title}\n\n${bodyText}${url ? `\n\n${url}` : ""}`,
+    };
+  },
 };
 
 function layoutInner(code: string): string {

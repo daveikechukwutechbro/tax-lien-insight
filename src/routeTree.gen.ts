@@ -32,6 +32,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAuctionsRouteImport } from './routes/admin/auctions'
 import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminBidsRouteImport } from './routes/admin/bids'
+import { Route as AdminBroadcastsRouteImport } from './routes/admin/broadcasts'
 import { Route as AdminCountiesRouteImport } from './routes/admin/counties'
 import { Route as AdminDocumentsRouteImport } from './routes/admin/documents'
 import { Route as AdminFundsRouteImport } from './routes/admin/funds'
@@ -174,6 +175,11 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
 const AdminBidsRoute = AdminBidsRouteImport.update({
   id: '/bids',
   path: '/bids',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminBroadcastsRoute = AdminBroadcastsRouteImport.update({
+  id: '/broadcasts',
+  path: '/broadcasts',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminCountiesRoute = AdminCountiesRouteImport.update({
@@ -360,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/admin/auctions': typeof AdminAuctionsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bids': typeof AdminBidsRoute
+  '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/counties': typeof AdminCountiesRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/funds': typeof AdminFundsRoute
@@ -411,6 +418,7 @@ export interface FileRoutesByTo {
   '/admin/auctions': typeof AdminAuctionsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bids': typeof AdminBidsRoute
+  '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/counties': typeof AdminCountiesRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/funds': typeof AdminFundsRoute
@@ -466,6 +474,7 @@ export interface FileRoutesById {
   '/admin/auctions': typeof AdminAuctionsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bids': typeof AdminBidsRoute
+  '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/counties': typeof AdminCountiesRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/funds': typeof AdminFundsRoute
@@ -521,6 +530,7 @@ export interface FileRouteTypes {
     | '/admin/auctions'
     | '/admin/audit'
     | '/admin/bids'
+    | '/admin/broadcasts'
     | '/admin/counties'
     | '/admin/documents'
     | '/admin/funds'
@@ -572,6 +582,7 @@ export interface FileRouteTypes {
     | '/admin/auctions'
     | '/admin/audit'
     | '/admin/bids'
+    | '/admin/broadcasts'
     | '/admin/counties'
     | '/admin/documents'
     | '/admin/funds'
@@ -626,6 +637,7 @@ export interface FileRouteTypes {
     | '/admin/auctions'
     | '/admin/audit'
     | '/admin/bids'
+    | '/admin/broadcasts'
     | '/admin/counties'
     | '/admin/documents'
     | '/admin/funds'
@@ -841,6 +853,13 @@ declare module '@tanstack/react-router' {
       path: '/bids'
       fullPath: '/admin/bids'
       preLoaderRoute: typeof AdminBidsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/broadcasts': {
+      id: '/admin/broadcasts'
+      path: '/broadcasts'
+      fullPath: '/admin/broadcasts'
+      preLoaderRoute: typeof AdminBroadcastsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/counties': {
@@ -1109,6 +1128,7 @@ interface AdminRouteRouteChildren {
   AdminAuctionsRoute: typeof AdminAuctionsRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBidsRoute: typeof AdminBidsRoute
+  AdminBroadcastsRoute: typeof AdminBroadcastsRoute
   AdminCountiesRoute: typeof AdminCountiesRoute
   AdminDocumentsRoute: typeof AdminDocumentsRoute
   AdminFundsRoute: typeof AdminFundsRoute
@@ -1126,6 +1146,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAuctionsRoute: AdminAuctionsRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminBidsRoute: AdminBidsRoute,
+  AdminBroadcastsRoute: AdminBroadcastsRoute,
   AdminCountiesRoute: AdminCountiesRoute,
   AdminDocumentsRoute: AdminDocumentsRoute,
   AdminFundsRoute: AdminFundsRoute,

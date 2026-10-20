@@ -96,10 +96,11 @@ async function fetchNextAuctionSummary(): Promise<AuctionSummary> {
 
   properties.sort((x, y) => new Date(x.auction_starts_at).getTime() - new Date(y.auction_starts_at).getTime());
 
-  const nextStartsAt =
-    upcoming.find((a) => ["scheduled", "registration_open", "registration_closed"].includes(a.status))?.starts_at ??
-    upcoming[0]?.starts_at ??
-    null;
+  // Only count down to an auction that has not started yet. Picking the first
+  // upcoming auction by status alone pinned the countdown to a start date that
+  // had already passed, freezing the hero timer at 00:00:00.
+  const now = Date.now();
+  const nextStartsAt = upcoming.find((a) => a.starts_at && new Date(a.starts_at).getTime() > now)?.starts_at ?? null;
 
   return {
     totalProperties: properties.length,

@@ -6,8 +6,18 @@
 // This file is the single source of truth for both the public pages and the
 // admin editor (src/routes/admin/content/pages.tsx).
 
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { getSiteContent, type SiteContentSlug } from "@/lib/backend";
+
+// Shared query so route loaders can prefetch the same cache entry the hook reads.
+export function siteContentQuery<K extends SiteContentSlug>(slug: K) {
+  return queryOptions({
+    queryKey: ["site-content", slug],
+    queryFn: () => getSiteContent(slug),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+}
 
 export type ItemFieldType = "text" | "textarea";
 
@@ -33,6 +43,12 @@ export type ContentField =
       itemLabel: string;
       help?: string;
       fields: ItemField[];
+    }
+  | {
+      key: string;
+      label: string;
+      type: "toggle";
+      help?: string;
     };
 
 export type ContentSchema = {
@@ -56,6 +72,9 @@ export const SITE_CONTENT_DEFAULTS = {
     heroTitle: "Upcoming Tax Lien Auction",
     heroSubtitle:
       "These properties are scheduled for auction. Register now and be ready to bid on secured tax lien certificates.",
+    seoTitle: "Upcoming Tax Lien Auction — Auction Ledger",
+    seoDescription:
+      "Browse the next multi-state tax lien auction. Review scheduled properties and counties, then register to bid on secured tax lien certificates.",
     ctaTitle: "Register now to participate in the auction.",
     ctaSubtitle: "Create an account, add funds, and be ready to bid when the auction goes live.",
     whyInvest: [
@@ -64,6 +83,11 @@ export const SITE_CONTENT_DEFAULTS = {
       { text: "Low investment minimums" },
       { text: "Potential for high returns" },
     ],
+    showAuctionDate: true,
+    showCountdown: true,
+    showStats: true,
+    showFilterBar: true,
+    showRegisterBanner: true,
   },
   "how-it-works": {
     title: "How It Works",
@@ -188,10 +212,22 @@ export const SITE_CONTENT_SCHEMAS: ContentSchema[] = [
   {
     slug: "home",
     label: "Home page",
-    description: "The headline and call-to-action shown on the landing page.",
+    description: "The headline, call-to-action, search-engine text, and section visibility for the landing page.",
     fields: [
       { key: "heroTitle", label: "Hero title", type: "text" },
       { key: "heroSubtitle", label: "Hero subtitle", type: "textarea" },
+      {
+        key: "seoTitle",
+        label: "Browser / SEO title",
+        type: "text",
+        help: "Shown in the browser tab and search results.",
+      },
+      {
+        key: "seoDescription",
+        label: "SEO description",
+        type: "textarea",
+        help: "The summary search engines show under the title.",
+      },
       { key: "ctaTitle", label: "Registration banner title", type: "text" },
       { key: "ctaSubtitle", label: "Registration banner subtitle", type: "textarea" },
       {
@@ -201,6 +237,26 @@ export const SITE_CONTENT_SCHEMAS: ContentSchema[] = [
         itemLabel: "Point",
         fields: [{ key: "text", label: "Text", type: "text" }],
       },
+      {
+        key: "showAuctionDate",
+        label: "Show auction date card",
+        type: "toggle",
+        help: "The date card beside the hero headline.",
+      },
+      {
+        key: "showCountdown",
+        label: "Show countdown timer",
+        type: "toggle",
+        help: "The live countdown to the next auction start.",
+      },
+      {
+        key: "showStats",
+        label: "Show stats & why-invest panel",
+        type: "toggle",
+        help: "The row of property/county/taxes figures.",
+      },
+      { key: "showFilterBar", label: "Show search & filters", type: "toggle" },
+      { key: "showRegisterBanner", label: "Show register banner", type: "toggle" },
     ],
   },
   {
@@ -308,11 +364,6 @@ export type SiteContentFor<K extends SiteContentSlug> = (typeof SITE_CONTENT_DEF
 
 export function useSiteContent<K extends SiteContentSlug>(slug: K): SiteContentFor<K> {
   const defaults = SITE_CONTENT_DEFAULTS[slug] as unknown as SiteContentFor<K>;
-  const { data } = useQuery({
-    queryKey: ["site-content", slug],
-    queryFn: () => getSiteContent(slug),
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  });
+  const { data } = useQuery(siteContentQuery(slug));
   return mergeDefaults(defaults as unknown as Record<string, unknown>, data?.body) as unknown as SiteContentFor<K>;
 }

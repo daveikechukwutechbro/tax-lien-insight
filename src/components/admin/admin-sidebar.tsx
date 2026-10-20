@@ -14,6 +14,7 @@ import {
   SlidersHorizontal,
   FileEdit,
   ScrollText,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 
@@ -56,6 +57,10 @@ const groups: Group[] = [
       { to: "/admin/content/settings", label: "Settings", icon: SlidersHorizontal },
       { to: "/admin/content/pages", label: "Pages", icon: FileEdit },
     ],
+  },
+  {
+    label: "Communications",
+    items: [{ to: "/admin/broadcasts", label: "Announcements", icon: Megaphone }],
   },
   {
     label: "System",

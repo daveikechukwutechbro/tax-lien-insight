@@ -434,8 +434,12 @@ export type AuctionLot = {
   property_type: string | null;
   assessed_value: number | null;
   image_url: string | null;
+  is_visible: boolean;
 };
-export async function getAuctionLots(auctionId: string): Promise<AuctionLot[]> {
+export async function getAuctionLots(
+  auctionId: string,
+  opts: { includeHidden?: boolean } = {},
+): Promise<AuctionLot[]> {
   const rows = await request<
     (Partial<AuctionLot> & {
       id: string;
@@ -444,7 +448,7 @@ export async function getAuctionLots(auctionId: string): Promise<AuctionLot[]> {
       starting_rate: number | string | null;
       current_rate: number | string | null;
     })[]
-  >(`/api/v1/auctions/${auctionId}/lots`);
+  >(`/api/v1/auctions/${auctionId}/lots${opts.includeHidden ? "?includeHidden=1" : ""}`);
   return rows.map((l) => ({
     id: l.id,
     property_id: l.property_id ?? null,
@@ -463,6 +467,7 @@ export async function getAuctionLots(auctionId: string): Promise<AuctionLot[]> {
     property_type: l.property_type ?? null,
     assessed_value: l.assessed_value != null ? Number(l.assessed_value) : null,
     image_url: l.image_url ?? null,
+    is_visible: l.is_visible !== false,
   }));
 }
 
@@ -537,6 +542,7 @@ export type RawProperty = {
   countyState: string | null;
   imageUrl?: string | null;
   status: string;
+  isVisible?: boolean;
   lotId?: string | null;
   lotStatus?: string | null;
   startingRate?: number | null;
@@ -712,6 +718,7 @@ export type PropertyInput = {
   interestRate?: number | null;
   taxYear?: number | null;
   redemptionPeriodMonths?: number | null;
+  isVisible?: boolean;
 };
 
 export async function getAdminProperties(): Promise<RawProperty[]> {
@@ -848,7 +855,10 @@ export async function transitionAdminLot(lotId: string, next: string): Promise<v
 export async function deleteAdminLot(lotId: string): Promise<void> {
   await request<{ deleted: boolean }>(`/api/v1/admin/auction-lots/${lotId}`, { method: "DELETE" });
 }
-export async function updateAdminLot(lotId: string, patch: Partial<LotInput> & { lotNumber?: number; currentRate?: number }): Promise<void> {
+export async function updateAdminLot(
+  lotId: string,
+  patch: Partial<LotInput> & { lotNumber?: number; currentRate?: number; isVisible?: boolean },
+): Promise<void> {
   await request<{ id: string; updated: boolean }>(`/api/v1/admin/auction-lots/${lotId}`, {
     method: "PATCH",
     body: JSON.stringify(patch),
@@ -986,5 +996,62 @@ export async function setAdminUserRole(id: string, role: string, action: "add" |
   await request<{ id: string }>(`/api/v1/admin/users/${id}/role`, {
     method: "PATCH",
     body: JSON.stringify({ role, action }),
+  });
+}
+
+// ---- Admin: broadcasts ----
+
+export type AdminBroadcast = {
+  id: string;
+  subject: string | null;
+  title: string;
+  body: string | null;
+  link: string | null;
+  send_in_app: boolean;
+  send_email: boolean;
+  audience: string;
+  recipient_count: number;
+  in_app_count: number;
+  email_sent_count: number;
+  email_failed_count: number;
+  email_configured: boolean;
+  created_at: string;
+  sender_email: string | null;
+};
+
+export type BroadcastInput = {
+  title: string;
+  body?: string;
+  subject?: string;
+  link?: string;
+  sendInApp: boolean;
+  sendEmail: boolean;
+  audience: "all" | "selected";
+  userIds?: string[];
+};
+
+export type BroadcastResult = {
+  id: string;
+  recipientCount: number;
+  inAppCount: number;
+  emailSentCount: number;
+  emailFailedCount: number;
+  emailConfigured: boolean;
+  createdAt: string;
+};
+
+export async function getAdminBroadcasts(): Promise<{
+  broadcasts: AdminBroadcast[];
+  emailConfigured: boolean;
+}> {
+  return request<{ broadcasts: AdminBroadcast[]; emailConfigured: boolean }>(
+    "/api/v1/admin/broadcasts",
+  );
+}
+
+export async function createAdminBroadcast(input: BroadcastInput): Promise<BroadcastResult> {
+  return request<BroadcastResult>("/api/v1/admin/broadcasts", {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }

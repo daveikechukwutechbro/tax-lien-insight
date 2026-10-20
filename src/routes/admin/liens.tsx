@@ -15,6 +15,7 @@ import {
   type AuctionLot,
 } from "@/lib/backend";
 import { invalidatePublicData } from "@/lib/queries/invalidate";
+import { VisibilityToggle } from "@/components/admin/visibility-toggle";
 
 export const Route = createFileRoute("/admin/liens")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -60,7 +61,7 @@ function LiensAdmin() {
 
   const { data: lots = [], refetch } = useQuery({
     queryKey: ["admin", "lots", auctionId],
-    queryFn: () => getAuctionLots(auctionId),
+    queryFn: () => getAuctionLots(auctionId, { includeHidden: true }),
     enabled: Boolean(auctionId),
   });
 
@@ -153,6 +154,18 @@ function LiensAdmin() {
       invalidatePublicData(qc);
     } catch (err) {
       toast.error((err as Error).message ?? "Could not remove lot");
+    }
+  }
+
+  async function toggleVisible(lot: AuctionLot) {
+    const next = !lot.is_visible;
+    try {
+      await updateAdminLot(lot.id, { isVisible: next });
+      toast.success(next ? "Lien is now visible on the site" : "Lien hidden from the site");
+      await refetch();
+      invalidatePublicData(qc);
+    } catch (err) {
+      toast.error((err as Error).message ?? "Could not update visibility");
     }
   }
 
@@ -267,6 +280,7 @@ function LiensAdmin() {
                   <th className="px-4 py-2">Owed</th>
                   <th className="px-4 py-2">Rate</th>
                   <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-2">On site</th>
                   <th className="px-4 py-2">Next</th>
                   <th className="px-4 py-2 text-right">Actions</th>
                 </tr>
@@ -275,7 +289,7 @@ function LiensAdmin() {
                 {lots.map((lot) =>
                   editingId === lot.id ? (
                     <tr key={lot.id} className="border-b border-hairline/50 bg-surface-alt/60 last:border-0">
-                      <td colSpan={7} className="px-4 py-3">
+                      <td colSpan={8} className="px-4 py-3">
                         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                           <EField label="Taxes owed" value={editForm.taxes_owed} onChange={(v) => setEditForm({ ...editForm, taxes_owed: v })} />
                           <EField label="Tax year" value={editForm.tax_year} onChange={(v) => setEditForm({ ...editForm, tax_year: v })} />
@@ -325,6 +339,13 @@ function LiensAdmin() {
                       </span>
                     </td>
                     <td className="px-4 py-2">
+                      <VisibilityToggle
+                        visible={lot.is_visible}
+                        onToggle={() => void toggleVisible(lot)}
+                        label="lien"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
                       {LOT_TRANSITION_OPTIONS[lot.status]?.length ? (
                         <select
                           defaultValue=""
@@ -365,7 +386,7 @@ function LiensAdmin() {
                 )}
                 {!lots.length && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-sm text-ink-muted">
+                    <td colSpan={8} className="px-4 py-8 text-center text-sm text-ink-muted">
                       {validLots.length ? "No lots yet." : "No lots are enrolled in this auction yet."}
                     </td>
                   </tr>

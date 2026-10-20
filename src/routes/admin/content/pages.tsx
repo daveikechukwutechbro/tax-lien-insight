@@ -247,6 +247,33 @@ function FieldEditor({
     );
   }
 
+  if (field.type === "toggle") {
+    const on = value === true;
+    return (
+      <div className="flex items-center justify-between gap-4 rounded-lg border border-hairline bg-background/60 px-3 py-2.5">
+        <Label label={field.label} help={field.help} />
+        <button
+          type="button"
+          role="switch"
+          aria-checked={on}
+          aria-label={field.label}
+          onClick={() => onChange(!on)}
+          className={
+            "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors " +
+            (on ? "bg-navy" : "bg-muted-foreground/40")
+          }
+        >
+          <span
+            className={
+              "inline-block size-5 rounded-full bg-white shadow transition-transform " +
+              (on ? "translate-x-[22px]" : "translate-x-0.5")
+            }
+          />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <label className="block">
       <Label label={field.label} help={field.help} />

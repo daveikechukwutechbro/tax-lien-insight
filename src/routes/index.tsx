@@ -17,10 +17,8 @@ import {
   Users2,
   Check,
   Search,
-  SlidersHorizontal,
   Eye,
   ShieldCheck,
-  ChevronDown,
   Info,
   ArrowRight,
 } from "lucide-react";
@@ -63,6 +61,8 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { data, isPending, isError, refetch } = useQuery(scheduledAuctionQuery);
+  const content = useSiteContent("home");
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
 
   if (isPending && !data) return <PageSkeleton rows={6} />;
 
@@ -86,26 +86,91 @@ function HomePage() {
 
   if (!data) return <PageSkeleton rows={6} />;
   const auctionDate = data.nextStartsAt ? new Date(data.nextStartsAt) : null;
+  const properties = applyFilters(data.properties, filters);
+  const filtersActive =
+    filters.search.trim() !== "" || filters.county !== "" || filters.type !== "" || filters.amount !== "";
 
   return (
     <div className="bg-background pb-16">
+      <PageSeo title={content.seoTitle} description={content.seoDescription} />
       <div className="container-tight pt-10">
-        <HeroRow auctionDate={auctionDate} />
-        <StatsRow
-          totalProperties={data.totalProperties}
-          totalCounties={data.totalCounties}
-          totalTaxesOwed={data.totalTaxesOwed}
+        <HeroRow
           auctionDate={auctionDate}
+          showAuctionDate={content.showAuctionDate}
+          showCountdown={content.showCountdown}
         />
-        <FilterBar />
-        <PropertyTable properties={data.properties} />
-        <RegisterBanner />
+        {content.showStats && (
+          <StatsRow
+            totalProperties={data.totalProperties}
+            totalCounties={data.totalCounties}
+            totalTaxesOwed={data.totalTaxesOwed}
+            auctionDate={auctionDate}
+          />
+        )}
+        {content.showFilterBar && (
+          <FilterBar properties={data.properties} filters={filters} onChange={setFilters} />
+        )}
+        <PropertyTable properties={properties} filtersActive={filtersActive} />
+        {content.showRegisterBanner && <RegisterBanner />}
       </div>
     </div>
   );
 }
 
-function HeroRow({ auctionDate }: { auctionDate: Date | null }) {
+function PageSeo({ title, description }: { title: string; description: string }) {
+  useEffect(() => {
+    if (title) document.title = title;
+    if (description) {
+      let el = document.querySelector('meta[name="description"]');
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("name", "description");
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", description);
+    }
+  }, [title, description]);
+  return null;
+}
+
+type Filters = { search: string; county: string; type: string; amount: string };
+const EMPTY_FILTERS: Filters = { search: "", county: "", type: "", amount: "" };
+
+const AMOUNT_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "All Amounts" },
+  { value: "lt5", label: "Under $5,000" },
+  { value: "5to15", label: "$5,000 – $15,000" },
+  { value: "gt15", label: "Over $15,000" },
+];
+
+function applyFilters(rows: ScheduledPropertyRow[], f: Filters): ScheduledPropertyRow[] {
+  const q = f.search.trim().toLowerCase();
+  return rows.filter((p) => {
+    if (q) {
+      const haystack = `${p.address} ${p.city} ${p.state} ${p.zip} ${p.county} ${p.parcel_id}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    if (f.county && p.county !== f.county) return false;
+    if (f.type && p.property_type !== f.type) return false;
+    if (f.amount) {
+      const dollars = p.taxes_owed / 100;
+      if (f.amount === "lt5" && dollars >= 5000) return false;
+      if (f.amount === "5to15" && (dollars < 5000 || dollars > 15000)) return false;
+      if (f.amount === "gt15" && dollars <= 15000) return false;
+    }
+    return true;
+  });
+}
+
+function HeroRow({
+  auctionDate,
+  showAuctionDate,
+  showCountdown,
+}: {
+  auctionDate: Date | null;
+  showAuctionDate: boolean;
+  showCountdown: boolean;
+}) {
   const { heroTitle, heroSubtitle } = useSiteContent("home");
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_auto_auto] lg:items-end">
@@ -115,26 +180,24 @@ function HeroRow({ auctionDate }: { auctionDate: Date | null }) {
         </h1>
         <p className="mt-3 max-w-2xl text-[15px] text-ink-muted">{heroSubtitle}</p>
       </div>
-      {auctionDate && (
-        <>
-          <HeroCard
-            icon={<CalendarDays className="size-6 text-navy" strokeWidth={1.75} />}
-            label="Auction Date"
-            primary={auctionDate.toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
-            secondary={auctionDate.toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-              timeZoneName: "short",
-              timeZone: "America/New_York",
-            })}
-          />
-          <CountdownCard target={auctionDate} />
-        </>
+      {auctionDate && showAuctionDate && (
+        <HeroCard
+          icon={<CalendarDays className="size-6 text-navy" strokeWidth={1.75} />}
+          label="Auction Date"
+          primary={auctionDate.toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}
+          secondary={auctionDate.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            timeZoneName: "short",
+            timeZone: "America/New_York",
+          })}
+        />
       )}
+      {auctionDate && showCountdown && <CountdownCard target={auctionDate} />}
     </section>
   );
 }
@@ -319,50 +382,97 @@ function WhyInvestCard() {
   );
 }
 
-function FilterBar() {
+function FilterBar({
+  properties,
+  filters,
+  onChange,
+}: {
+  properties: ScheduledPropertyRow[];
+  filters: Filters;
+  onChange: (f: Filters) => void;
+}) {
+  const counties = Array.from(
+    new Set(properties.map((p) => p.county).filter((c) => c && c !== "—")),
+  ).sort();
+  const active =
+    filters.search.trim() !== "" || filters.county !== "" || filters.type !== "" || filters.amount !== "";
+  const set = <K extends keyof Filters>(k: K, v: Filters[K]) => onChange({ ...filters, [k]: v });
+
   return (
     <section className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-hairline bg-surface p-3">
       <div className="relative min-w-[240px] flex-1 sm:min-w-[280px]">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted" />
         <input
           type="search"
+          value={filters.search}
+          onChange={(e) => set("search", e.target.value)}
           placeholder="Search by Address, City, County or Parcel ID..."
           className="h-10 w-full rounded-md border border-hairline bg-surface pl-9 pr-3 text-sm placeholder:text-ink-muted focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15"
         />
       </div>
-      <SelectPill label="All Counties" />
-      <SelectPill label="All Property Types" />
-      <SelectPill label="All Amounts" />
+      <FilterSelect label="County" value={filters.county} onChange={(v) => set("county", v)}>
+        <option value="">All Counties</option>
+        {counties.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </FilterSelect>
+      <FilterSelect label="Property type" value={filters.type} onChange={(v) => set("type", v)}>
+        <option value="">All Property Types</option>
+        <option value="residential">Residential</option>
+        <option value="land">Land</option>
+        <option value="commercial">Commercial</option>
+      </FilterSelect>
+      <FilterSelect label="Amount" value={filters.amount} onChange={(v) => set("amount", v)}>
+        {AMOUNT_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </FilterSelect>
       <button
         type="button"
-        className="inline-flex h-10 items-center gap-2 rounded-md border border-hairline px-3 text-sm font-500 text-ink hover:border-navy hover:text-navy"
+        onClick={() => onChange(EMPTY_FILTERS)}
+        disabled={!active}
+        className="ml-auto inline-flex h-10 items-center rounded-md bg-navy px-5 text-sm font-600 text-primary-foreground shadow-sm transition-colors hover:bg-navy-deep disabled:opacity-40"
       >
-        <SlidersHorizontal className="size-4" />
-        More Filters
-      </button>
-      <button
-        type="button"
-        className="ml-auto inline-flex h-10 items-center rounded-md bg-navy px-5 text-sm font-600 text-primary-foreground shadow-sm transition-colors hover:bg-navy-deep"
-      >
-        Apply Filters
+        Reset
       </button>
     </section>
   );
 }
 
-function SelectPill({ label }: { label: string }) {
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}) {
   return (
-    <button
-      type="button"
-      className="inline-flex h-10 min-w-[140px] grow items-center justify-between gap-2 rounded-md border border-hairline bg-surface px-3 text-sm text-ink hover:border-navy sm:min-w-[170px] sm:grow-0"
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-10 min-w-[140px] grow rounded-md border border-hairline bg-surface px-3 text-sm text-ink focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15 sm:min-w-[170px] sm:grow-0"
     >
-      <span>{label}</span>
-      <ChevronDown className="size-4 text-ink-muted" />
-    </button>
+      {children}
+    </select>
   );
 }
 
-function PropertyTable({ properties }: { properties: ScheduledPropertyRow[] }) {
+function PropertyTable({
+  properties,
+  filtersActive,
+}: {
+  properties: ScheduledPropertyRow[];
+  filtersActive: boolean;
+}) {
   const fmt = (n: number) =>
     (n / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -370,7 +480,9 @@ function PropertyTable({ properties }: { properties: ScheduledPropertyRow[] }) {
     return (
       <section className="mt-8 rounded-xl border border-hairline bg-surface p-10 text-center">
         <p className="text-sm text-ink-muted">
-          No properties for auction yet. Check back soon.
+          {filtersActive
+            ? "No properties match your filters. Try clearing them."
+            : "No properties for auction yet. Check back soon."}
         </p>
       </section>
     );

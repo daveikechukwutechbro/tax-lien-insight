@@ -73,12 +73,13 @@ export interface PublicAuction {
 const PUBLIC_AUCTION_SQL = `
   SELECT a.id, a.title, a.status, a.starts_at, a.ends_at,
          j.id AS j_id, j.name AS j_name, s.code AS j_state,
-         COUNT(al.id) FILTER (WHERE al.status NOT IN ('cancelled','withdrawn','archived'))::int AS lien_count,
-         COALESCE(SUM(al.taxes_owed) FILTER (WHERE al.status NOT IN ('cancelled','withdrawn','archived')), 0)::bigint AS total_taxes
+         COUNT(al.id) FILTER (WHERE al.status NOT IN ('cancelled','withdrawn','archived') AND al.is_visible AND (al.property_id IS NULL OR ap.is_visible))::int AS lien_count,
+         COALESCE(SUM(al.taxes_owed) FILTER (WHERE al.status NOT IN ('cancelled','withdrawn','archived') AND al.is_visible AND (al.property_id IS NULL OR ap.is_visible)), 0)::bigint AS total_taxes
   FROM auctions a
   LEFT JOIN jurisdictions j ON j.id = a.jurisdiction_id
   LEFT JOIN states s ON s.id = j.state_id
   LEFT JOIN auction_lots al ON al.auction_id = a.id
+  LEFT JOIN properties ap ON ap.id = al.property_id
 `;
 
 function mapPublicAuction(r: Record<string, unknown>): PublicAuction {
@@ -281,16 +282,19 @@ export async function createLot(
   return rows[0].id as string;
 }
 
-export async function listLots(auctionId: string) {
+export async function listLots(auctionId: string, opts: { includeHidden?: boolean } = {}) {
+  const publicFilter = opts.includeHidden
+    ? ""
+    : "AND al.is_visible = true AND (al.property_id IS NULL OR p.is_visible = true)";
   const { rows } = await getPool().query(
     `SELECT al.id, al.auction_id, al.property_id, al.parcel_id, al.lot_number,
             al.status, al.starting_rate, al.current_rate, al.minimum_rate,
-            al.taxes_owed, al.tax_year, al.redemption_period_months,
+            al.taxes_owed, al.tax_year, al.redemption_period_months, al.is_visible,
             p.address, p.city, p.state, p.postal_code, p.property_type, p.assessed_value,
             p.image_data AS image_url
      FROM auction_lots al
      LEFT JOIN properties p ON p.id = al.property_id
-     WHERE al.auction_id = $1
+     WHERE al.auction_id = $1 ${publicFilter}
      ORDER BY al.lot_number NULLS LAST, al.created_at`,
     [auctionId],
   );

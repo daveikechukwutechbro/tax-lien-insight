@@ -108,6 +108,7 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
 } from "../notifications/notifications.service.js";
+import { sendBroadcast, listBroadcasts, getBroadcast } from "../notifications/broadcast.service.js";
 import { getUserActivity } from "../activity/activity.service.js";
 import { getDocumentUrl } from "../documents/documents.service.js";
 import { storeDocument } from "../providers/storage/index.js";
@@ -360,10 +361,13 @@ export function createApp(): Hono {
       type: c.req.query("type") ?? undefined,
       search: c.req.query("search") ?? undefined,
       jurisdictionId: c.req.query("jurisdictionId") ?? undefined,
+      visibleOnly: true,
     });
     return c.json(json(items.items, { total: items.total }));
   });
-  app.get("/api/v1/properties/:id", async (c) => c.json(json(await getProperty(c.req.param("id")))));
+  app.get("/api/v1/properties/:id", async (c) =>
+    c.json(json(await getProperty(c.req.param("id"), { publicOnly: true }))),
+  );
   app.post("/api/v1/admin/properties", async (c) => {
     const ctx = requirePermission(c, "property.create");
     const body = await c.req.json().catch(() => ({}));
@@ -397,7 +401,11 @@ export function createApp(): Hono {
     return c.json(json(items, { total: items.length }));
   });
   app.get("/api/v1/auctions/:id", async (c) => c.json(json(await getPublicAuction(c.req.param("id")))));
-  app.get("/api/v1/auctions/:id/lots", async (c) => c.json(json(await listLots(c.req.param("id")))));
+  app.get("/api/v1/auctions/:id/lots", async (c) => {
+    const includeHidden = c.req.query("includeHidden") === "1";
+    if (includeHidden) requirePermission(c, "property.edit");
+    return c.json(json(await listLots(c.req.param("id"), { includeHidden })));
+  });
   app.post("/api/v1/auctions/:id/register", async (c) => {
     const ctx = requireUser(c);
     const res = await registerForAuction(c.req.param("id"), ctx);
@@ -510,6 +518,10 @@ export function createApp(): Hono {
     set("taxes_owed", body.taxesOwed);
     set("tax_year", body.taxYear);
     set("redemption_period_months", body.redemptionPeriodMonths);
+    if (typeof body.isVisible === "boolean") {
+      fields.push(`is_visible = $${values.length + 1}`);
+      values.push(body.isVisible);
+    }
     if (fields.length === 0) return c.json(json({ id, updated: false }));
     fields.push(`updated_at = now()`);
     values.push(id);
@@ -1088,6 +1100,42 @@ export function createApp(): Hono {
     else if (body.action === "remove") await revokeRole(id, body.role);
     else throw new ValidationError("action must be add or remove");
     return c.json(json({ id, role: body.role, action: body.action }));
+  });
+
+  // ---- Admin: broadcasts (announcements to users) ----
+  app.get("/api/v1/admin/broadcasts", async (c) => {
+    requirePermission(c, "comms.broadcast");
+    return c.json(json({ broadcasts: await listBroadcasts(), emailConfigured: isEmailConfigured() }));
+  });
+  app.post("/api/v1/admin/broadcasts", async (c) => {
+    const ctx = requirePermission(c, "comms.broadcast");
+    const body = await c.req.json().catch(() => ({}));
+    const result = await sendBroadcast({
+      senderUserId: ctx.userId,
+      title: String(body.title ?? ""),
+      body: body.body != null ? String(body.body) : undefined,
+      subject: body.subject != null ? String(body.subject) : undefined,
+      link: body.link != null ? String(body.link) : undefined,
+      sendInApp: Boolean(body.sendInApp),
+      sendEmail: Boolean(body.sendEmail),
+      audience: body.audience === "selected" ? "selected" : "all",
+      userIds: Array.isArray(body.userIds) ? body.userIds.map((v: unknown) => String(v)) : undefined,
+    });
+    await recordAdminAction({ actorUserId: ctx.userId, action: "BROADCAST_SENT", targetUserId: undefined, reason: result.id });
+    await writeAudit(null, {
+      actorUserId: ctx.userId,
+      action: "BROADCAST_SENT",
+      entityType: "admin_broadcast",
+      entityId: result.id,
+      afterJson: { title: body.title, audience: body.audience, recipientCount: result.recipientCount },
+    });
+    return c.json(json(result), 201);
+  });
+  app.get("/api/v1/admin/broadcasts/:id", async (c) => {
+    requirePermission(c, "comms.broadcast");
+    const broadcast = await getBroadcast(c.req.param("id"));
+    if (!broadcast) throw new NotFoundError("Broadcast not found");
+    return c.json(json(broadcast));
   });
   app.get("/api/v1/admin/auctions", async (c) => {
     requireAdmin(c);
