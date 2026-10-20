@@ -6,6 +6,7 @@ import { loaderPrefetch } from "@/lib/queries/prefetch";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useSession } from "@/hooks/use-session";
 import { useSiteContent } from "@/lib/site-content";
+import { PageSeo } from "@/components/site/page-seo";
 import { PageSkeleton } from "@/components/site/page-skeleton";
 import {
   CalendarDays,
@@ -115,22 +116,6 @@ function HomePage() {
       </div>
     </div>
   );
-}
-
-function PageSeo({ title, description }: { title: string; description: string }) {
-  useEffect(() => {
-    if (title) document.title = title;
-    if (description) {
-      let el = document.querySelector('meta[name="description"]');
-      if (!el) {
-        el = document.createElement("meta");
-        el.setAttribute("name", "description");
-        document.head.appendChild(el);
-      }
-      el.setAttribute("content", description);
-    }
-  }, [title, description]);
-  return null;
 }
 
 type Filters = { search: string; county: string; type: string; amount: string };

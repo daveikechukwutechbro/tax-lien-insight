@@ -956,7 +956,19 @@ export type SiteContent = {
   updatedAt: string | null;
 };
 
-export const SITE_CONTENT_SLUGS = ["settings", "home", "how-it-works", "faq", "rates", "resources", "support", "about"] as const;
+export const SITE_CONTENT_SLUGS = [
+  "settings",
+  "navigation",
+  "home",
+  "how-it-works",
+  "faq",
+  "rates",
+  "resources",
+  "glossary",
+  "help",
+  "support",
+  "about",
+] as const;
 export type SiteContentSlug = (typeof SITE_CONTENT_SLUGS)[number];
 
 export async function getSiteContent(slug: string): Promise<SiteContent> {
@@ -969,6 +981,33 @@ export async function saveAdminSiteContent(slug: string, body: Record<string, un
   return request<SiteContent>(`/api/v1/admin/site-content/${slug}`, {
     method: "PUT",
     body: JSON.stringify(body),
+  });
+}
+
+// ---- Admin: roles & permissions ----
+
+export type AdminRole = {
+  id: string;
+  name: string;
+  description: string | null;
+  permissions: string[];
+};
+export type AdminPermission = {
+  id: string;
+  name: string;
+  description: string | null;
+};
+
+export async function getAdminRoles(): Promise<{ roles: AdminRole[]; permissions: AdminPermission[] }> {
+  return request("/api/v1/admin/roles");
+}
+export async function saveAdminRolePermissions(
+  roleId: string,
+  permissions: string[],
+): Promise<{ id: string; name: string; permissions: string[] }> {
+  return request(`/api/v1/admin/roles/${roleId}/permissions`, {
+    method: "PUT",
+    body: JSON.stringify({ permissions }),
   });
 }
 

@@ -1,14 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, ChevronUp, ChevronDown, RotateCcw } from "lucide-react";
+import { Plus, Trash2, ChevronUp, ChevronDown, RotateCcw, Eye, Upload, X } from "lucide-react";
 import { getAdminSiteContent, saveAdminSiteContent, type SiteContentSlug } from "@/lib/backend";
+import { fileToDataUrl } from "@/lib/image-upload";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import {
   SITE_CONTENT_SCHEMAS,
   SITE_CONTENT_DEFAULTS,
+  SITE_PATHS,
   type ContentField,
 } from "@/lib/site-content";
 
@@ -121,6 +123,28 @@ export function PageForm({ slug, saved }: { slug: SiteContentSlug; saved?: Recor
             variant="outline"
             size="sm"
             onClick={() => {
+              try {
+                window.sessionStorage.setItem(`al-preview:${slug}`, JSON.stringify(draft));
+              } catch {
+                toast.error("Draft too large to preview");
+                return;
+              }
+              const path = SITE_PATHS[slug] ?? "/";
+              window.open(
+                `${path}${path.includes("?") ? "&" : "?"}preview=${slug}`,
+                "_blank",
+                "noopener",
+              );
+            }}
+            title="Open the public page in a new tab with your unsaved changes"
+          >
+            <Eye className="mr-1.5 size-3.5" /> Preview
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
               setDraft(mergeSaved(defaults, undefined));
               toast.message("Reset to defaults — remember to save");
             }}
@@ -156,8 +180,100 @@ function FieldEditor({
   value: unknown;
   onChange: (v: unknown) => void;
 }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const inputCls =
     "w-full rounded-md border border-hairline bg-background px-3 py-2 text-sm focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15";
+
+  if (field.type === "image") {
+    const src = typeof value === "string" && value ? value : "";
+    const maxBytes = field.key === "favicon" ? 64 * 1024 : 300 * 1024;
+    return (
+      <div>
+        <Label label={field.label} help={field.help} />
+        <div className="mt-2 flex items-center gap-4">
+          <div
+            className={
+              "grid shrink-0 place-items-center rounded-lg border border-hairline bg-background/60 " +
+              (field.key === "favicon" ? "size-12" : "h-14 min-w-14")
+            }
+          >
+            {src ? (
+              <img
+                src={src}
+                alt={field.label}
+                className={
+                  field.key === "favicon" ? "size-8 object-contain" : "max-h-10 max-w-24 object-contain"
+                }
+              />
+            ) : (
+              <span className="text-[10px] text-ink-muted">None</span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                if (file.size > maxBytes) {
+                  toast.error(`Max file size is ${Math.round(maxBytes / 1024)} KB`);
+                  return;
+                }
+                setUploading(true);
+                try {
+                  onChange(await fileToDataUrl(file, maxBytes));
+                } catch {
+                  toast.error("Could not read that file");
+                } finally {
+                  setUploading(false);
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+            >
+              <Upload className="mr-1.5 size-3.5" />
+              {uploading ? "Loading…" : src ? "Replace" : "Upload"}
+            </Button>
+            {src ? (
+              <Button type="button" variant="outline" size="sm" onClick={() => onChange("")}>
+                <X className="mr-1.5 size-3.5" /> Clear
+              </Button>
+            ) : null}
+          </div>
+        </div>
+        {field.hint ? <p className="mt-1.5 text-xs text-ink-muted">{field.hint}</p> : null}
+      </div>
+    );
+  }
+
+  if (field.type === "select") {
+    return (
+      <div>
+        <Label label={field.label} help={field.help} />
+        <select
+          className={`mt-2 ${inputCls}`}
+          value={String(value ?? "")}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {field.options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
 
   if (field.type === "items") {
     const items = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
@@ -204,7 +320,23 @@ function FieldEditor({
                 {field.fields.map((f) => (
                   <label key={f.key} className="block">
                     <span className="text-xs font-500 text-ink-muted">{f.label}</span>
-                    {f.type === "textarea" ? (
+                    {f.type === "select" ? (
+                      <select
+                        className={`mt-1 ${inputCls}`}
+                        value={String(item[f.key] ?? "")}
+                        onChange={(e) => {
+                          const next = [...items];
+                          next[i] = { ...next[i], [f.key]: e.target.value };
+                          replace(next);
+                        }}
+                      >
+                        {(f.options ?? []).map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : f.type === "textarea" ? (
                       <textarea
                         rows={3}
                         className={`mt-1 ${inputCls}`}

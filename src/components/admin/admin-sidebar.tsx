@@ -15,6 +15,7 @@ import {
   FileEdit,
   ScrollText,
   Megaphone,
+  KeyRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -64,7 +65,10 @@ const groups: Group[] = [
   },
   {
     label: "System",
-    items: [{ to: "/admin/audit", label: "Audit Log", icon: ScrollText }],
+    items: [
+      { to: "/admin/roles", label: "Roles & Permissions", icon: KeyRound },
+      { to: "/admin/audit", label: "Audit Log", icon: ScrollText },
+    ],
   },
 ];
 

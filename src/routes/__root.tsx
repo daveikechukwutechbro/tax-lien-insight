@@ -13,6 +13,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { BACKEND_URL } from "@/lib/backend-proxy";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { MobileBottomNav } from "@/components/dashboard/bottom-nav";
@@ -85,6 +86,13 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
   );
 }
 
+type RootSettingsBody = Record<string, unknown>;
+
+function settingsStr(s: RootSettingsBody, key: string, fallback: string): string {
+  const v = s[key];
+  return typeof v === "string" && v.trim() !== "" ? v : fallback;
+}
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   beforeLoad: ({ location }: any) => {
     if (ADMIN_SITE) {
@@ -95,33 +103,84 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       }
     }
   },
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Auction Ledger — Tax Lien Certificates & Auction Marketplace" },
-      { name: "description", content: "Browse upcoming multi-state tax lien auctions, review property and lien data, and place bids on secured tax lien certificates." },
-      { name: "author", content: "Auction Ledger" },
-      { property: "og:site_name", content: "Auction Ledger" },
-      { property: "og:title", content: "Auction Ledger" },
-      { property: "og:description", content: "The transparent marketplace for tax lien certificates across the United States." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap",
-      },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-    ],
-  }),
+  // Server-side fetch of site settings so the SEO Google reads (title,
+  // description, favicon) is present in the initial HTML, not only after
+  // hydration. Falls back to empty settings on any failure or timeout.
+  loader: async ({ context }): Promise<{ settings: RootSettingsBody }> => {
+    if (ADMIN_SITE) return { settings: {} };
+    const empty = { settings: {} as RootSettingsBody };
+    try {
+      const isServer = typeof window === "undefined";
+      const url = isServer
+        ? `${BACKEND_URL}/api/v1/site-content/settings`
+        : "/api/v1/site-content/settings";
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(isServer ? 1500 : 6000),
+        headers: { accept: "application/json" },
+      });
+      if (!res.ok) return empty;
+      const json = (await res.json()) as { data?: { slug?: string; body?: unknown; updatedAt?: string | null } };
+      const data = json.data;
+      if (!data || typeof data.body !== "object" || data.body === null) return empty;
+      // Seed the content query so the settings hook doesn't refetch on mount.
+      context.queryClient.setQueryData(["site-content", "settings"], {
+        slug: "settings",
+        body: data.body,
+        updatedAt: data.updatedAt ?? null,
+      });
+      return { settings: data.body as RootSettingsBody };
+    } catch {
+      return empty;
+    }
+  },
+  head: ({ loaderData }) => {
+    const s = loaderData?.settings ?? {};
+    const siteName = settingsStr(s, "siteName", "Auction Ledger");
+    const title = settingsStr(
+      s,
+      "seoSiteTitle",
+      "Auction Ledger — Tax Lien Certificates & Auction Marketplace",
+    );
+    const description = settingsStr(
+      s,
+      "seoSiteDescription",
+      "Browse upcoming multi-state tax lien auctions, review property and lien data, and place bids on secured tax lien certificates.",
+    );
+    const favicon = settingsStr(s, "favicon", "/favicon.ico");
+    const defaultTheme = settingsStr(s, "defaultTheme", "light");
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { title },
+        { name: "description", content: description },
+        { name: "author", content: siteName },
+        { property: "og:site_name", content: siteName },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "al-default-theme", content: defaultTheme },
+      ],
+      links: [
+        {
+          rel: "stylesheet",
+          href: appCss,
+        },
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap",
+        },
+        {
+          rel: "icon",
+          href: favicon,
+          ...(favicon.endsWith(".ico") ? { type: "image/x-icon" } : {}),
+        },
+      ],
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -129,12 +188,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  const themeInitScript = `try{const t=localStorage.getItem("al-theme");const d=t==="dark"||(!t&&matchMedia("(prefers-color-scheme:dark)").matches);if(d){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark"}}catch(e){}`;
+  // Runs before first paint. Precedence: visitor's stored choice >
+  // admin default theme (Site settings) > system preference.
+  const themeInitScript = `try{var s=localStorage.getItem("al-theme");var m=document.querySelector('meta[name="al-default-theme"]');var f=m?m.getAttribute("content"):"light";var d=s?(s==="dark"):(f==="dark"||matchMedia("(prefers-color-scheme:dark)").matches);if(d){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark"}}catch(e){}`;
   return (
     <html lang="en">
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
         {children}
@@ -191,6 +252,36 @@ function AdminShell() {
   );
 }
 
+function PreviewBanner() {
+  const location = useLocation();
+  const slug = new URLSearchParams(location.search).get("preview");
+  if (!slug) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-gold-soft bg-gold-soft/60 px-4 py-2 text-center text-xs font-600 text-navy">
+      <span>
+        Previewing unsaved draft — visitors still see the published version.
+      </span>
+      <button
+        type="button"
+        onClick={() => {
+          try {
+            window.sessionStorage.removeItem(`al-preview:${slug}`);
+          } catch {
+            /* ignore */
+          }
+          const params = new URLSearchParams(window.location.search);
+          params.delete("preview");
+          const qs = params.toString();
+          window.location.href = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
+        }}
+        className="rounded-md bg-navy px-2.5 py-1 text-[11px] text-primary-foreground transition-colors hover:bg-navy-deep"
+      >
+        Exit preview
+      </button>
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
@@ -220,6 +311,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen flex-col bg-background text-foreground">
+        <PreviewBanner />
         <SiteHeader />
         <main className={signedIn ? "flex-1 pb-24 lg:pb-0" : "flex-1"}>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}

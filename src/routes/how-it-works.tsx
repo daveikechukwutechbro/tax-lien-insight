@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { UserPlus, Wallet, Gavel, Coins } from "lucide-react";
 import { useSiteContent } from "@/lib/site-content";
+import { PageSeo } from "@/components/site/page-seo";
 
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
@@ -19,9 +20,10 @@ export const Route = createFileRoute("/how-it-works")({
 const STEP_ICONS = [UserPlus, Wallet, Gavel, Coins];
 
 function HowItWorks() {
-  const { title, subtitle, ctaLabel, steps } = useSiteContent("how-it-works");
+  const { title, subtitle, ctaLabel, steps, seoTitle, seoDescription } = useSiteContent("how-it-works");
   return (
     <div className="container-tight py-16">
+      <PageSeo title={seoTitle} description={seoDescription} />
       <h1 className="font-display text-4xl font-600 text-navy sm:text-5xl">{title}</h1>
       <p className="mt-3 max-w-2xl text-ink-muted">{subtitle}</p>
       <ol className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">

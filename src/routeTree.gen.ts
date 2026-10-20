@@ -40,6 +40,7 @@ import { Route as AdminKycRouteImport } from './routes/admin/kyc'
 import { Route as AdminLiensRouteImport } from './routes/admin/liens'
 import { Route as AdminPropertiesRouteImport } from './routes/admin/properties'
 import { Route as AdminRegistrationsRouteImport } from './routes/admin/registrations'
+import { Route as AdminRolesRouteImport } from './routes/admin/roles'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AuctionsIdRouteImport } from './routes/auctions.$id'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
@@ -217,6 +218,11 @@ const AdminRegistrationsRoute = AdminRegistrationsRouteImport.update({
   path: '/registrations',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminRolesRoute = AdminRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/admin/liens': typeof AdminLiensRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
+  '/admin/roles': typeof AdminRolesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
@@ -426,6 +433,7 @@ export interface FileRoutesByTo {
   '/admin/liens': typeof AdminLiensRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
+  '/admin/roles': typeof AdminRolesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
@@ -482,6 +490,7 @@ export interface FileRoutesById {
   '/admin/liens': typeof AdminLiensRoute
   '/admin/properties': typeof AdminPropertiesRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
+  '/admin/roles': typeof AdminRolesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auctions/$id': typeof AuctionsIdRoute
   '/properties/$id': typeof PropertiesIdRoute
@@ -538,6 +547,7 @@ export interface FileRouteTypes {
     | '/admin/liens'
     | '/admin/properties'
     | '/admin/registrations'
+    | '/admin/roles'
     | '/admin/users'
     | '/auctions/$id'
     | '/properties/$id'
@@ -590,6 +600,7 @@ export interface FileRouteTypes {
     | '/admin/liens'
     | '/admin/properties'
     | '/admin/registrations'
+    | '/admin/roles'
     | '/admin/users'
     | '/auctions/$id'
     | '/properties/$id'
@@ -645,6 +656,7 @@ export interface FileRouteTypes {
     | '/admin/liens'
     | '/admin/properties'
     | '/admin/registrations'
+    | '/admin/roles'
     | '/admin/users'
     | '/auctions/$id'
     | '/properties/$id'
@@ -911,6 +923,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRegistrationsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/roles': {
+      id: '/admin/roles'
+      path: '/roles'
+      fullPath: '/admin/roles'
+      preLoaderRoute: typeof AdminRolesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -1136,6 +1155,7 @@ interface AdminRouteRouteChildren {
   AdminLiensRoute: typeof AdminLiensRoute
   AdminPropertiesRoute: typeof AdminPropertiesRoute
   AdminRegistrationsRoute: typeof AdminRegistrationsRoute
+  AdminRolesRoute: typeof AdminRolesRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminContentPagesRoute: typeof AdminContentPagesRoute
@@ -1154,6 +1174,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminLiensRoute: AdminLiensRoute,
   AdminPropertiesRoute: AdminPropertiesRoute,
   AdminRegistrationsRoute: AdminRegistrationsRoute,
+  AdminRolesRoute: AdminRolesRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminContentPagesRoute: AdminContentPagesRoute,

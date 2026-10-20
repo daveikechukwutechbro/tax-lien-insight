@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSiteContent } from "@/lib/site-content";
+import { PageSeo } from "@/components/site/page-seo";
 
 export const Route = createFileRoute("/faq")({
   head: () => ({
@@ -14,9 +15,10 @@ export const Route = createFileRoute("/faq")({
 });
 
 function FAQ() {
-  const { eyebrow, title, items } = useSiteContent("faq");
+  const { eyebrow, title, items, seoTitle, seoDescription } = useSiteContent("faq");
   return (
     <main className="bg-background pb-20">
+      <PageSeo title={seoTitle} description={seoDescription} />
       <section className="border-b border-hairline bg-surface">
         <div className="container-tight py-12">
           <span className="text-xs uppercase tracking-[0.24em] text-ink-muted">{eyebrow}</span>

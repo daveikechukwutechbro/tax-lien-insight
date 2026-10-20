@@ -3,7 +3,7 @@
  * deployed backend service. The backend is the source of truth; the frontend app
  * forwards requests (including cookies/headers) so auth/session cookies propagate.
  */
-const BACKEND_URL =
+export const BACKEND_URL =
   (import.meta.env?.VITE_BACKEND_API_URL as string | undefined) ??
   (typeof process !== "undefined" ? process.env.BACKEND_API_URL : undefined) ??
   "https://tax-lien-insight-backend.daveikechukwutechbro.workers.dev";

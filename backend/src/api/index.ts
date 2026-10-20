@@ -7,7 +7,7 @@ import {
   fail,
   type ApiEnvelope,
 } from "../shared/api.js";
-import { AppError, toAppError, ValidationError, NotFoundError, ConflictError } from "../shared/errors.js";
+import { AppError, toAppError, ValidationError, NotFoundError, ConflictError, ForbiddenError } from "../shared/errors.js";
 import { config } from "../shared/config.js";
 import { logger, type LogMeta } from "../shared/logger.js";
 import {
@@ -1246,6 +1246,95 @@ export function createApp(): Hono {
     const updated = await upsertSiteContent(slug, body ?? {}, ctx.userId);
     await recordAdminAction({ actorUserId: ctx.userId, action: "CONTENT_UPDATED", targetUserId: undefined, reason: slug });
     return c.json(json(updated));
+  });
+
+  // ---- Admin: roles & permissions ----
+  app.get("/api/v1/admin/roles", async (c) => {
+    requirePermission(c, "system.manage");
+    const q = (sql: string) => getPool().query(sql);
+    const [roles, perms, grants] = await Promise.all([
+      q(`SELECT id, name, description FROM roles ORDER BY name`),
+      q(`SELECT id, name, description FROM permissions ORDER BY name`),
+      q(
+        `SELECT rp.role_id::text AS role_id, p.name AS permission
+         FROM role_permissions rp JOIN permissions p ON p.id = rp.permission_id`,
+      ),
+    ]);
+    const byRole = new Map<string, string[]>();
+    for (const g of grants.rows) {
+      const arr = byRole.get(g.role_id) ?? [];
+      arr.push(g.permission);
+      byRole.set(g.role_id, arr);
+    }
+    return c.json(
+      json({
+        roles: roles.rows.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          permissions: (byRole.get(r.id) ?? []).sort(),
+        })),
+        permissions: perms.rows.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+        })),
+      }),
+    );
+  });
+  app.put("/api/v1/admin/roles/:id/permissions", async (c) => {
+    const ctx = requirePermission(c, "system.manage");
+    const roleId = c.req.param("id");
+    const body = await c.req.json().catch(() => null);
+    const names = body?.permissions;
+    if (!Array.isArray(names) || names.some((n) => typeof n !== "string")) {
+      throw new ValidationError("permissions must be an array of permission names");
+    }
+    const requested = Array.from(new Set<string>(names as string[]));
+    const { rows: permRows } = await getPool().query(`SELECT id, name FROM permissions`);
+    const validIds = new Map<string, string>(permRows.map((p: any) => [p.name, p.id]));
+    const unknown = requested.filter((n) => !validIds.has(n));
+    if (unknown.length > 0) {
+      throw new ValidationError(`Unknown permissions: ${unknown.join(", ")}`);
+    }
+    const { rows: roleRows } = await getPool().query(`SELECT id, name FROM roles WHERE id = $1`, [roleId]);
+    if (!roleRows[0]) throw new NotFoundError("Role not found");
+
+    // Guard: never allow the last role that can manage the system to lose it,
+    // otherwise nobody could edit roles again.
+    const hasSystemManage = requested.includes("system.manage");
+    if (!hasSystemManage) {
+      const { rows: keepRows } = await getPool().query(
+        `SELECT count(*)::int AS c
+         FROM role_permissions rp JOIN permissions p ON p.id = rp.permission_id
+         WHERE p.name = 'system.manage' AND rp.role_id <> $1`,
+        [roleId],
+      );
+      if ((keepRows[0]?.c ?? 0) === 0) {
+        throw new ForbiddenError(
+          "At least one role must keep the system.manage permission, otherwise roles can no longer be edited.",
+        );
+      }
+    }
+
+    await transaction(async (client) => {
+      await client.query(`DELETE FROM role_permissions WHERE role_id = $1`, [roleId]);
+      for (const name of requested) {
+        await client.query(
+          `INSERT INTO role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+          [roleId, validIds.get(name)],
+        );
+      }
+    });
+    await recordAdminAction({
+      actorUserId: ctx.userId,
+      action: "ROLE_PERMISSIONS_UPDATED",
+      targetUserId: undefined,
+      reason: `${roleRows[0].name}: ${requested.join(", ") || "(none)"}`,
+    });
+    return c.json(
+      json({ id: roleId, name: roleRows[0].name, permissions: requested.sort() }),
+    );
   });
 
   return app;

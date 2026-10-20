@@ -10,11 +10,14 @@ export interface SiteContent {
 
 export const DEFAULT_CONTENT_SLUGS = [
   "settings",
+  "navigation",
   "home",
   "how-it-works",
   "faq",
   "rates",
   "resources",
+  "glossary",
+  "help",
   "support",
   "about",
 ];

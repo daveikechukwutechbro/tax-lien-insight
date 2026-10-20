@@ -9,15 +9,17 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useSiteContent } from "@/lib/site-content";
+import { PageSeo } from "@/components/site/page-seo";
+import type { StateRate } from "@/lib/content-data";
 
 export const Route = createFileRoute("/rates")({
   head: () => ({
     meta: [
-      { title: "Interest Rates by State â€” Auction Ledger" },
+      { title: "Interest Rates by State — Auction Ledger" },
       {
         name: "description",
         content:
-          "The statutory tax lien interest rate, how it is set, and any minimum for every US state and DC â€” lien, hybrid, and deed jurisdictions.",
+          "The statutory tax lien interest rate, how it is set, and any minimum for every US state and DC — lien, hybrid, and deed jurisdictions.",
       },
       { property: "og:title", content: "Tax Lien Interest Rates by State" },
       {
@@ -32,85 +34,30 @@ export const Route = createFileRoute("/rates")({
   component: RatesPage,
 });
 
-type RateModel = "lien" | "hybrid" | "deed";
-
-type StateRate = {
-  state: string;
-  model: RateModel;
-  rate: string;
-  how: string;
-  min: string;
-  note?: string;
-};
-
-const DEED = { model: "deed", rate: "â€”", how: "No investor interest", min: "â€”" } as const;
-
-const STATE_RATES = [
-  { state: "Alaska", ...DEED },
-  { state: "Alabama", model: "hybrid", rate: "12% max", how: "Bid down at auction", min: "No floor" },
-  { state: "Arkansas", ...DEED },
-  { state: "Arizona", model: "lien", rate: "16% max", how: "Bid down at auction", min: "No floor" },
-  { state: "California", ...DEED },
-  { state: "Colorado", model: "lien", rate: "14% max", how: "Fixed by statute", min: "None" },
-  { state: "Connecticut", ...DEED },
-  { state: "District of Columbia", model: "lien", rate: "18% max", how: "Fixed by statute", min: "None" },
-  { state: "Delaware", ...DEED },
-  { state: "Florida", model: "hybrid", rate: "18% max", how: "Bid down at auction", min: "5%", note: "Also runs a tax deed path." },
-  { state: "Georgia", ...DEED },
-  { state: "Hawaii", ...DEED, note: "No investor tax-sale auction; delinquent liens stay with the county." },
-  { state: "Iowa", model: "lien", rate: "24% max", how: "Fixed by statute", min: "None", note: "Highest ceiling in the country." },
-  { state: "Idaho", ...DEED },
-  { state: "Illinois", model: "lien", rate: "9% max", how: "Bid down at auction", min: "No floor", note: "One- or three-year redemption by property type." },
-  { state: "Indiana", model: "lien", rate: "15% max", how: "Flat penalty", min: "10%", note: "Penalty paid on redemption rather than compounding interest." },
-  { state: "Kansas", ...DEED },
-  { state: "Kentucky", model: "lien", rate: "12% max", how: "Fixed by statute", min: "None" },
-  { state: "Louisiana", model: "lien", rate: "12% max", how: "Bid down at auction", min: "8.4%", note: "Resets under Acts 2024 No. 774, effective Jan 1, 2026." },
-  { state: "Massachusetts", ...DEED },
-  { state: "Maryland", model: "lien", rate: "20% max", how: "Set by county law", min: "6%", note: "Statute sets a default; counties may go higher." },
-  { state: "Maine", ...DEED },
-  { state: "Michigan", ...DEED },
-  { state: "Minnesota", ...DEED },
-  { state: "Missouri", model: "lien", rate: "10% max", how: "Fixed by statute", min: "None" },
-  { state: "Mississippi", model: "lien", rate: "18% max", how: "Fixed by statute", min: "None" },
-  { state: "Montana", model: "lien", rate: "10% max", how: "Fixed by statute", min: "None" },
-  { state: "North Carolina", ...DEED },
-  { state: "North Dakota", ...DEED },
-  { state: "Nebraska", model: "lien", rate: "14% max", how: "Fixed by statute", min: "None" },
-  { state: "New Hampshire", ...DEED },
-  { state: "New Jersey", model: "lien", rate: "18% max", how: "Bid down at auction", min: "None" },
-  { state: "New Mexico", ...DEED },
-  { state: "Nevada", ...DEED },
-  { state: "New York", ...DEED },
-  { state: "Ohio", model: "hybrid", rate: "18% max", how: "Bid down at auction", min: "No floor", note: "Also runs a tax deed / foreclosure path." },
-  { state: "Oklahoma", ...DEED },
-  { state: "Oregon", ...DEED },
-  { state: "Pennsylvania", ...DEED },
-  { state: "Rhode Island", ...DEED },
-  { state: "South Carolina", ...DEED },
-  { state: "South Dakota", model: "lien", rate: "10% max", how: "Bid down at auction", min: "None" },
-  { state: "Tennessee", ...DEED },
-  { state: "Texas", ...DEED },
-  { state: "Utah", ...DEED },
-  { state: "Virginia", ...DEED },
-  { state: "Vermont", ...DEED },
-  { state: "Washington", ...DEED },
-  { state: "Wisconsin", ...DEED },
-  { state: "West Virginia", model: "lien", rate: "12% max", how: "Fixed by statute", min: "None", note: "Roughly 1% per month on redemption." },
-  { state: "Wyoming", model: "lien", rate: "15% max", how: "Fixed by statute", min: "None" },
-].sort((a, b) => a.state.localeCompare(b.state)) as StateRate[];
-
-const MODEL_LABEL: Record<RateModel, { label: string; badge: string }> = {
+const MODEL_LABEL: Record<StateRate["model"], { label: string; badge: string }> = {
   lien: { label: "Lien", badge: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
   hybrid: { label: "Hybrid", badge: "bg-amber-50 text-amber-700 ring-amber-200" },
   deed: { label: "Deed", badge: "bg-slate-100 text-slate-500 ring-slate-200" },
 };
 
-const lienStates = STATE_RATES.filter((s) => s.model !== "deed");
+function ratePercent(rate: string): number {
+  const m = rate.match(/(\d+(?:\.\d+)?)\s*%/);
+  return m ? Number(m[1]) : -1;
+}
 
 function RatesPage() {
-  const { eyebrow, title, subtitle } = useSiteContent("rates");
+  const { eyebrow, title, subtitle, rows, sourcesNote, seoTitle, seoDescription } =
+    useSiteContent("rates");
+  const stateRates = rows as StateRate[];
+  const lienStates = stateRates.filter((s) => s.model !== "deed");
+  const highest = stateRates.reduce<StateRate | null>(
+    (best, r) => (best && ratePercent(best.rate) >= ratePercent(r.rate) ? best : r),
+    null,
+  );
+
   return (
     <main className="bg-background pb-20">
+      <PageSeo title={seoTitle} description={seoDescription} />
       <section className="border-b border-hairline bg-navy text-primary-foreground">
         <div className="container-tight py-14">
           <div className="flex items-center gap-2 text-gold">
@@ -124,9 +71,21 @@ function RatesPage() {
 
       <section className="container-tight py-10">
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard icon={<TrendingUp className="size-5" />} label="States that pay interest" value={`${lienStates.length} of 51`} />
-          <StatCard icon={<Percent className="size-5" />} label="Highest ceiling" value="Iowa â€” 24%" />
-          <StatCard icon={<Scale className="size-5" />} label="Most common method" value="Bid down at auction" />
+          <StatCard
+            icon={<TrendingUp className="size-5" />}
+            label="States that pay interest"
+            value={`${lienStates.length} of ${stateRates.length}`}
+          />
+          <StatCard
+            icon={<Percent className="size-5" />}
+            label="Highest ceiling"
+            value={highest ? `${highest.state} — ${highest.rate.replace(" max", "")}` : "—"}
+          />
+          <StatCard
+            icon={<Scale className="size-5" />}
+            label="Most common method"
+            value="Bid down at auction"
+          />
         </div>
 
         <div className="mt-8 overflow-hidden rounded-xl border border-hairline bg-surface">
@@ -138,11 +97,11 @@ function RatesPage() {
             <div className="hidden sm:block">Minimum / Notes</div>
           </div>
           <div className="divide-y divide-hairline">
-            {STATE_RATES.map((s) => {
-              const badge = MODEL_LABEL[s.model];
+            {stateRates.map((s, i) => {
+              const badge = MODEL_LABEL[s.model] ?? MODEL_LABEL.lien;
               return (
                 <div
-                  key={s.state}
+                  key={`${s.state}-${i}`}
                   className="grid grid-cols-[1fr_5.5rem_9.5rem_5.5rem_1fr] items-center gap-x-3 px-4 py-3 text-sm sm:grid-cols-[1fr_5.5rem_11rem_6rem_1.5fr]"
                 >
                   <div className="font-600 text-navy">{s.state}</div>
@@ -174,7 +133,7 @@ function RatesPage() {
               the owner repays you with interest, so the rate above is your return ceiling.{" "}
               <span className="font-600">Hybrid</span> states run both a lien sale and a separate
               deed path. <span className="font-600">Deed</span> states sell the property itself and
-              pay no investor interest â€” your return comes from acquiring the property, not from a
+              pay no investor interest — your return comes from acquiring the property, not from a
               statutory rate. In <span className="font-600">bid-down</span> states bidders compete
               by accepting a lower rate at the auction, so the effective yield is usually well below
               the ceiling. Where the mechanism is <span className="font-600">set by county law</span>,
@@ -183,12 +142,7 @@ function RatesPage() {
           </div>
         </div>
 
-        <div className="mt-4 text-xs text-ink-muted">
-          Sources: state statutes cited to official legislative sources (e.g., A.R.S. Title 42,
-          Fla. Stat. Ch. 197, Iowa Code Â§447.1, 35 ILCS 200/21-215, RSMo Â§140.340, Ohio Rev. Code Ch.
-          5721, D.C. Code Â§47-1348) and cross-checked Sep 2026. Rules and rates change â€” always
-          verify with the county treasurer before bidding. Not financial advice.
-        </div>
+        <div className="mt-4 text-xs text-ink-muted">{sourcesNote}</div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           <QuickLink icon={<MapPin className="size-5" />} title="Browse counties by state" desc="Live jurisdictions and upcoming sales." to="/states" />
@@ -197,7 +151,7 @@ function RatesPage() {
         </div>
 
         <div className="mt-8">
-          <Link to="/" className="text-sm font-500 text-navy underline underline-offset-4">â† Back home</Link>
+          <Link to="/" className="text-sm font-500 text-navy underline underline-offset-4">← Back home</Link>
         </div>
       </section>
     </main>

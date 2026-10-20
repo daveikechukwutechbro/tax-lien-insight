@@ -22,22 +22,68 @@ export function BrandName({ name }: { name: string }) {
 
 type NavItem = { to: string; label: string };
 
-const nav: NavItem[] = [
-  { to: "/auctions", label: "Auctions" },
-  { to: "/states", label: "By State" },
-  { to: "/search", label: "Search Properties" },
-  { to: "/how-it-works", label: "How It Works" },
-];
-
 const linkCls =
   "relative text-sm font-500 text-ink-muted transition-colors hover:text-navy active:top-px";
 const linkActive = "text-navy font-600";
+
+function isExternal(to: string) {
+  return /^https?:\/\//.test(to) || to.startsWith("mailto:");
+}
+
+function NavLink({ to, label }: NavItem) {
+  if (isExternal(to)) {
+    return (
+      <a
+        href={to}
+        className={linkCls}
+        target={to.startsWith("http") ? "_blank" : undefined}
+        rel={to.startsWith("http") ? "noreferrer" : undefined}
+      >
+        {label}
+      </a>
+    );
+  }
+  return (
+    <Link to={to} className={linkCls} activeProps={{ className: linkActive }}>
+      {label}
+    </Link>
+  );
+}
+
+function MobileNavLink({ to, label }: NavItem) {
+  if (isExternal(to)) {
+    return (
+      <a
+        href={to}
+        className="rounded-md px-4 py-3 text-sm font-500 text-ink transition-colors hover:bg-surface-alt"
+        target={to.startsWith("http") ? "_blank" : undefined}
+        rel={to.startsWith("http") ? "noreferrer" : undefined}
+      >
+        {label}
+      </a>
+    );
+  }
+  return (
+    <SheetClose asChild>
+      <Link
+        to={to}
+        className="rounded-md px-4 py-3 text-sm font-500 text-ink transition-colors hover:bg-surface-alt"
+        activeProps={{ className: "bg-navy/5 text-navy font-600" }}
+      >
+        {label}
+      </Link>
+    </SheetClose>
+  );
+}
 
 export function SiteHeader() {
   const { user, loading } = useSession();
   const { data: unread } = useQuery(unreadNotificationsQuery(user?.id));
   const { data: profile } = useQuery(profileQuery(user?.id));
-  const { siteName, siteTagline, announcementText } = useSiteContent("settings");
+  const { siteName, siteTagline, announcementText, announcementEnabled, logo } =
+    useSiteContent("settings");
+  const { navLinks } = useSiteContent("navigation");
+  const nav: NavItem[] = (navLinks as NavItem[]).filter((l) => l.label && l.to);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
@@ -47,7 +93,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
-      {announcementText.trim() && (
+      {announcementEnabled && announcementText.trim() && (
         <div className="bg-navy text-primary-foreground">
           <div className="container-tight py-2 text-center text-xs font-500 tracking-wide">
             {announcementText}
@@ -56,9 +102,13 @@ export function SiteHeader() {
       )}
       <div className="container-tight flex h-14 items-center gap-3 sm:gap-4 md:h-16 lg:gap-8">
         <Link to={user ? "/dashboard" : "/"} className="flex shrink-0 items-center gap-2.5">
-          <span className="grid size-9 place-items-center rounded-md bg-navy text-gold">
-            <Landmark className="size-5" strokeWidth={2.25} />
-          </span>
+          {logo ? (
+            <img src={logo} alt={siteName} className="h-8 w-auto max-w-[150px] object-contain md:h-9" />
+          ) : (
+            <span className="grid size-9 place-items-center rounded-md bg-navy text-gold">
+              <Landmark className="size-5" strokeWidth={2.25} />
+            </span>
+          )}
           <span className="flex flex-col leading-none">
             <span className="font-display text-[15px] font-700 tracking-tight text-navy">
               <BrandName name={siteName} />
@@ -71,14 +121,7 @@ export function SiteHeader() {
 
         <nav className="hidden items-center gap-5 border-l border-hairline pl-6 lg:flex">
           {nav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={linkCls}
-              activeProps={{ className: linkActive }}
-            >
-              {item.label}
-            </Link>
+            <NavLink key={item.to + item.label} {...item} />
           ))}
           {!loading && user && (
             <Link
@@ -128,15 +171,7 @@ export function SiteHeader() {
               )}
               <nav className="flex flex-col gap-1 py-4">
                 {nav.map((item) => (
-                  <SheetClose asChild key={item.to}>
-                    <Link
-                      to={item.to}
-                      className="rounded-md px-4 py-3 text-sm font-500 text-ink transition-colors hover:bg-surface-alt"
-                      activeProps={{ className: "bg-navy/5 text-navy font-600" }}
-                    >
-                      {item.label}
-                    </Link>
-                  </SheetClose>
+                  <MobileNavLink key={item.to + item.label} {...item} />
                 ))}
                 {!loading && user && (
                   <SheetClose asChild>

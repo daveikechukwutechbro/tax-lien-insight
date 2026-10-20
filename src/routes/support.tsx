@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Mail, Clock, MessageSquare, Send, CheckCircle2, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { useSiteContent } from "@/lib/site-content";
+import { PageSeo } from "@/components/site/page-seo";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
@@ -17,7 +18,10 @@ export const Route = createFileRoute("/support")({
 });
 
 function SupportPage() {
-  const { eyebrow, title, subtitle, email: supportEmail, hours, hoursNote } = useSiteContent("support");
+  const { eyebrow, title, subtitle, email: emailSetting, hours, hoursNote, seoTitle, seoDescription } =
+    useSiteContent("support");
+  const { contactEmail } = useSiteContent("settings");
+  const supportEmail = emailSetting.trim() !== "" ? emailSetting : contactEmail;
   const [sent, setSent] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -40,6 +44,7 @@ function SupportPage() {
 
   return (
     <main className="bg-background pb-20">
+      <PageSeo title={seoTitle} description={seoDescription} />
       <section className="border-b border-hairline bg-navy text-primary-foreground">
         <div className="container-tight py-14">
           <div className="flex items-center gap-2 text-gold">
