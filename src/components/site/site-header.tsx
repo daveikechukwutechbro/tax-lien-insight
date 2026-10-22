@@ -103,7 +103,11 @@ export function SiteHeader() {
       <div className="container-tight flex h-14 items-center gap-3 sm:gap-4 md:h-16 lg:gap-8">
         <Link to={user ? "/dashboard" : "/"} className="flex shrink-0 items-center gap-2.5">
           {logo ? (
-            <img src={logo} alt={siteName} className="h-8 w-auto max-w-[150px] object-contain md:h-9" />
+            <img
+              src={logo}
+              alt={siteName}
+              className="h-8 w-auto max-w-[150px] object-contain md:h-9"
+            />
           ) : (
             <span className="grid size-9 place-items-center rounded-md bg-navy text-gold">
               <Landmark className="size-5" strokeWidth={2.25} />
@@ -124,11 +128,7 @@ export function SiteHeader() {
             <NavLink key={item.to + item.label} {...item} />
           ))}
           {!loading && user && (
-            <Link
-              to="/dashboard"
-              className={linkCls}
-              activeProps={{ className: linkActive }}
-            >
+            <Link to="/dashboard" className={linkCls} activeProps={{ className: linkActive }}>
               Dashboard
             </Link>
           )}
@@ -212,8 +212,10 @@ export function SiteHeader() {
             <>
               <Link
                 to="/dashboard/notifications"
-                aria-label="Notifications"
-                className="relative hidden items-center gap-2 rounded-md p-1.5 text-ink-muted transition-colors hover:text-navy sm:flex"
+                aria-label={
+                  unread && unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
+                }
+                className="relative flex items-center gap-2 rounded-md p-1.5 text-ink-muted transition-colors hover:text-navy"
               >
                 <Bell className="size-5" strokeWidth={1.75} />
                 {typeof unread === "number" && unread > 0 && (
@@ -226,7 +228,11 @@ export function SiteHeader() {
                 trigger={
                   <button className="flex items-center gap-1.5 rounded-full border border-hairline bg-surface p-0.5 text-ink transition-colors hover:border-navy/40 hover:bg-surface-alt sm:gap-2 sm:pr-2.5">
                     {profile?.avatar ? (
-                      <img src={profile.avatar} alt="" className="size-8 rounded-full object-cover md:size-7" />
+                      <img
+                        src={profile.avatar}
+                        alt=""
+                        className="size-8 rounded-full object-cover md:size-7"
+                      />
                     ) : (
                       <span className="grid size-8 place-items-center rounded-full bg-navy text-xs font-600 text-gold md:size-7">
                         {initials}

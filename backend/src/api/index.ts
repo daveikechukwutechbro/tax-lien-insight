@@ -561,15 +561,20 @@ export function createApp(): Hono {
     });
     try {
       const { rows } = await getPool().query(
-        `SELECT p.id AS property_id FROM auction_lots al LEFT JOIN properties p ON p.id = al.property_id WHERE al.id = $1`,
+        `SELECT p.id AS property_id, al.auction_id FROM auction_lots al LEFT JOIN properties p ON p.id = al.property_id WHERE al.id = $1`,
         [c.req.param("id")],
       );
       const propertyId = rows[0]?.property_id;
+      const auctionId = rows[0]?.auction_id;
       await dispatchEvent(
         "BID_PLACED",
         {
           lotId: c.req.param("id"),
-          link: propertyId ? `/properties/${propertyId}?lot=${c.req.param("id")}` : `/auction-lots/${c.req.param("id")}`,
+          link: propertyId
+            ? `/properties/${propertyId}?lot=${c.req.param("id")}`
+            : auctionId
+              ? `/auctions/${auctionId}?lot=${c.req.param("id")}`
+              : "/auctions",
         },
         { userId: ctx.userId },
       );
@@ -1047,7 +1052,7 @@ export function createApp(): Hono {
         q(`SELECT count(*)::int AS c FROM properties`),
         q(`SELECT count(*)::int AS c FROM auction_lots`),
         q(`SELECT count(*)::int AS c FROM bids`),
-        q(`SELECT count(*)::int AS c FROM auctions WHERE status IN ('open','registration','live')`),
+        q(`SELECT count(*)::int AS c FROM auctions WHERE status IN ('scheduled','registration_open','registration_closed','live','paused')`),
         q(`SELECT count(*)::int AS c FROM kyc_verifications WHERE status IN ('submitted','processing','manual_review')`),
         q(`SELECT count(*)::int AS c FROM jurisdictions WHERE status='active'`),
         q(`SELECT COALESCE(SUM(available_balance + held_balance + pending_balance),0)::numeric(14,2)::text AS s FROM funds_accounts`),

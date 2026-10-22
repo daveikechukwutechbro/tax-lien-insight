@@ -1,12 +1,28 @@
 import { Link } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Gavel, Bookmark, Trophy, XCircle, CalendarClock,
-  Receipt, CreditCard, Wallet, UserRound, Bell, Search, FileText, MessageSquare, LogOut, BadgeCheck, ChevronDown, Activity,
+  LayoutDashboard,
+  Gavel,
+  Bookmark,
+  Trophy,
+  XCircle,
+  CalendarClock,
+  Receipt,
+  CreditCard,
+  Wallet,
+  UserRound,
+  Bell,
+  Search,
+  FileText,
+  MessageSquare,
+  LogOut,
+  BadgeCheck,
+  ChevronDown,
+  Activity,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { logout, emitAuthChange } from "@/lib/backend-auth";
-import { profileQuery } from "@/lib/queries/dashboard";
+import { profileQuery, unreadNotificationsQuery } from "@/lib/queries/dashboard";
 import { useRouter } from "@tanstack/react-router";
 import { ProfileMenu } from "@/components/site/profile-menu";
 
@@ -35,9 +51,15 @@ export function DashboardSidebar() {
   const router = useRouter();
   const qc = useQueryClient();
   const { data: profile } = useQuery(profileQuery(user?.id));
+  const { data: unread } = useQuery(unreadNotificationsQuery(user?.id));
 
   const displayName = profile?.full_name ?? user?.email?.split("@")[0] ?? "Bidder";
-  const initials = displayName.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase();
+  const initials = displayName
+    .split(" ")
+    .map((p: string) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   async function signOut() {
     await qc.cancelQueries().catch(() => {});
@@ -71,7 +93,11 @@ export function DashboardSidebar() {
                 </div>
                 <div className="flex items-center gap-1 text-xs text-ink-muted">
                   Investor Member
-                  {profile?.verified && <span className="ml-1 rounded bg-success-soft px-1.5 py-0.5 text-[10px] font-600 text-success">Verified</span>}
+                  {profile?.verified && (
+                    <span className="ml-1 rounded bg-success-soft px-1.5 py-0.5 text-[10px] font-600 text-success">
+                      Verified
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -89,9 +115,17 @@ export function DashboardSidebar() {
             activeProps={{ className: "bg-navy/5 text-navy font-600 border-l-2 border-navy" }}
           >
             <Icon className="size-4" strokeWidth={1.75} /> {label}
+            {to === "/dashboard/notifications" && typeof unread === "number" && unread > 0 && (
+              <span className="ml-auto grid min-w-[18px] place-items-center rounded-full bg-destructive px-1 text-[10px] font-700 leading-[18px] text-white">
+                {unread > 99 ? "99+" : unread}
+              </span>
+            )}
           </Link>
         ))}
-        <button onClick={signOut} className="mt-1 flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-ink hover:bg-surface-alt">
+        <button
+          onClick={signOut}
+          className="mt-1 flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-ink hover:bg-surface-alt"
+        >
           <LogOut className="size-4" /> Log Out
         </button>
       </nav>

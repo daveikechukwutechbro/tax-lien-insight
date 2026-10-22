@@ -12,7 +12,7 @@ import {
   type AdminAuction,
 } from "@/lib/backend";
 import { invalidatePublicData } from "@/lib/queries/invalidate";
-import { Pencil } from "lucide-react";
+import { Eye, Pencil, Rocket } from "lucide-react";
 
 function toLocalInput(iso: string | null): string {
   if (!iso) return "";
@@ -24,6 +24,8 @@ function toLocalInput(iso: string | null): string {
 export const Route = createFileRoute("/admin/auctions")({
   component: AuctionsAdmin,
 });
+
+const HIDDEN_STATES = new Set(["draft", "archived", "cancelled"]);
 
 function statusTone(status: string): string {
   if (status === "live") return "bg-emerald-50 text-emerald-700";
@@ -46,6 +48,8 @@ function AuctionsAdmin() {
   const [county, setCounty] = useState("");
   const [starts, setStarts] = useState("");
   const [ends, setEnds] = useState("");
+  const [publishNow, setPublishNow] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: "", county: "", starts: "", ends: "" });
@@ -81,14 +85,26 @@ function AuctionsAdmin() {
   async function add(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await createAdminAuction({
+      const id = await createAdminAuction({
         title,
         jurisdictionId: county || undefined,
         startsAt: starts ? new Date(starts).toISOString() : undefined,
         endsAt: ends ? new Date(ends).toISOString() : undefined,
       });
-      toast.success("Auction created");
-      setTitle(""); setCounty(""); setStarts(""); setEnds("");
+      if (publishNow) {
+        await transitionAdminAuction(id, "draft", "scheduled");
+        toast.success(
+          `Auction "${title}" published — it's now visible on the public site. Add lots next so it appears on the homepage.`,
+        );
+      } else {
+        toast.info(
+          `Auction "${title}" saved as a draft. It stays hidden until you publish it (use the Publish button below).`,
+        );
+      }
+      setTitle("");
+      setCounty("");
+      setStarts("");
+      setEnds("");
       await qc.invalidateQueries({ queryKey: ["admin", "auctions"] });
       invalidatePublicData(qc);
     } catch (err) {
@@ -97,22 +113,36 @@ function AuctionsAdmin() {
   }
 
   async function transition(r: AdminAuction, next: string) {
+    setBusyId(r.id);
     try {
       await transitionAdminAuction(r.id, r.state, next);
-      toast.success(`Auction moved to ${next}`);
+      toast.success(
+        next === "scheduled"
+          ? `Auction published — it's now visible on the public site`
+          : `Auction moved to ${next.replace(/_/g, " ")}`,
+      );
       await qc.invalidateQueries({ queryKey: ["admin", "auctions"] });
       invalidatePublicData(qc);
     } catch (err) {
       toast.error((err as Error).message ?? "Transition failed");
+    } finally {
+      setBusyId(null);
     }
   }
 
-  const countyName = (id: string | null) =>
-    counties.find((c) => c.id === id)?.name ?? "—";
+  const countyName = (id: string | null) => counties.find((c) => c.id === id)?.name ?? "—";
 
   return (
     <div>
       <h2 className="font-display text-2xl font-600 text-navy">Auctions</h2>
+      <p className="mt-1 text-sm text-ink-muted">
+        Create an auction here, then publish it to make it public. Published auctions appear on the
+        homepage and the{" "}
+        <Link to="/auctions" className="text-navy underline hover:text-navy/70">
+          Auctions page
+        </Link>
+        ; add lots so the properties show up for bidders.
+      </p>
       <form
         onSubmit={add}
         className="mt-4 grid gap-3 rounded-xl border border-hairline bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4"
@@ -146,9 +176,17 @@ function AuctionsAdmin() {
           onChange={(e) => setEnds(e.target.value)}
           className="input"
         />
-        <div className="sm:col-span-2 lg:col-span-4">
-          <button className="rounded-md bg-navy px-5 py-2 text-sm font-600 text-primary-foreground">
-            Create auction
+        <div className="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-4">
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={publishNow}
+              onChange={(e) => setPublishNow(e.target.checked)}
+            />
+            Publish immediately (visible on the site right away)
+          </label>
+          <button className="ml-auto rounded-md bg-navy px-5 py-2 text-sm font-600 text-primary-foreground">
+            {publishNow ? "Create & publish" : "Create draft"}
           </button>
         </div>
       </form>
@@ -168,7 +206,10 @@ function AuctionsAdmin() {
           <tbody>
             {rows.map((r) =>
               editingId === r.id ? (
-                <tr key={r.id} className="border-b border-hairline/50 bg-surface-alt/60 last:border-0">
+                <tr
+                  key={r.id}
+                  className="border-b border-hairline/50 bg-surface-alt/60 last:border-0"
+                >
                   <td className="px-4 py-2">
                     <input
                       value={editForm.title}
@@ -205,7 +246,9 @@ function AuctionsAdmin() {
                     />
                   </td>
                   <td className="px-4 py-2">
-                    <span className={`rounded px-2 py-0.5 text-xs capitalize ${statusTone(r.state)}`}>
+                    <span
+                      className={`rounded px-2 py-0.5 text-xs capitalize ${statusTone(r.state)}`}
+                    >
                       {r.state.replace(/_/g, " ")}
                     </span>
                   </td>
@@ -228,9 +271,15 @@ function AuctionsAdmin() {
                 </tr>
               ) : (
                 <tr key={r.id} className="border-b border-hairline/50 last:border-0">
-                  <td className="px-4 py-2 font-500 text-navy">
-                    {r.title}
-                    {!r.published && (
+                  <td className="px-4 py-2">
+                    <Link
+                      to="/auctions/$id"
+                      params={{ id: r.id }}
+                      className="font-500 text-navy underline-offset-2 hover:underline"
+                    >
+                      {r.title}
+                    </Link>
+                    {HIDDEN_STATES.has(r.state) && (
                       <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-700">
                         hidden
                       </span>
@@ -241,14 +290,26 @@ function AuctionsAdmin() {
                     {r.startsAt ? new Date(r.startsAt).toLocaleString() : "—"}
                   </td>
                   <td className="px-4 py-2">
-                    <span className={`rounded px-2 py-0.5 text-xs capitalize ${statusTone(r.state)}`}>
+                    <span
+                      className={`rounded px-2 py-0.5 text-xs capitalize ${statusTone(r.state)}`}
+                    >
                       {r.state.replace(/_/g, " ")}
                     </span>
                   </td>
                   <td className="px-4 py-2">
-                    {AUCTION_TRANSITION_OPTIONS[r.state]?.length ? (
+                    {r.state === "draft" ? (
+                      <button
+                        onClick={() => void transition(r, "scheduled")}
+                        disabled={busyId === r.id}
+                        className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-600 text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                      >
+                        <Rocket className="size-3.5" />
+                        {busyId === r.id ? "Publishing…" : "Publish"}
+                      </button>
+                    ) : AUCTION_TRANSITION_OPTIONS[r.state]?.length ? (
                       <select
                         defaultValue=""
+                        disabled={busyId === r.id}
                         onChange={(e) => {
                           const next = e.target.value;
                           if (next) void transition(r, next);
@@ -276,6 +337,16 @@ function AuctionsAdmin() {
                       >
                         Manage lots
                       </Link>
+                      {!HIDDEN_STATES.has(r.state) && (
+                        <Link
+                          to="/auctions/$id"
+                          params={{ id: r.id }}
+                          title="View on the public site"
+                          className="inline-flex items-center gap-1 text-navy hover:underline"
+                        >
+                          <Eye className="size-3.5" /> View
+                        </Link>
+                      )}
                       <button
                         onClick={() => startEdit(r)}
                         aria-label="Edit auction"
@@ -287,6 +358,13 @@ function AuctionsAdmin() {
                   </td>
                 </tr>
               ),
+            )}
+            {!rows.length && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-ink-muted">
+                  No auctions yet — create your first auction above.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>

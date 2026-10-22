@@ -210,10 +210,30 @@ function BroadcastsAdmin() {
               </span>
               <input
                 className="input"
+                list="broadcast-link-suggestions"
                 placeholder="/auctions or https://…"
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
               />
+              <datalist id="broadcast-link-suggestions">
+                <option value="/" label="Home" />
+                <option value="/auctions" label="Auctions" />
+                <option value="/rates" label="Interest rates" />
+                <option value="/how-it-works" label="How it works" />
+                <option value="/resources" label="Resources" />
+                <option value="/glossary" label="Glossary" />
+                <option value="/help" label="Help center" />
+                <option value="/faq" label="FAQ" />
+                <option value="/support" label="Support" />
+                <option value="/about" label="About" />
+                <option value="/dashboard" label="Bidder dashboard" />
+                <option value="/dashboard/funds" label="Account funds" />
+                <option value="/dashboard/scheduled" label="Scheduled auctions" />
+              </datalist>
+              <span className="mt-1 block text-xs text-ink-muted">
+                Pick a page or type a full https:// link. Broken links make the user's “View” button
+                land on a 404.
+              </span>
             </label>
           </div>
 

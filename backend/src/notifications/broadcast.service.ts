@@ -74,6 +74,32 @@ function normalize(input: BroadcastInput) {
 
   let link = (input.link ?? "").trim();
   if (link && !/^https?:\/\//i.test(link) && !link.startsWith("/")) link = `/${link}`;
+  // Internal links must point at pages that actually exist, otherwise the
+  // user's "View" button lands on a 404.
+  if (link.startsWith("/") && !link.startsWith("//")) {
+    const allowedPrefixes = [
+      "/",
+      "/auctions",
+      "/properties",
+      "/rates",
+      "/how-it-works",
+      "/resources",
+      "/glossary",
+      "/help",
+      "/faq",
+      "/support",
+      "/about",
+      "/dashboard",
+      "/auth",
+    ];
+    const path = link.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+    const ok = allowedPrefixes.some((p) => p === "/" ? path === "/" : path === p || path.startsWith(`${p}/`));
+    if (!ok) {
+      throw new ValidationError(
+        `Link "${link}" doesn't match any page on the site. Pick one from the suggestions or use a full https:// link.`,
+      );
+    }
+  }
 
   const subject = (input.subject ?? "").trim() || title;
   if (input.sendEmail && subject.length > 200) {

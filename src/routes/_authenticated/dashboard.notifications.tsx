@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "@/hooks/use-session";
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from "@/lib/backend";
@@ -44,6 +44,37 @@ function Notifications() {
     qc.invalidateQueries({ queryKey: ["notifications"] });
   }
 
+  async function viewAndMarkRead(n: { id: string; read_at?: string | null }) {
+    if (!n.read_at) await markRead(n.id);
+  }
+
+  function renderViewLink(n: { id: string; link: string | null; read_at?: string | null }) {
+    if (!n.link) return null;
+    const internal = n.link.startsWith("/");
+    if (internal) {
+      return (
+        <Link
+          to={n.link as never}
+          onClick={() => void viewAndMarkRead(n)}
+          className="shrink-0 rounded-md border border-hairline px-2.5 py-1 text-xs font-500 text-navy hover:bg-surface-alt"
+        >
+          View
+        </Link>
+      );
+    }
+    return (
+      <a
+        href={n.link}
+        target="_blank"
+        rel="noreferrer"
+        onClick={() => void viewAndMarkRead(n)}
+        className="shrink-0 rounded-md border border-hairline px-2.5 py-1 text-xs font-500 text-navy hover:bg-surface-alt"
+      >
+        View
+      </a>
+    );
+  }
+
   return (
     <div>
       <PageIntro
@@ -51,35 +82,54 @@ function Notifications() {
         subtitle={unread > 0 ? `${unread} unread` : "You're all caught up."}
         actions={
           unread > 0 ? (
-            <button onClick={markAllRead} disabled={busy} className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-2 text-xs font-500 text-navy hover:bg-surface-alt disabled:opacity-60">
+            <button
+              onClick={markAllRead}
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-2 text-xs font-500 text-navy hover:bg-surface-alt disabled:opacity-60"
+            >
               <CheckCheck className="size-3.5" /> Mark all as read
             </button>
           ) : undefined
         }
       />
       <div className="mt-6 overflow-hidden rounded-xl border border-hairline bg-surface">
-        {rows.length === 0 ? <p className="p-8 text-center text-sm text-ink-muted">No notifications yet. Watching a property, placing a bid, or funding your account creates one.</p> :
+        {rows.length === 0 ? (
+          <p className="p-8 text-center text-sm text-ink-muted">
+            No notifications yet. Watching a property, placing a bid, or funding your account
+            creates one.
+          </p>
+        ) : (
           <ul className="divide-y divide-hairline">
             {rows.map((n) => (
-              <li key={n.id} className={`flex items-start gap-3 p-4 ${n.read_at ? "" : "bg-navy/[0.02]"}`}>
-                <span className={`mt-1.5 size-2 shrink-0 rounded-full ${n.read_at ? "bg-transparent" : "bg-gold"}`} />
+              <li
+                key={n.id}
+                className={`flex items-start gap-3 p-4 ${n.read_at ? "" : "bg-navy/[0.02]"}`}
+              >
+                <span
+                  className={`mt-1.5 size-2 shrink-0 rounded-full ${n.read_at ? "bg-transparent" : "bg-gold"}`}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="font-600 text-navy">{n.title}</div>
                   {n.body && <p className="mt-0.5 text-sm text-ink">{n.body}</p>}
                   <div className="mt-1 flex items-center gap-3 text-xs text-ink-muted">
-                    <span>{new Date(n.created_at).toLocaleString()} ({timeAgo(n.created_at)})</span>
+                    <span>
+                      {new Date(n.created_at).toLocaleString()} ({timeAgo(n.created_at)})
+                    </span>
                     {!n.read_at && (
-                      <button onClick={() => markRead(n.id)} className="text-navy underline hover:text-navy/70">Mark read</button>
+                      <button
+                        onClick={() => markRead(n.id)}
+                        className="text-navy underline hover:text-navy/70"
+                      >
+                        Mark read
+                      </button>
                     )}
                   </div>
                 </div>
-                {n.link && (
-                  <a href={n.link} className="shrink-0 rounded-md border border-hairline px-2.5 py-1 text-xs font-500 text-navy hover:bg-surface-alt">View</a>
-                )}
+                {renderViewLink(n)}
               </li>
             ))}
           </ul>
-        }
+        )}
       </div>
     </div>
   );

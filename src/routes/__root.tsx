@@ -97,7 +97,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   beforeLoad: ({ location }: any) => {
     if (ADMIN_SITE) {
       const allowed = ["/admin", "/auth", "/verify", "/reset"];
-      const isAllowed = allowed.some((p) => location.pathname === p || location.pathname.startsWith(p + "/"));
+      const isAllowed = allowed.some(
+        (p) => location.pathname === p || location.pathname.startsWith(p + "/"),
+      );
       if (!isAllowed) {
         throw redirect({ to: "/admin", replace: true });
       }
@@ -119,7 +121,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         headers: { accept: "application/json" },
       });
       if (!res.ok) return empty;
-      const json = (await res.json()) as { data?: { slug?: string; body?: unknown; updatedAt?: string | null } };
+      const json = (await res.json()) as {
+        data?: { slug?: string; body?: unknown; updatedAt?: string | null };
+      };
       const data = json.data;
       if (!data || typeof data.body !== "object" || data.body === null) return empty;
       // Seed the content query so the settings hook doesn't refetch on mount.
@@ -171,7 +175,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
         {
           rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap",
+          href: "https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
         },
         {
           rel: "icon",
@@ -258,9 +262,7 @@ function PreviewBanner() {
   if (!slug) return null;
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-gold-soft bg-gold-soft/60 px-4 py-2 text-center text-xs font-600 text-navy">
-      <span>
-        Previewing unsaved draft — visitors still see the published version.
-      </span>
+      <span>Previewing unsaved draft — visitors still see the published version.</span>
       <button
         type="button"
         onClick={() => {
@@ -322,7 +324,11 @@ function RootComponent() {
           <>
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetOverlay />
-              <SheetContent side="left" className="w-[260px] p-0" onOpenAutoFocus={(e) => e.preventDefault()}>
+              <SheetContent
+                side="left"
+                className="w-[260px] p-0"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+              >
                 <div className="h-[calc(100vh-4rem)] overflow-y-auto py-4">
                   <DashboardSidebar />
                 </div>

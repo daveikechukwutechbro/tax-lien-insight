@@ -1,19 +1,48 @@
 import { createFileRoute, Outlet, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { getMe, logout, emitAuthChange } from "@/lib/backend-auth";
+import {
+  getMe,
+  logout,
+  emitAuthChange,
+  knownAuthenticated,
+  markAuthenticated,
+  readCachedUser,
+  type BackendUser,
+} from "@/lib/backend-auth";
 import { ADMIN_SITE } from "@/lib/site-mode";
 import { AdminNav } from "@/components/admin/admin-sidebar";
+import { PageSkeleton } from "@/components/site/page-skeleton";
 import { Sheet, SheetContent, SheetOverlay } from "@/components/ui/sheet";
 import { Landmark, PanelLeft, ExternalLink, LogOut } from "lucide-react";
 
+function isAdminUser(user: BackendUser | null): boolean {
+  return !!user && (user.roles.includes("admin") || user.roles.includes("super_admin"));
+}
+
 export const Route = createFileRoute("/admin")({
   ssr: false,
+  pendingMs: 0,
+  pendingComponent: () => <PageSkeleton rows={2} />,
   beforeLoad: async () => {
-    const user = await getMe();
+    // Fast path: a verified session skips the Worker round-trip entirely, so
+    // clicking around the admin console navigates instantly instead of
+    // blocking every click on a slow /me call.
+    if (knownAuthenticated) {
+      const cached = readCachedUser();
+      if (isAdminUser(cached)) return { user: cached };
+    }
+    let user: BackendUser | null = null;
+    for (let i = 0; i < 2 && !user; i++) {
+      try {
+        user = await getMe();
+      } catch {
+        // transient Worker blip — retry once, then fall through to redirect
+      }
+    }
     if (!user) throw redirect({ to: "/auth" });
-    const isAdmin = user.roles.includes("admin") || user.roles.includes("super_admin");
-    if (!isAdmin) throw redirect({ to: ADMIN_SITE ? "/auth" : "/dashboard" });
+    if (!isAdminUser(user)) throw redirect({ to: ADMIN_SITE ? "/auth" : "/dashboard" });
+    markAuthenticated(true);
     return { user };
   },
   component: AdminShell,
@@ -82,7 +111,11 @@ function AdminShell() {
       {/* Mobile drawer */}
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetOverlay />
-        <SheetContent side="left" className="w-[260px] p-0" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <SheetContent
+          side="left"
+          className="w-[260px] p-0"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <div className="flex h-14 items-center gap-2.5 border-b border-hairline px-5">
             <span className="grid size-8 place-items-center rounded-md bg-navy text-gold">
               <Landmark className="size-4" strokeWidth={2.25} />
